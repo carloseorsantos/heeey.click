@@ -14,6 +14,7 @@ import {
 import { CollaboratorUser, SyncStatus, AccessLevel } from '../lib/types';
 import { getInitials } from '../lib/utils';
 import { useAuth } from '../hooks/useAuth';
+import { HeeeyLogo } from './Logo';
 
 interface HeaderProps {
   title: string;
@@ -103,9 +104,7 @@ export function Header({
           onClick={onBackToDashboard}
           className="hidden sm:flex items-center space-x-1.5 cursor-pointer group"
         >
-          <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-violet-500/25 group-hover:scale-105 transition-transform">
-            H
-          </div>
+          <HeeeyLogo className="w-7 h-7 shadow-md shadow-violet-500/25 group-hover:scale-105 transition-transform" />
           <span className="font-bold text-slate-800 text-sm tracking-tight dark:text-white">
             heeey<span className="text-violet-600">.click</span>
           </span>

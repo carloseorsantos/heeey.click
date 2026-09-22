@@ -29,6 +29,7 @@ import { useAuth } from '../hooks/useAuth';
 import { BoardCard } from '../components/BoardCard';
 import { AuthModal } from '../components/AuthModal';
 import { NicknameModal } from '../components/NicknameModal';
+import { HeeeyLogo } from '../components/Logo';
 
 interface DashboardPageProps {
   onNavigateToBoard: (boardId: string) => void;
@@ -198,9 +199,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       {/* Top Navbar */}
       <nav className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-violet-500/25">
-            H
-          </div>
+          <HeeeyLogo className="w-9 h-9 shadow-md shadow-violet-500/25" />
           <div>
             <h1 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
               heeey<span className="text-violet-600">.click</span>

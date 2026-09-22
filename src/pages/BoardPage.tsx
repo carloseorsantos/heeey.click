@@ -6,6 +6,7 @@ import { Header } from '../components/Header';
 import { ShareModal } from '../components/ShareModal';
 import { AuthModal } from '../components/AuthModal';
 import { NicknameModal } from '../components/NicknameModal';
+import { HeeeyLogo } from '../components/Logo';
 
 interface BoardPageProps {
   boardId: string;
@@ -45,9 +46,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300">
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-violet-600/30 animate-pulse">
-            H
-          </div>
+          <HeeeyLogo className="w-14 h-14 shadow-xl shadow-violet-600/30 animate-pulse" />
           <div className="flex items-center space-x-2 text-sm font-medium">
             <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
             <span>Carregando sua lousa...</span>

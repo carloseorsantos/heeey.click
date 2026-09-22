@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, CheckCircle2, AlertCircle, X, Loader2, Sparkles } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { HeeeyLogo } from './Logo';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -58,9 +59,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
         </button>
 
         <div className="flex items-center space-x-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/30">
-            <Sparkles className="w-5 h-5" />
-          </div>
+          <HeeeyLogo className="w-11 h-11 shadow-lg shadow-violet-500/30" />
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Acessar sua conta</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Entre sem senha via Magic Link</p>
