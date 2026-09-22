@@ -22,12 +22,16 @@ create index if not exists idx_boards_updated_at on public.boards(updated_at des
 
 -- 3. Função e trigger para atualização automática de updated_at
 create or replace function public.handle_updated_at()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
 begin
   new.updated_at = timezone('utc'::text, now());
   return new;
 end;
-$$ language plpgsql;
+$$;
 
 drop trigger if exists set_boards_updated_at on public.boards;
 create trigger set_boards_updated_at
@@ -47,12 +51,18 @@ create policy "Permitir leitura pública dos quadros"
   for select
   using (true);
 
--- Criação pública: anônimos e usuários autenticados podem criar quadros
+-- Criação pública e segura: anônimos criam com owner_id nulo; logados com seu próprio auth.uid()
 drop policy if exists "Permitir criação pública de quadros" on public.boards;
 create policy "Permitir criação pública de quadros"
   on public.boards
   for insert
-  with check (true);
+  with check (
+    -- Se anônimo, não permite forjar owner_id de terceiros
+    (auth.uid() is null and owner_id is null)
+    or
+    -- Se autenticado, owner_id deve ser o próprio usuário ou null
+    (auth.uid() is not null and (owner_id = auth.uid() or owner_id is null))
+  );
 
 -- Atualização: permitida se for o proprietário OU se o quadro estiver com access_level = 'edit'
 drop policy if exists "Permitir atualização por proprietário ou em quadros editáveis" on public.boards;
