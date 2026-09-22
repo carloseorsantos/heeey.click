@@ -38,6 +38,11 @@ export function NicknameModal({ isOpen, onClose }: NicknameModalProps) {
     e.preventDefault();
     if (name.trim()) {
       setNickname(name.trim(), selectedColor);
+      try {
+        localStorage.setItem('heeey_guest_customized', 'true');
+      } catch (err) {
+        // ignore localStorage errors
+      }
     }
     onClose();
   }

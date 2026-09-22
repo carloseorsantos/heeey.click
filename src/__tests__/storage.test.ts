@@ -49,6 +49,7 @@ describe('storage', () => {
 
     const retrieved = getGuestProfile();
     expect(retrieved.name).toBe('Meu Novo Nome');
+    expect(localStorage.getItem('heeey_guest_customized')).toBe('true');
   });
 
   it('saveLocalBoard, getLocalBoards and deleteLocalBoard should work', () => {

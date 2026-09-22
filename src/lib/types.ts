@@ -46,6 +46,7 @@ export interface RealtimeCanvasUpdate {
   appState?: {
     viewBackgroundColor?: string;
   };
+  files?: Record<string, any>;
   senderId: string;
   timestamp: number;
 }

@@ -58,11 +58,19 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center space-x-3 mb-6">
+        <div className="flex items-center space-x-3 mb-5">
           <HeeeyLogo className="w-11 h-11 shadow-lg shadow-violet-500/30" />
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Acessar sua conta</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Entre sem senha via Magic Link</p>
+          </div>
+        </div>
+
+        {/* Optional Auth Notice */}
+        <div className="mb-5 p-3 bg-violet-50/70 dark:bg-violet-950/30 rounded-xl border border-violet-100 dark:border-violet-900/50 text-xs text-violet-950 dark:text-violet-200 flex items-start space-x-2.5">
+          <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400 flex-shrink-0 mt-0.5" />
+          <div className="leading-relaxed">
+            <span className="font-semibold">O login é 100% opcional:</span> Você e seus amigos podem desenhar livremente no Modo Convidado. O link mágico serve apenas para salvar seus quadros na sua conta.
           </div>
         </div>
 
@@ -109,10 +117,39 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             </div>
 
             {error && (
-              <div className="flex items-center space-x-2 text-rose-600 bg-rose-50 p-3 rounded-xl text-xs dark:bg-rose-950/40 dark:text-rose-400">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{error}</span>
-              </div>
+              (error.toLowerCase().includes('rate limit') ||
+              error.toLowerCase().includes('over_email_send_rate_limit') ||
+              error.toLowerCase().includes('too many requests') ||
+              error.toLowerCase().includes('security purposes') ||
+              error.toLowerCase().includes('429') ||
+              error.toLowerCase().includes('email_rate_limit') ||
+              error.toLowerCase().includes('muitas requisições')) ? (
+                <div className="space-y-3 bg-amber-50 border border-amber-200/80 p-3.5 rounded-xl dark:bg-amber-950/30 dark:border-amber-800/50">
+                  <div className="flex items-start space-x-2.5 text-amber-800 dark:text-amber-300 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                    <div>
+                      <p className="font-semibold text-amber-900 dark:text-amber-200">
+                        Limite temporário de envio de e-mails
+                      </p>
+                      <p className="mt-1 text-amber-700 dark:text-amber-300/90 leading-relaxed">
+                        Para evitar abusos no plano gratuito, o envio de links mágicos tem cota limitada. Não se preocupe: você não precisa de conta para usar o Heeey! Continue como convidado.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleResetAndClose}
+                    className="w-full py-2 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition shadow-sm"
+                  >
+                    Continuar como Convidado
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2 text-rose-600 bg-rose-50 p-3 rounded-xl text-xs dark:bg-rose-950/40 dark:text-rose-400">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )
             )}
 
             <button
@@ -133,7 +170,15 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               )}
             </button>
 
-            <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 pt-2">
+            <button
+              type="button"
+              onClick={handleResetAndClose}
+              className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-xl transition dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              Prefiro continuar sem conta (Modo Convidado)
+            </button>
+
+            <p className="text-[11px] text-center text-slate-400 dark:text-slate-500 pt-1">
               Seus quadros serão automaticamente associados e sincronizados com a sua conta.
             </p>
           </form>

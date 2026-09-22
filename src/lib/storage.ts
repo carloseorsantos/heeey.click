@@ -47,6 +47,7 @@ export function updateGuestProfile(updates: Partial<GuestProfile>): GuestProfile
   const updated = { ...current, ...updates };
   try {
     localStorage.setItem(GUEST_PROFILE_KEY, JSON.stringify(updated));
+    localStorage.setItem('heeey_guest_customized', 'true');
   } catch (e) {
     console.error('Erro ao atualizar guest profile:', e);
   }

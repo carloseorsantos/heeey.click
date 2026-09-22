@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Copy, Check, Users, Lock, Globe, ShieldCheck } from 'lucide-react';
+import { X, Copy, Check, Users, Lock, Globe, ShieldCheck, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { AccessLevel } from '../lib/types';
 
@@ -89,13 +89,26 @@ export function ShareModal({
           <X className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center space-x-3 mb-6">
+        <div className="flex items-center space-x-3 mb-5">
           <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/20">
             <Users className="w-5 h-5" />
           </div>
           <div>
             <h2 className="text-xl font-bold text-slate-900 dark:text-white">Compartilhar Quadro</h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">Colabore ao vivo com qualquer pessoa</p>
+          </div>
+        </div>
+
+        {/* Guest Mode Highlight Notice */}
+        <div className="rounded-xl bg-violet-50/70 border border-violet-100 p-3 mb-5 flex items-start space-x-2.5 dark:bg-violet-950/30 dark:border-violet-900/50">
+          <Sparkles className="w-4 h-4 text-violet-600 dark:text-violet-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-xs font-semibold text-violet-950 dark:text-violet-200">
+              Colaboração livre sem cadastro
+            </p>
+            <p className="text-[11px] text-violet-700 dark:text-violet-300 mt-0.5 leading-relaxed">
+              Amigos não precisam criar conta nem fazer login por e-mail para desenhar. Basta abrir o link para interagir instantaneamente no modo convidado.
+            </p>
           </div>
         </div>
 

@@ -18,6 +18,7 @@ import {
 import { getLocalBoard, saveLocalBoard, isBoardLocallyCreated, markBoardAsCreated } from '../lib/storage';
 import { useAuth } from './useAuth';
 import { debounce, throttle } from '../lib/utils';
+import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 
 interface UseRealtimeBoardOptions {
   boardId: string;
@@ -44,6 +45,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   const collaboratorsMapRef = useRef<Map<SocketId, Collaborator>>(new Map());
   const onlineCollaboratorsRef = useRef<Map<string, CollaboratorUser>>(new Map());
   const lastChangeSignatureRef = useRef<string>('');
+  const lastSentCursorRef = useRef<{ x: number; y: number; button?: string } | null>(null);
+  const processedFilesRef = useRef<Set<string>>(new Set());
 
   // Determine permissions accurately:
   // - If board has owner_id, current user must match owner_id.
@@ -184,9 +187,9 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     }, 1200)
   ).current;
 
-  // 4. Debounced Broadcast of Canvas Changes
+  // 4. Debounced Broadcast of Canvas Changes (includes files for real-time media sync)
   const debouncedBroadcastCanvas = useRef(
-    debounce((elements: readonly ExcalidrawElement[], appState: AppState) => {
+    debounce((elements: readonly ExcalidrawElement[], appState: AppState, files?: Record<string, any>) => {
       if (!channelRef.current) return;
 
       const payload: RealtimeCanvasUpdate = {
@@ -196,6 +199,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         appState: {
           viewBackgroundColor: appState.viewBackgroundColor,
         },
+        files,
         senderId: effectiveUserId,
         timestamp: Date.now(),
       };
@@ -209,16 +213,18 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   ).current;
 
   // 5. Throttled Cursor Broadcast (prevents flooding WebSocket and dropping messages)
+  // Adjusted from 40ms to 90ms to save >55% bandwidth while preserving smooth visual motion
   const throttledBroadcastCursor = useRef(
     throttle((payload: RealtimeCursorUpdate) => {
       if (!channelRef.current) return;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
 
       channelRef.current.send({
         type: 'broadcast',
         event: 'cursor-update',
         payload,
       });
-    }, 40)
+    }, 90)
   ).current;
 
   // 6. Supabase Realtime Channel (Broadcast + Presence + Room Sync)
@@ -317,6 +323,11 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
               : undefined,
           });
 
+          // Sync binary files into Excalidraw if present in the broadcast
+          if (payload.files && Object.keys(payload.files).length > 0) {
+            api.addFiles(Object.values(payload.files));
+          }
+
           // Also update board state in background
           setBoard((prev) => {
             if (!prev) return prev;
@@ -326,6 +337,10 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
               app_state: {
                 ...prev.app_state,
                 ...(payload.appState || {}),
+              },
+              files: {
+                ...prev.files,
+                ...(payload.files || {}),
               },
               updated_at: new Date().toISOString(),
             };
@@ -474,6 +489,35 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     };
   }, [boardId, effectiveUserId, effectiveUserName, guestProfile.color]);
 
+  // 6.1 Handle tab visibility change to pause cursor broadcasts and clear cursor on peers' screens
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        throttledBroadcastCursor.cancel();
+        if (channelRef.current && lastSentCursorRef.current !== null) {
+          lastSentCursorRef.current = null;
+          channelRef.current.send({
+            type: 'broadcast',
+            event: 'cursor-update',
+            payload: {
+              type: 'cursor-update',
+              boardId,
+              senderId: effectiveUserId,
+              username: effectiveUserName,
+              color: guestProfile.color,
+              cursor: null,
+            },
+          });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [boardId, effectiveUserId, effectiveUserName, guestProfile.color, throttledBroadcastCursor]);
+
   // 7. Excalidraw Change Handler with change detection filter (no spamming on pan/zoom)
   const handleCanvasChange = useCallback(
     (elements: readonly OrderedExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
@@ -512,16 +556,71 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       boardRef.current = updatedBoard;
       setBoard(updatedBoard);
 
-      // Debounced real-time broadcast to room
-      debouncedBroadcastCanvas(elements, appState);
+      // Debounced real-time broadcast to room (including binary files metadata)
+      debouncedBroadcastCanvas(elements, appState, files);
 
       // Debounced persistence to database & local storage
       debouncedSaveToDb(updatedBoard);
+
+      // Automatic background optimization for any newly added raw image files
+      if (files) {
+        Object.entries(files).forEach(([fileId, fileData]) => {
+          if (
+            fileData?.dataURL &&
+            typeof fileData.dataURL === 'string' &&
+            fileData.dataURL.startsWith('data:image/') &&
+            !fileData.dataURL.startsWith('data:image/svg+xml') &&
+            !(fileData as any)._optimized &&
+            !processedFilesRef.current.has(fileId)
+          ) {
+            processedFilesRef.current.add(fileId);
+            optimizeAndUploadImage(boardId, fileId, fileData.dataURL)
+              .then((result) => {
+                if (result && result.dataURL !== fileData.dataURL) {
+                  const updatedFileRecord = {
+                    id: fileId as any,
+                    dataURL: result.dataURL as any,
+                    mimeType: result.mimeType as any,
+                    created: fileData.created || Date.now(),
+                    _optimized: true,
+                  };
+
+                  apiRef.current?.addFiles([updatedFileRecord]);
+
+                  setBoard((prev) => {
+                    if (!prev) return prev;
+                    const updatedFiles = {
+                      ...prev.files,
+                      [fileId]: {
+                        ...prev.files?.[fileId],
+                        ...updatedFileRecord,
+                      },
+                    };
+                    const updatedBoardWithFile: Board = {
+                      ...prev,
+                      files: updatedFiles,
+                      updated_at: new Date().toISOString(),
+                    };
+                    boardRef.current = updatedBoardWithFile;
+                    saveLocalBoard(updatedBoardWithFile);
+                    debouncedSaveToDb(updatedBoardWithFile);
+                    // Broadcast updated storage URL to peers
+                    debouncedBroadcastCanvas(elements, appState, updatedFiles);
+                    return updatedBoardWithFile;
+                  });
+                }
+              })
+              .catch((err) => {
+                console.warn('Erro ao otimizar imagem de fundo:', err);
+              });
+          }
+        });
+      }
     },
-    [canEdit, debouncedBroadcastCanvas, debouncedSaveToDb]
+    [boardId, canEdit, debouncedBroadcastCanvas, debouncedSaveToDb]
   );
 
-  // 8. Pointer & Cursor movement handler (Throttled)
+  // 8. Pointer & Cursor movement handler (Throttled + 3px Euclidean Filter + Tab Visibility)
   const handlePointerUpdate = useCallback(
     (payload: {
       pointer: { x: number; y: number; tool: 'pointer' | 'laser' };
@@ -529,6 +628,52 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       pointersMap: any;
     }) => {
       if (!channelRef.current) return;
+
+      // 1. Pause broadcast when tab is hidden to save realtime quota
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
+        return;
+      }
+
+      if (!payload.pointer) {
+        if (lastSentCursorRef.current !== null) {
+          lastSentCursorRef.current = null;
+          throttledBroadcastCursor.cancel();
+          if (channelRef.current) {
+            channelRef.current.send({
+              type: 'broadcast',
+              event: 'cursor-update',
+              payload: {
+                type: 'cursor-update',
+                boardId,
+                senderId: effectiveUserId,
+                username: effectiveUserName,
+                color: guestProfile.color,
+                cursor: null,
+                button: payload.button,
+              },
+            });
+          }
+        }
+        return;
+      }
+
+      // 2. Filter out micro-movements (< 3px euclidean distance threshold) unless button changed
+      if (lastSentCursorRef.current) {
+        const dx = payload.pointer.x - lastSentCursorRef.current.x;
+        const dy = payload.pointer.y - lastSentCursorRef.current.y;
+        const dist = Math.hypot(dx, dy);
+        const buttonChanged = lastSentCursorRef.current.button !== payload.button;
+
+        if (dist < 3 && !buttonChanged) {
+          return;
+        }
+      }
+
+      lastSentCursorRef.current = {
+        x: payload.pointer.x,
+        y: payload.pointer.y,
+        button: payload.button,
+      };
 
       throttledBroadcastCursor({
         type: 'cursor-update',
