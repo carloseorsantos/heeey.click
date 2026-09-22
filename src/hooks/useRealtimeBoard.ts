@@ -15,7 +15,8 @@ import {
   RealtimeSyncRequest,
   RealtimeSyncResponse,
 } from '../lib/types';
-import { getLocalBoard, saveLocalBoard, isBoardLocallyCreated, markBoardAsCreated } from '../lib/storage';
+import { getLocalBoard, saveLocalBoard, isBoardLocallyCreated, markBoardAsCreated, getBoardCreatorGuestId } from '../lib/storage';
+import { sanitizeFilesForBroadcast, computeSceneSignature, electSyncPeer } from '../lib/realtimeUtils';
 import { useAuth } from './useAuth';
 import { debounce, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
@@ -33,7 +34,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   const [onlineCollaborators, setOnlineCollaborators] = useState<CollaboratorUser[]>([]);
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
 
-  // References to keep latest values in callbacks without re-subscribing
+  // References to keep latest values in callbacks without stale closures
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
   apiRef.current = excalidrawAPI;
 
@@ -42,6 +43,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
 
   const isRemoteUpdateRef = useRef<boolean>(false);
   const channelRef = useRef<any>(null);
+  const channelStatusRef = useRef<string>('CLOSED');
+  const joinedAtRef = useRef<number>(Date.now());
   const collaboratorsMapRef = useRef<Map<SocketId, Collaborator>>(new Map());
   const onlineCollaboratorsRef = useRef<Map<string, CollaboratorUser>>(new Map());
   const lastChangeSignatureRef = useRef<string>('');
@@ -50,13 +53,26 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
 
   // Determine permissions accurately:
   // - If board has owner_id, current user must match owner_id.
-  // - If board has no owner_id (guest board), current browser must be the creator.
-  // Visitors who open the link in another browser do NOT own the board!
+  // - If board has no owner_id (guest board), current browser must be the creator session.
+  // Visitors who open the link in another browser or after session reset do NOT own the board!
+  const creatorGuestId = getBoardCreatorGuestId(boardId);
   const isOwner = board?.owner_id
     ? board.owner_id === user?.id
-    : isBoardLocallyCreated(boardId);
+    : (isBoardLocallyCreated(boardId) && (!creatorGuestId || creatorGuestId === guestProfile.id));
   const canEdit = board?.access_level === 'edit' || isOwner;
   const isViewMode = !canEdit;
+
+  const isOwnerRef = useRef<boolean>(isOwner);
+  isOwnerRef.current = isOwner;
+
+  const effectiveUserIdRef = useRef<string>(effectiveUserId);
+  effectiveUserIdRef.current = effectiveUserId;
+
+  const effectiveUserNameRef = useRef<string>(effectiveUserName);
+  effectiveUserNameRef.current = effectiveUserName;
+
+  const guestProfileRef = useRef(guestProfile);
+  guestProfileRef.current = guestProfile;
 
   // 1. Initial Load: Fetch from Supabase, fallback to local storage
   useEffect(() => {
@@ -138,7 +154,9 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   // 2. Associate unowned board to user if authenticated without unmounting
   useEffect(() => {
     if (!user?.id || !boardRef.current) return;
-    if (boardRef.current.owner_id === null && isBoardLocallyCreated(boardId)) {
+    const creator = getBoardCreatorGuestId(boardId);
+    const isCurrentGuestCreator = !creator || creator === guestProfile.id;
+    if (boardRef.current.owner_id === null && isBoardLocallyCreated(boardId) && isCurrentGuestCreator) {
       const updated: Board = {
         ...boardRef.current,
         owner_id: user.id,
@@ -154,40 +172,60 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         .is('owner_id', null)
         .then();
     }
-  }, [user?.id, boardId]);
+  }, [user?.id, boardId, guestProfile.id]);
 
   // 3. Debounced Database Save
+  // Uses UPDATE for mutable canvas fields instead of UPSERT to avoid PostgREST INSERT RLS rejection for non-owner collaborators
   const debouncedSaveToDb = useRef(
     debounce(async (boardData: Board) => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        saveLocalBoard(boardData);
+        setSyncStatus('offline');
+        return;
+      }
+
       setSyncStatus('saving');
       try {
         saveLocalBoard(boardData);
 
-        const { error } = await supabase.from('boards').upsert({
-          id: boardData.id,
-          title: boardData.title,
-          owner_id: boardData.owner_id,
-          elements: boardData.elements,
-          app_state: boardData.app_state,
-          files: boardData.files,
-          access_level: boardData.access_level,
-          updated_at: new Date().toISOString(),
-        });
+        const { error, data } = await supabase
+          .from('boards')
+          .update({
+            elements: boardData.elements,
+            app_state: boardData.app_state,
+            files: boardData.files,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', boardData.id)
+          .select('id');
 
         if (error) {
           console.warn('Erro ao salvar no Supabase:', error.message);
-          setSyncStatus('saved');
+          setSyncStatus('error');
+        } else if (!data || data.length === 0) {
+          // If board is not in remote database yet and current user is owner, insert it
+          if (isOwnerRef.current) {
+            const { error: insertErr } = await supabase.from('boards').insert(boardData);
+            if (insertErr) {
+              console.warn('Erro ao inserir novo quadro no Supabase:', insertErr.message);
+              setSyncStatus('error');
+            } else {
+              setSyncStatus('saved');
+            }
+          } else {
+            setSyncStatus('saved');
+          }
         } else {
           setSyncStatus('saved');
         }
       } catch (e) {
         console.warn('Falha no salvamento remoto:', e);
-        setSyncStatus('saved');
+        setSyncStatus('error');
       }
     }, 1200)
   ).current;
 
-  // 4. Debounced Broadcast of Canvas Changes (includes files for real-time media sync)
+  // 4. Debounced Broadcast of Canvas Changes (sanitizes files to keep heavy base64 dataURLs local)
   const debouncedBroadcastCanvas = useRef(
     debounce((elements: readonly ExcalidrawElement[], appState: AppState, files?: Record<string, any>) => {
       if (!channelRef.current) return;
@@ -199,8 +237,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         appState: {
           viewBackgroundColor: appState.viewBackgroundColor,
         },
-        files,
-        senderId: effectiveUserId,
+        files: sanitizeFilesForBroadcast(files),
+        senderId: effectiveUserIdRef.current,
         timestamp: Date.now(),
       };
 
@@ -316,17 +354,30 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             currentAppState
           );
 
+          // Sync binary files into Excalidraw if present in the broadcast and has valid dataURL
+          if (payload.files && Object.keys(payload.files).length > 0) {
+            const filesWithData = Object.values(payload.files).filter(
+              (f: any) => f && typeof f.dataURL === 'string' && f.dataURL.length > 0
+            );
+            if (filesWithData.length > 0) {
+              api.addFiles(filesWithData as any);
+            }
+          }
+
+          // Update signature to match reconciled state so synchronous or queued onChange will not re-broadcast,
+          // but subsequent user drawing strokes will have a distinct signature and NOT be dropped!
+          lastChangeSignatureRef.current = computeSceneSignature(
+            reconciled,
+            payload.appState?.viewBackgroundColor || currentAppState.viewBackgroundColor,
+            Object.keys(api.getFiles() || {}).length
+          );
+
           api.updateScene({
             elements: reconciled,
             appState: payload.appState?.viewBackgroundColor
               ? { viewBackgroundColor: payload.appState.viewBackgroundColor }
               : undefined,
           });
-
-          // Sync binary files into Excalidraw if present in the broadcast
-          if (payload.files && Object.keys(payload.files).length > 0) {
-            api.addFiles(Object.values(payload.files));
-          }
 
           // Also update board state in background
           setBoard((prev) => {
@@ -348,9 +399,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             return updated;
           });
         } finally {
-          setTimeout(() => {
-            isRemoteUpdateRef.current = false;
-          }, 50);
+          // Reset flag synchronously to avoid dropping user drawing strokes in the next frame
+          isRemoteUpdateRef.current = false;
         }
       })
       // Broadcast: Cursor updates with reliable nicknames and colors
@@ -387,34 +437,46 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           collaborators: new Map(collaboratorsMapRef.current),
         });
       })
-      // Broadcast: Room Sync Request (a newly joined peer requests latest scene)
+      // Broadcast: Room Sync Request (elect a single peer to respond, avoiding thundering herd)
       .on('broadcast', { event: 'sync-request' }, ({ payload }: { payload: RealtimeSyncRequest }) => {
-        if (!payload || payload.senderId === effectiveUserId) return;
+        if (!payload || payload.senderId === effectiveUserIdRef.current) return;
         const api = apiRef.current;
         if (!api) return;
 
-        const elements = api.getSceneElementsIncludingDeleted();
-        if (elements && elements.length > 0 && channelRef.current) {
-          const syncResponse: RealtimeSyncResponse = {
-            type: 'sync-response',
-            boardId,
-            elements,
-            appState: {
-              viewBackgroundColor: api.getAppState().viewBackgroundColor,
-            },
-            files: api.getFiles(),
-            senderId: effectiveUserId,
-          };
-          channelRef.current.send({
-            type: 'broadcast',
-            event: 'sync-response',
-            payload: syncResponse,
-          });
+        const presence = channelRef.current?.presenceState?.();
+        const currentOwnerId = boardRef.current?.owner_id;
+        const electedId = electSyncPeer(
+          presence,
+          currentOwnerId,
+          effectiveUserIdRef.current,
+          payload.senderId
+        );
+
+        // Only the elected peer responds
+        if (electedId === effectiveUserIdRef.current) {
+          const elements = api.getSceneElementsIncludingDeleted();
+          if (elements && elements.length > 0 && channelRef.current) {
+            const syncResponse: RealtimeSyncResponse = {
+              type: 'sync-response',
+              boardId,
+              elements,
+              appState: {
+                viewBackgroundColor: api.getAppState().viewBackgroundColor,
+              },
+              files: sanitizeFilesForBroadcast(api.getFiles()),
+              senderId: effectiveUserIdRef.current,
+            };
+            channelRef.current.send({
+              type: 'broadcast',
+              event: 'sync-response',
+              payload: syncResponse,
+            });
+          }
         }
       })
       // Broadcast: Room Sync Response (received latest scene from existing peer)
       .on('broadcast', { event: 'sync-response' }, ({ payload }: { payload: RealtimeSyncResponse }) => {
-        if (!payload || payload.senderId === effectiveUserId) return;
+        if (!payload || payload.senderId === effectiveUserIdRef.current) return;
         const api = apiRef.current;
         if (!api) return;
 
@@ -428,25 +490,36 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
               payload.elements as any,
               api.getAppState()
             );
+
+            if (payload.files) {
+              const filesWithData = Object.values(payload.files).filter(
+                (f: any) => f && typeof f.dataURL === 'string' && f.dataURL.length > 0
+              );
+              if (filesWithData.length > 0) {
+                api.addFiles(filesWithData as any);
+              }
+            }
+
+            lastChangeSignatureRef.current = computeSceneSignature(
+              reconciled,
+              payload.appState?.viewBackgroundColor || api.getAppState().viewBackgroundColor,
+              Object.keys(api.getFiles() || {}).length
+            );
+
             api.updateScene({
               elements: reconciled,
               appState: payload.appState?.viewBackgroundColor
                 ? { viewBackgroundColor: payload.appState.viewBackgroundColor }
                 : undefined,
             });
-            if (payload.files) {
-              api.addFiles(Object.values(payload.files));
-            }
           } finally {
-            setTimeout(() => {
-              isRemoteUpdateRef.current = false;
-            }, 50);
+            isRemoteUpdateRef.current = false;
           }
         }
       })
       // Broadcast: Meta updates (title, access_level)
       .on('broadcast', { event: 'meta-update' }, ({ payload }: { payload: RealtimeMetaUpdate }) => {
-        if (!payload || payload.senderId === effectiveUserId) return;
+        if (!payload || payload.senderId === effectiveUserIdRef.current) return;
 
         setBoard((prev) => {
           if (!prev) return prev;
@@ -461,12 +534,14 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         });
       })
       .subscribe(async (status) => {
+        channelStatusRef.current = status;
         if (status === 'SUBSCRIBED') {
+          joinedAtRef.current = Date.now();
           await channel.track({
-            id: effectiveUserId,
-            name: effectiveUserName,
-            color: guestProfile.color,
-            joinedAt: Date.now(),
+            id: effectiveUserIdRef.current,
+            name: effectiveUserNameRef.current,
+            color: guestProfileRef.current.color,
+            joinedAt: joinedAtRef.current,
           });
 
           // Request latest scene from existing peers in the room
@@ -476,18 +551,31 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             payload: {
               type: 'sync-request',
               boardId,
-              senderId: effectiveUserId,
+              senderId: effectiveUserIdRef.current,
             },
           });
         }
       });
 
     return () => {
+      channelStatusRef.current = 'CLOSED';
       channel.untrack();
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [boardId, effectiveUserId, effectiveUserName, guestProfile.color]);
+  }, [boardId, effectiveUserId]);
+
+  // Update room presence without reconnecting WebSocket when nickname or color changes
+  useEffect(() => {
+    if (channelRef.current && channelStatusRef.current === 'SUBSCRIBED') {
+      channelRef.current.track({
+        id: effectiveUserId,
+        name: effectiveUserName,
+        color: guestProfile.color,
+        joinedAt: joinedAtRef.current,
+      });
+    }
+  }, [effectiveUserId, effectiveUserName, guestProfile.color]);
 
   // 6.1 Handle tab visibility change to pause cursor broadcasts and clear cursor on peers' screens
   useEffect(() => {
@@ -530,11 +618,11 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
 
       // Filter out pure viewport changes (scroll, zoom, selection)
       // by computing a signature of the actual canvas elements and files
-      const elementsVersionSum = elements.reduce(
-        (acc, el) => (acc + el.version + el.versionNonce) % 10000000,
-        0
+      const signature = computeSceneSignature(
+        elements,
+        appState.viewBackgroundColor,
+        Object.keys(files || {}).length
       );
-      const signature = `${elements.length}:${elementsVersionSum}:${appState.viewBackgroundColor || ''}:${Object.keys(files || {}).length}`;
 
       if (signature === lastChangeSignatureRef.current) {
         return;
@@ -688,9 +776,10 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     [boardId, effectiveUserId, effectiveUserName, guestProfile.color, throttledBroadcastCursor]
   );
 
-  // 9. Update board title
+  // 9. Update board title (Enforce read-only mode for viewers)
   const updateTitle = useCallback(
     async (newTitle: string) => {
+      if (!canEdit) return; // Viewers in read-only mode cannot rename board
       const trimmed = newTitle.trim() || 'Quadro sem título';
       if (!boardRef.current) return;
 
@@ -728,8 +817,33 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         console.warn('Erro ao atualizar título no banco:', err);
       }
     },
-    [boardId, effectiveUserId]
+    [boardId, canEdit, effectiveUserId]
   );
+
+  // Online / Offline network listeners
+  useEffect(() => {
+    const handleOnline = () => {
+      setSyncStatus('saved');
+      if (boardRef.current) {
+        debouncedSaveToDb(boardRef.current);
+      }
+    };
+    const handleOffline = () => {
+      setSyncStatus('offline');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setSyncStatus('offline');
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [debouncedSaveToDb]);
 
   // 10. Update access level (Only owner should call this)
   const updateAccessLevel = useCallback(

@@ -3,6 +3,8 @@ import {
   Excalidraw,
   convertToExcalidrawElements,
   viewportCoordsToSceneCoords,
+  exportToBlob,
+  exportToSvg,
 } from '@excalidraw/excalidraw';
 import { Loader2, UserCircle, X, Sparkles } from 'lucide-react';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
@@ -60,6 +62,65 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+
+  // Initialize theme from storage or system preference
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('heeey_theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
+
+  // Export board as PNG or SVG
+  const handleExport = async (format: 'png' | 'svg') => {
+    const api = excalidrawAPI;
+    if (!api) return;
+
+    try {
+      const elements = api.getSceneElements();
+      const appState = api.getAppState();
+      const files = api.getFiles();
+      const safeTitle = (board?.title || 'quadro').replace(/[/\\?%*:|"<>]/g, '-').trim();
+
+      if (format === 'png') {
+        const blob = await exportToBlob({
+          elements,
+          appState: {
+            ...appState,
+            exportWithBackground: true,
+          },
+          files,
+          mimeType: 'image/png',
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${safeTitle}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        const svg = await exportToSvg({
+          elements,
+          appState: {
+            ...appState,
+            exportWithBackground: true,
+          },
+          files,
+        });
+        const serializer = new XMLSerializer();
+        const svgString = serializer.serializeToString(svg);
+        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${safeTitle}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.warn('Erro ao exportar quadro:', err);
+    }
+  };
 
   // Update browser document title with board name
   useEffect(() => {
@@ -301,6 +362,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenNickname={() => setIsNicknameOpen(true)}
         onBackToDashboard={onBackToDashboard}
+        onExport={handleExport}
       />
 
       {/* Excalidraw Canvas Area */}

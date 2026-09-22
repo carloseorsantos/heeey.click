@@ -12,6 +12,15 @@ export function App() {
     };
 
     window.addEventListener('popstate', handlePopState);
+
+    // Initialize dark mode class on root HTML element
+    const savedTheme = localStorage.getItem('heeey_theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 

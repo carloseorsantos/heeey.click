@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   ArrowLeft,
-  Cloud,
   CloudCheck,
+  CloudOff,
+  AlertCircle,
   Loader2,
   Share2,
   LogIn,
@@ -10,6 +11,11 @@ import {
   Eye,
   Edit2,
   Users,
+  Download,
+  Image,
+  FileCode,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { CollaboratorUser, SyncStatus, AccessLevel } from '../lib/types';
 import { getInitials } from '../lib/utils';
@@ -27,6 +33,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
   onOpenNickname: () => void;
   onBackToDashboard: () => void;
+  onExport?: (format: 'png' | 'svg') => void;
 }
 
 export function Header({
@@ -39,13 +46,34 @@ export function Header({
   onOpenAuth,
   onOpenNickname,
   onBackToDashboard,
+  onExport,
 }: HeaderProps) {
   const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
   const titleInputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  const toggleTheme = () => {
+    const nextDark = !isDarkMode;
+    setIsDarkMode(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('heeey_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('heeey_theme', 'light');
+    }
+  };
 
   useEffect(() => {
     setCurrentTitle(title);
@@ -58,11 +86,14 @@ export function Header({
     }
   }, [isEditingTitle]);
 
-  // Close menu on click outside
+  // Close menus on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowUserMenu(false);
+      }
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -71,7 +102,7 @@ export function Header({
 
   function handleTitleSubmit() {
     setIsEditingTitle(false);
-    if (currentTitle.trim() && currentTitle !== title) {
+    if (!isViewMode && currentTitle.trim() && currentTitle !== title) {
       onUpdateTitle(currentTitle.trim());
     } else {
       setCurrentTitle(title);
@@ -112,9 +143,9 @@ export function Header({
 
         <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block" />
 
-        {/* Title */}
+        {/* Title (Read-only mode enforced if isViewMode) */}
         <div className="min-w-0 max-w-[140px] sm:max-w-xs md:max-w-sm">
-          {isEditingTitle ? (
+          {!isViewMode && isEditingTitle ? (
             <input
               ref={titleInputRef}
               type="text"
@@ -126,14 +157,24 @@ export function Header({
             />
           ) : (
             <div
-              onClick={() => setIsEditingTitle(true)}
-              className="flex items-center space-x-1.5 px-2 py-1 rounded-lg hover:bg-slate-100 cursor-pointer group dark:hover:bg-slate-800 transition"
-              title="Clique para renomear"
+              onClick={() => {
+                if (!isViewMode) {
+                  setIsEditingTitle(true);
+                }
+              }}
+              className={`flex items-center space-x-1.5 px-2 py-1 rounded-lg ${
+                isViewMode
+                  ? 'cursor-default'
+                  : 'hover:bg-slate-100 cursor-pointer group dark:hover:bg-slate-800 transition'
+              }`}
+              title={isViewMode ? title || 'Quadro sem título' : 'Clique para renomear'}
             >
               <h1 className="text-sm font-semibold text-slate-800 truncate dark:text-slate-100">
                 {title || 'Quadro sem título'}
               </h1>
-              <Edit2 className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+              {!isViewMode && (
+                <Edit2 className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+              )}
             </div>
           )}
         </div>
@@ -146,25 +187,38 @@ export function Header({
               <span>Apenas Visualização</span>
             </span>
           ) : (
-            <span className="flex items-center space-x-1 text-xs text-slate-400">
-              {syncStatus === 'saving' ? (
+            <span className="flex items-center space-x-1 text-xs">
+              {syncStatus === 'saving' && (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-600" />
                   <span className="text-violet-600">Salvando...</span>
                 </>
-              ) : (
+              )}
+              {syncStatus === 'saved' && (
                 <>
                   <CloudCheck className="w-3.5 h-3.5 text-emerald-500" />
                   <span className="text-slate-400">Salvo</span>
                 </>
+              )}
+              {syncStatus === 'offline' && (
+                <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700" title="Você está offline. As alterações estão seguras no navegador.">
+                  <CloudOff className="w-3 h-3 text-slate-400" />
+                  <span>Offline</span>
+                </span>
+              )}
+              {syncStatus === 'error' && (
+                <span className="flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-rose-50 text-rose-600 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-900" title="Erro ao salvar alterações no servidor">
+                  <AlertCircle className="w-3 h-3 text-rose-500" />
+                  <span>Erro ao salvar</span>
+                </span>
               )}
             </span>
           )}
         </div>
       </div>
 
-      {/* Right section: Online avatars + Share Button + Profile/Auth */}
-      <div className="flex items-center space-x-2 sm:space-x-3">
+      {/* Right section: Online avatars + Theme + Export + Share Button + Profile/Auth */}
+      <div className="flex items-center space-x-1.5 sm:space-x-2.5">
         {/* Collaborators online avatars */}
         <div className="flex items-center -space-x-2 overflow-hidden py-1 px-1">
           {onlineCollaborators.slice(0, 4).map((collab) => (
@@ -204,6 +258,54 @@ export function Header({
           />
           <span className="truncate max-w-[100px]">{effectiveUserName}</span>
         </button>
+
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="p-1.5 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition"
+          title={isDarkMode ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+        >
+          {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+        </button>
+
+        {/* Export Button */}
+        {onExport && (
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center space-x-1 px-2.5 py-1.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-semibold dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition"
+              title="Exportar imagem do quadro"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Exportar</span>
+            </button>
+
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-slate-100 py-1.5 z-50 dark:bg-slate-900 dark:border-slate-800 animate-in fade-in zoom-in-95">
+                <button
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    onExport('png');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 flex items-center space-x-2"
+                >
+                  <Image className="w-3.5 h-3.5 text-violet-500" />
+                  <span>Imagem PNG</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    onExport('svg');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 flex items-center space-x-2"
+                >
+                  <FileCode className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Vetor SVG</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Share Button */}
         <button

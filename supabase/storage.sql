@@ -26,23 +26,61 @@ create policy "Permitir leitura pública de imagens no board-media"
   for select
   using (bucket_id = 'board-media');
 
--- Upload público permitido: convidados e usuários logados podem enviar imagens otimizadas para as lousas
+-- Upload de imagens no board-media: permitido apenas para o proprietário do quadro, quadros editáveis, ou quadros em rascunho
 drop policy if exists "Permitir upload de imagens no board-media" on storage.objects;
 create policy "Permitir upload de imagens no board-media"
   on storage.objects
   for insert
-  with check (bucket_id = 'board-media');
+  with check (
+    bucket_id = 'board-media'
+    and (
+      exists (
+        select 1 from public.boards b
+        where b.id::text = split_part(name, '/', 1)
+          and (
+            (auth.uid() is not null and b.owner_id = auth.uid())
+            or b.access_level = 'edit'
+            or (b.owner_id is null and b.access_level = 'edit')
+          )
+      )
+      or not exists (
+        select 1 from public.boards b
+        where b.id::text = split_part(name, '/', 1)
+      )
+    )
+  );
 
--- Atualização e sobrescrita de imagem com o mesmo identificador
+-- Atualização e sobrescrita restritas: apenas em quadros editáveis ou pelo proprietário do quadro
 drop policy if exists "Permitir atualização de imagens no board-media" on storage.objects;
 create policy "Permitir atualização de imagens no board-media"
   on storage.objects
   for update
-  using (bucket_id = 'board-media');
+  using (
+    bucket_id = 'board-media'
+    and exists (
+      select 1 from public.boards b
+      where b.id::text = split_part(name, '/', 1)
+        and (
+          (auth.uid() is not null and b.owner_id = auth.uid())
+          or b.access_level = 'edit'
+          or (b.owner_id is null and b.access_level = 'edit')
+        )
+    )
+  );
 
--- Exclusão de imagens
+-- Exclusão restrita: apenas pelo proprietário do quadro ou em quadros anônimos criados sem dono
 drop policy if exists "Permitir exclusão de imagens no board-media" on storage.objects;
 create policy "Permitir exclusão de imagens no board-media"
   on storage.objects
   for delete
-  using (bucket_id = 'board-media');
+  using (
+    bucket_id = 'board-media'
+    and exists (
+      select 1 from public.boards b
+      where b.id::text = split_part(name, '/', 1)
+        and (
+          (auth.uid() is not null and b.owner_id = auth.uid())
+          or b.owner_id is null
+        )
+    )
+  );

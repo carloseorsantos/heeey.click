@@ -3,6 +3,7 @@ import {
   getGuestProfile,
   updateGuestProfile,
   getLocalBoards,
+  getLocalBoard,
   saveLocalBoard,
   deleteLocalBoard,
   markBoardAsCreated,
@@ -132,5 +133,84 @@ describe('storage', () => {
     const updated = getLocalBoards();
     expect(updated[0].owner_id).toBe('user-uuid-999');
   });
+
+  it('shared device protection: should NOT claim boards created by a previous guest session after reset', async () => {
+    // Guest 1 creates a board
+    const guestProfile1 = getGuestProfile();
+    const guestBoard1: Board = {
+      id: 'shared-board-1',
+      title: 'Quadro da Biblioteca',
+      owner_id: null,
+      elements: [],
+      app_state: {},
+      files: {},
+      access_level: 'edit',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    saveLocalBoard(guestBoard1);
+    markBoardAsCreated('shared-board-1', guestProfile1.id);
+
+    // Guest 1 leaves/signs out, guest profile is reset
+    const { resetGuestProfile } = await import('../lib/storage');
+    const guestProfile2 = resetGuestProfile();
+    expect(guestProfile2.id).not.toBe(guestProfile1.id);
+
+    // Person 2 logs in with user-uuid-888
+    await claimLocalBoardsForUser('user-uuid-888', guestProfile2.id);
+
+    // The board must NOT be claimed by Person 2!
+    const boards = getLocalBoards();
+    const board = boards.find((b) => b.id === 'shared-board-1');
+    expect(board?.owner_id).toBeNull();
+  });
+
+  it('resilient storage: saves individual board content and cleans up on delete', () => {
+    const board: Board = {
+      id: 'resilient-board-1',
+      title: 'Quadro Resiliente',
+      owner_id: null,
+      elements: [{ id: 'el-1', type: 'rectangle', version: 1, isDeleted: false }],
+      app_state: { viewBackgroundColor: '#ffffff' },
+      files: { 'file-1': { id: 'file-1', dataURL: 'http://example.com/img.png', mimeType: 'image/png' } },
+      access_level: 'edit',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    saveLocalBoard(board);
+
+    // Verify individual key was written
+    const individualKey = localStorage.getItem('heeey_board_resilient-board-1');
+    expect(individualKey).toBeTruthy();
+    const parsed = JSON.parse(individualKey!);
+    expect(parsed.elements.length).toBe(1);
+    expect(parsed.files['file-1']).toBeDefined();
+
+    // Verify getLocalBoard returns the full individual content
+    const loaded = getLocalBoard('resilient-board-1');
+    expect(loaded?.id).toBe('resilient-board-1');
+    expect(loaded?.files['file-1'].dataURL).toBe('http://example.com/img.png');
+
+    // Deleting cleans up individual key
+    deleteLocalBoard('resilient-board-1');
+    expect(localStorage.getItem('heeey_board_resilient-board-1')).toBeNull();
+    expect(getLocalBoard('resilient-board-1')).toBeNull();
+  });
+
+  it('isBoardLocallyCreated should respect activeGuestId to prevent shared-device hijacking', () => {
+    markBoardAsCreated('board-guest-1', 'guest-123');
+
+    // Matching guest should return true
+    expect(isBoardLocallyCreated('board-guest-1', 'guest-123')).toBe(true);
+
+    // Different guest on shared computer should return false
+    expect(isBoardLocallyCreated('board-guest-1', 'guest-456')).toBe(false);
+
+    // Without activeGuestId argument, returns true for backwards compatibility
+    expect(isBoardLocallyCreated('board-guest-1')).toBe(true);
+  });
 });
+
+
 

@@ -9,6 +9,8 @@ import {
   FileSpreadsheet,
   Workflow,
   Lightbulb,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -36,12 +38,38 @@ interface DashboardPageProps {
 }
 
 export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
-  const { user, isAuthenticated, signOut, effectiveUserName } = useAuth();
+  const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
   const [boards, setBoards] = useState<Board[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('heeey_theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextDark = !isDarkMode;
+    setIsDarkMode(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('heeey_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('heeey_theme', 'light');
+    }
+  };
 
   // Load boards from Supabase and merge with local boards
   useEffect(() => {
@@ -51,6 +79,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
 
       try {
         if (user?.id) {
+          // Authenticated: load user boards from Supabase
           const { data, error } = await supabase
             .from('boards')
             .select('*')
@@ -61,11 +90,11 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             const remoteMap = new Map<string, Board>();
             data.forEach((b: any) => remoteMap.set(b.id, b as Board));
 
-            // Include local boards belonging to this user or created on this device
+            // Include local boards belonging to this user or created by the active guest session
             localList.forEach((local) => {
               if (
                 !remoteMap.has(local.id) &&
-                (local.owner_id === user.id || isBoardLocallyCreated(local.id))
+                (local.owner_id === user.id || (!local.owner_id && isBoardLocallyCreated(local.id, guestProfile.id)))
               ) {
                 remoteMap.set(local.id, local);
               }
@@ -80,8 +109,10 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             return;
           }
         } else {
-          // Unauthenticated guest: display only boards created on this browser
-          const myLocalBoards = localList.filter((b) => isBoardLocallyCreated(b.id));
+          // Unauthenticated guest: display only unowned boards created in the current active session
+          const myLocalBoards = localList.filter(
+            (b) => !b.owner_id && isBoardLocallyCreated(b.id, guestProfile.id)
+          );
           setBoards(myLocalBoards);
           setLoading(false);
           return;
@@ -91,14 +122,16 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       }
 
       const fallback = localList.filter(
-        (b) => isBoardLocallyCreated(b.id) || (user?.id && b.owner_id === user.id)
+        (b) =>
+          (user?.id && b.owner_id === user.id) ||
+          (!b.owner_id && isBoardLocallyCreated(b.id, guestProfile.id))
       );
       setBoards(fallback);
       setLoading(false);
     }
 
     loadBoards();
-  }, [user?.id]);
+  }, [user?.id, guestProfile.id]);
 
   function handleCreateBoard(templateTitle?: string, initialElements?: any[]) {
     const newId = generateId();
@@ -184,8 +217,13 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       setBoards((prev) => prev.filter((b) => b.id !== id));
       (async () => {
         try {
-          await supabase.from('boards').delete().eq('id', id);
-        } catch (e) {}
+          const { error } = await supabase.from('boards').delete().eq('id', id);
+          if (error) {
+            console.warn('Erro ao excluir quadro do Supabase:', error.message);
+          }
+        } catch (e) {
+          console.warn('Exceção ao excluir quadro do Supabase:', e);
+        }
       })();
     }
   }
@@ -208,10 +246,19 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
           </div>
         </div>
 
-        {/* Right side auth & profile */}
-        <div className="flex items-center space-x-3">
+        {/* Right side: Theme toggle + auth & profile */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition"
+            title={isDarkMode ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+          >
+            {isDarkMode ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
+          </button>
+
           {isAuthenticated ? (
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <button
                 onClick={() => setIsNicknameOpen(true)}
                 className="hidden sm:flex items-center space-x-2 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-violet-600 transition"

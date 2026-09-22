@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { getGuestProfile, updateGuestProfile, GuestProfile, claimLocalBoardsForUser } from '../lib/storage';
+import { getGuestProfile, updateGuestProfile, resetGuestProfile, GuestProfile, claimLocalBoardsForUser } from '../lib/storage';
 
 interface AuthContextType {
   user: User | null;
@@ -24,13 +24,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [guestProfile, setGuestProfileState] = useState<GuestProfile>(getGuestProfile());
   const [loading, setLoading] = useState(true);
 
+  // Sync custom user nickname or color when session changes
+  const applyUserCustomization = useCallback((currentUser: User | null) => {
+    if (!currentUser) return;
+    try {
+      const storedName = localStorage.getItem(`heeey_nickname_${currentUser.id}`) || currentUser.user_metadata?.custom_name;
+      const storedColorRaw = localStorage.getItem(`heeey_color_${currentUser.id}`) || (currentUser.user_metadata?.cursor_color ? JSON.stringify(currentUser.user_metadata.cursor_color) : null);
+      
+      const updates: Partial<GuestProfile> = {};
+      if (storedName) {
+        updates.name = storedName;
+      }
+      if (storedColorRaw) {
+        try {
+          updates.color = JSON.parse(storedColorRaw);
+        } catch {}
+      }
+      if (Object.keys(updates).length > 0) {
+        setGuestProfileState((prev) => updateGuestProfile({ ...prev, ...updates }));
+      }
+    } catch {}
+  }, []);
+
   useEffect(() => {
     // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user?.id) {
-        claimLocalBoardsForUser(session.user.id);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        applyUserCustomization(currentUser);
       }
       setLoading(false);
     }).catch((err) => {
@@ -40,11 +63,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user?.id) {
-        claimLocalBoardsForUser(session.user.id);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+
+      // Only claim boards on a deliberate SIGNED_IN event for boards created by the active guest session
+      if (event === 'SIGNED_IN' && currentUser?.id) {
+        claimLocalBoardsForUser(currentUser.id, guestProfile.id);
+      }
+      if (currentUser) {
+        applyUserCustomization(currentUser);
       }
       setLoading(false);
     });
@@ -52,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [applyUserCustomization, guestProfile.id]);
 
   const signInWithMagicLink = useCallback(async (email: string) => {
     try {
@@ -76,21 +105,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(null);
     setSession(null);
+    // Reset guest profile to generate a fresh identity on shared devices
+    const freshGuest = resetGuestProfile();
+    setGuestProfileState(freshGuest);
   }, []);
 
   const setNickname = useCallback((name: string, color?: { background: string; stroke: string }) => {
+    const trimmed = name.trim();
+    if (user?.id) {
+      try {
+        if (trimmed) {
+          localStorage.setItem(`heeey_nickname_${user.id}`, trimmed);
+        }
+        if (color) {
+          localStorage.setItem(`heeey_color_${user.id}`, JSON.stringify(color));
+        }
+      } catch {}
+
+      // Persist in Supabase auth user metadata
+      supabase.auth.updateUser({
+        data: {
+          custom_name: trimmed || user.user_metadata?.custom_name,
+          cursor_color: color || user.user_metadata?.cursor_color,
+        },
+      }).catch((err) => {
+        console.warn('Erro ao atualizar metadata do usuário no Supabase:', err);
+      });
+    }
+
     const updated = updateGuestProfile({
-      name: name.trim() || guestProfile.name,
+      name: trimmed || guestProfile.name,
       ...(color ? { color } : {}),
     });
     setGuestProfileState(updated);
-  }, [guestProfile.name]);
+  }, [guestProfile.name, user]);
 
   const effectiveUserId = user?.id || guestProfile.id;
+
+  // Custom nickname precedence:
+  // 1. Authenticated user's custom nickname (localStorage or Supabase user_metadata)
+  // 2. User full name from auth provider
+  // 3. User customized guest profile name (if marked customized)
+  // 4. User email prefix
+  // 5. Fallback guest profile name
+  const customUserNickname = user
+    ? (user.user_metadata?.custom_name ||
+       (typeof localStorage !== 'undefined' ? localStorage.getItem(`heeey_nickname_${user.id}`) : null))
+    : null;
+
+  const isGuestCustomized = typeof localStorage !== 'undefined' && localStorage.getItem('heeey_guest_customized') === 'true';
+
   const effectiveUserName =
+    customUserNickname ||
     user?.user_metadata?.full_name ||
+    (isGuestCustomized ? guestProfile.name : null) ||
     user?.email?.split('@')[0] ||
-    guestProfile.name;
+    guestProfile.name ||
+    'Colaborador';
 
   return (
     <AuthContext.Provider
