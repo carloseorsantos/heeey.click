@@ -14,11 +14,10 @@ import { spring } from '../lib/motion';
 import { Button } from '../components/ui/Button';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
 import { useAuth } from '../hooks/useAuth';
+import { useSettings } from '../hooks/useSettings';
 import { useTheme } from '../hooks/useTheme';
 import { Header } from '../components/Header';
 import { ShareModal } from '../components/ShareModal';
-import { AuthModal } from '../components/AuthModal';
-import { NicknameModal } from '../components/NicknameModal';
 import { VersionHistoryModal } from '../components/VersionHistoryModal';
 import { BoardSearchModal } from '../components/BoardSearchModal';
 import { HeeeyLogo } from '../components/Logo';
@@ -76,8 +75,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
   const { t, excalidrawLangCode } = useI18n();
 
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isNicknameOpen, setIsNicknameOpen] = useState(false);
+  const { openSettings } = useSettings();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -388,8 +386,6 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         isTrashed={isTrashed}
         onlineCollaborators={onlineCollaborators}
         onOpenShare={() => setIsShareOpen(true)}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenNickname={() => setIsNicknameOpen(true)}
         onBackToDashboard={onBackToDashboard}
         onOpenDocs={onNavigateToDocs}
         onExport={handleExport}
@@ -503,7 +499,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
                       size="sm"
                       onClick={() => {
                         setShowGuestPrompt(false);
-                        setIsNicknameOpen(true);
+                        openSettings('profile');
                       }}
                     >
                       {t('board.customize')}
@@ -554,10 +550,6 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         isOwner={isOwner}
         onUpdateAccessLevel={updateAccessLevel}
       />
-
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-
-      <NicknameModal isOpen={isNicknameOpen} onClose={() => setIsNicknameOpen(false)} />
 
       <BoardSearchModal
         isOpen={isSearchOpen}

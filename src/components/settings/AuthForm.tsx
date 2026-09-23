@@ -1,15 +1,8 @@
 import { useState } from 'react';
 import { Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { HeeeyLogo } from './Logo';
-import { Modal } from './Modal';
-import { Button } from './ui/Button';
-import { useI18n } from '../i18n';
-
-interface AuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { useAuth } from '../../hooks/useAuth';
+import { Button } from '../ui/Button';
+import { useI18n } from '../../i18n';
 
 const RATE_LIMIT_MARKERS = [
   'rate limit',
@@ -26,7 +19,8 @@ function isRateLimitError(message: string) {
   return RATE_LIMIT_MARKERS.some((marker) => lower.includes(marker));
 }
 
-export function AuthModal({ isOpen, onClose }: AuthModalProps) {
+/** Magic-link sign-in, inline in Settings › Account */
+export function AuthForm() {
   const { signInWithMagicLink } = useAuth();
   const { t } = useI18n();
   const [email, setEmail] = useState('');
@@ -54,21 +48,13 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   }
 
-  function handleResetAndClose() {
-    setEmail('');
+  function handleReset() {
     setSuccess(false);
     setError(null);
-    onClose();
   }
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleResetAndClose}
-      title={t('auth.title')}
-      description={t('auth.description')}
-      icon={<HeeeyLogo className="w-10 h-10" />}
-    >
+    <>
       {success ? (
         <div className="text-center pt-2 space-y-4" role="status">
           <div className="w-14 h-14 bg-success/15 text-success rounded-full flex items-center justify-center mx-auto">
@@ -81,14 +67,12 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
               {t('auth.sentAfter')}
             </p>
           </div>
-          <Button size="lg" onClick={handleResetAndClose} className="w-full">
-            {t('auth.done')}
+          <Button variant="plain" onClick={handleReset}>
+            {t('auth.useAnotherEmail')}
           </Button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="text-sm text-label-2">{t('auth.optional')}</p>
-
           <div>
             <label htmlFor="email" className="block text-callout font-medium text-label mb-1.5">
               {t('auth.email')}
@@ -104,8 +88,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 aria-invalid={!!error}
-                className="field h-11 pl-9"
-                autoFocus
+                className="field h-11 pl-9 bg-surface"
               />
             </div>
           </div>
@@ -127,7 +110,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             ))}
 
           <div className="space-y-2 pt-1">
-            <Button type="submit" variant="primary" size="lg" disabled={loading} className="w-full">
+            <Button type="submit" variant="primary" disabled={loading} className="w-full sm:w-auto">
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -137,12 +120,9 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 <span>{t('auth.send')}</span>
               )}
             </Button>
-            <Button variant="plain" size="lg" onClick={handleResetAndClose} className="w-full">
-              {t('auth.continueAsGuest')}
-            </Button>
           </div>
         </form>
       )}
-    </Modal>
+    </>
   );
 }

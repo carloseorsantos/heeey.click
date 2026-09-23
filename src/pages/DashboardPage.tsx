@@ -16,6 +16,7 @@ import {
   FolderPlus,
   Folder as FolderIcon,
   BookOpen,
+  Settings,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -36,9 +37,8 @@ import {
 } from '../lib/utils';
 import { setBoardTrashed, deleteBoardPermanently } from '../lib/boardTrash';
 import { useAuth } from '../hooks/useAuth';
+import { useSettings } from '../hooks/useSettings';
 import { BoardCard } from '../components/BoardCard';
-import { AuthModal } from '../components/AuthModal';
-import { NicknameModal } from '../components/NicknameModal';
 import { HeeeyLogo, HeeeyWordmark } from '../components/Logo';
 import { Modal, ModalIcon } from '../components/Modal';
 import { AccountMenu } from '../components/AccountMenu';
@@ -47,7 +47,6 @@ import { Toast, type ToastData } from '../components/ui/Toast';
 import { FolderCard } from '../components/FolderCard';
 import { FolderNameModal } from '../components/FolderNameModal';
 import { MoveToFolderModal } from '../components/MoveToFolderModal';
-import { ApiKeysModal } from '../components/ApiKeysModal';
 import { useI18n, type MessageKey } from '../i18n';
 import { useFolders } from '../hooks/useFolders';
 import { Folder, flattenFolderTree, getFolderPath, moveBoardToFolder } from '../lib/folders';
@@ -174,9 +173,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
   }, [t]);
   const [boards, setBoards] = useState<Board[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isNicknameOpen, setIsNicknameOpen] = useState(false);
-  const [isApiKeysOpen, setIsApiKeysOpen] = useState(false);
+  const { openSettings } = useSettings();
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'boards' | 'trash'>('boards');
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -750,6 +747,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
           {onNavigateToDocs && (
             <SidebarItem icon={BookOpen} label={t('dashboard.documentation')} onClick={onNavigateToDocs} />
           )}
+          <SidebarItem icon={Settings} label={t('settings.title')} onClick={() => openSettings()} />
         </div>
       </aside>
 
@@ -823,17 +821,12 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
               </Button>
             )}
             {!isAuthenticated && (
-              <Button variant="secondary" onClick={() => setIsAuthOpen(true)} className="hidden sm:inline-flex">
+              <Button variant="secondary" onClick={() => openSettings('account')} className="hidden sm:inline-flex">
                 <LogIn className="w-4 h-4" />
                 <span>{t('dashboard.signIn')}</span>
               </Button>
             )}
-            <AccountMenu
-              onEditProfile={() => setIsNicknameOpen(true)}
-              onSignIn={() => setIsAuthOpen(true)}
-              onOpenApiKeys={() => setIsApiKeysOpen(true)}
-              onOpenDocs={onNavigateToDocs}
-            />
+            <AccountMenu onOpenDocs={onNavigateToDocs} />
           </div>
         </header>
 
@@ -1089,10 +1082,6 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
         </div>
       </Modal>
 
-      <ApiKeysModal isOpen={isApiKeysOpen} onClose={() => setIsApiKeysOpen(false)} />
-
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
-      <NicknameModal isOpen={isNicknameOpen} onClose={() => setIsNicknameOpen(false)} />
     </div>
   );
 }

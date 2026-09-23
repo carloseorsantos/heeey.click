@@ -28,8 +28,6 @@ interface HeaderProps {
   isTrashed?: boolean;
   onlineCollaborators: CollaboratorUser[];
   onOpenShare: () => void;
-  onOpenAuth: () => void;
-  onOpenNickname: () => void;
   onBackToDashboard: () => void;
   onOpenDocs?: () => void;
   onExport?: (format: 'png' | 'svg') => void;
@@ -94,8 +92,6 @@ export function Header({
   isTrashed = false,
   onlineCollaborators,
   onOpenShare,
-  onOpenAuth,
-  onOpenNickname,
   onBackToDashboard,
   onOpenDocs,
   onExport,
@@ -249,7 +245,7 @@ export function Header({
           {t('header.share')}
         </Button>
 
-        <AccountMenu onEditProfile={onOpenNickname} onSignIn={onOpenAuth} onOpenDocs={onOpenDocs}>
+        <AccountMenu onOpenDocs={onOpenDocs}>
           {(close) => (
             <>
               {onOpenHistory && (
