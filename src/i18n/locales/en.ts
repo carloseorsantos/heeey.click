@@ -29,6 +29,7 @@ export const en: Messages = {
     loadingBoard: "Loading the whiteboard…",
   },
   auth: {
+    checkEmail: "Check your email",
     continueAsGuest: "Continue as a guest",
     description: "No password: we email you a sign-in link.",
     done: "Done",
@@ -84,6 +85,10 @@ export const en: Messages = {
     tryAgainError: "Something went wrong. Please try again.",
   },
   dashboard: {
+    blankBoard: "Blank board",
+    blankBoardDescription: "Start from scratch",
+    boardsSection: "Boards",
+    newFrom: "New board",
     apiKeys: "API keys and integrations",
     back: "Back",
     backToBoards: "Back to my boards",
@@ -162,6 +167,17 @@ export const en: Messages = {
     recently: "recently",
   },
   docs: {
+    aiActions: "Actions for AI and reading",
+    backToTop: "Back to top",
+    copyFullDump: "Copy full content",
+    copyFullDumpTitle: "Copy all content to the clipboard",
+    filesCount: "{count, plural, one {# file} other {# files}}",
+    integratedDocs: "{count, plural, one {# integrated document} other {# integrated documents}}",
+    jumpToDoc: "Jump to a document",
+    llmsIndex: "llms.txt index",
+    sourceDocs: "Source documents",
+    top: "Top",
+    viewPlainText: "View plain text (.txt)",
     backToDashboard: "Back to dashboard",
     backToEditor: "Back to whiteboard",
     categories: {
@@ -195,6 +211,7 @@ export const en: Messages = {
     warning: "Warning",
   },
   folders: {
+    title: "Folders",
     create: "Create folder",
     current: "Current folder",
     delete: "Delete folder",

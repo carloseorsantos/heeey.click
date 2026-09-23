@@ -90,20 +90,20 @@ export function MarkdownRenderer({
         const cleanPath = filePath.trim();
         const docSlug = normalizeSlug(cleanPath.replace(/^docs\//, ''));
         const fileId = `file-${slugify(cleanPath)}`;
-        return `\n\n<div class="doc-file-banner my-12 pt-8 border-t-2 border-slate-200 dark:border-slate-800" id="${fileId}">
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm">
+        return `\n\n<div class="doc-file-banner my-12 pt-8 border-t border-separator" id="${fileId}">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-surface shadow-card">
     <div class="flex items-center gap-3 min-w-0">
-      <div class="w-9 h-9 rounded-xl bg-brand-100 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-accent/10 text-accent-text flex items-center justify-center flex-shrink-0">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       </div>
       <div class="min-w-0 truncate">
-        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none mb-1">Arquivo Fonte</span>
-        <span class="font-mono text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate block">${escapeHtml(cleanPath)}</span>
+        <span class="text-2xs font-semibold text-label-2 block leading-none mb-1">Arquivo Fonte</span>
+        <span class="font-mono text-xs sm:text-sm font-semibold text-label truncate block">${escapeHtml(cleanPath)}</span>
       </div>
     </div>
-    <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 border border-slate-200 dark:border-slate-700 transition flex-shrink-0 shadow-2xs">
+    <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-accent-text bg-accent/10 hover:bg-accent/15 transition-colors flex-shrink-0">
       <span>Abrir documento isolado</span>
       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -137,20 +137,20 @@ export function MarkdownRenderer({
             const docSlug = normalizeSlug(cleanPath.replace(/^docs\//, ''));
             const fileId = `file-${slugify(cleanPath)}`;
             return `
-              <div class="doc-file-banner my-12 pt-8 border-t-2 border-slate-200 dark:border-slate-800" id="${fileId}">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm">
+              <div class="doc-file-banner my-12 pt-8 border-t border-separator" id="${fileId}">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-surface shadow-card">
                   <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-9 h-9 rounded-xl bg-brand-100 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
+                    <div class="w-9 h-9 rounded-xl bg-accent/10 text-accent-text flex items-center justify-center flex-shrink-0">
                       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     </div>
                     <div class="min-w-0 truncate">
-                      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none mb-1">Arquivo Fonte</span>
-                      <span class="font-mono text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate block">${escapeHtml(cleanPath)}</span>
+                      <span class="text-2xs font-semibold text-label-2 block leading-none mb-1">Arquivo Fonte</span>
+                      <span class="font-mono text-xs sm:text-sm font-semibold text-label truncate block">${escapeHtml(cleanPath)}</span>
                     </div>
                   </div>
-                  <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 border border-slate-200 dark:border-slate-700 transition flex-shrink-0 shadow-2xs">
+                  <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-accent-text bg-accent/10 hover:bg-accent/15 transition-colors flex-shrink-0">
                     <span>Abrir documento isolado</span>
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -164,41 +164,41 @@ export function MarkdownRenderer({
           const id = slugify(plain);
 
           if (depth === 1) {
-            return `<h1 id="${id}" class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white pt-2 pb-3 mb-6 border-b border-slate-200 dark:border-slate-800">${text}</h1>`;
+            return `<h1 id="${id}" class="text-2xl sm:text-3xl font-bold text-label pt-2 pb-3 mb-6">${text}</h1>`;
           }
           if (depth === 2) {
             return `
-              <h2 id="${id}" class="group text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white mt-10 mb-4 pb-2 border-b border-slate-200/70 dark:border-slate-800/60 flex items-center gap-2">
+              <h2 id="${id}" class="group text-xl sm:text-2xl font-bold text-label mt-12 mb-4 flex items-center gap-2">
                 <span>${text}</span>
-                <a href="#${id}" class="doc-heading-anchor text-slate-400 hover:text-brand-600 dark:text-slate-500 dark:hover:text-brand-400 opacity-0 group-hover:opacity-100 transition" aria-label="Permalink: ${escapeHtml(plain)}">#</a>
+                <a href="#${id}" class="doc-heading-anchor text-label-3 hover:text-accent-text opacity-0 group-hover:opacity-100 transition" aria-label="Permalink: ${escapeHtml(plain)}">#</a>
               </h2>
             `;
           }
           if (depth === 3) {
             return `
-              <h3 id="${id}" class="group text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 mt-7 mb-3 flex items-center gap-2">
+              <h3 id="${id}" class="group text-lg sm:text-xl font-semibold text-label mt-8 mb-3 flex items-center gap-2">
                 <span>${text}</span>
-                <a href="#${id}" class="doc-heading-anchor text-slate-400 hover:text-brand-600 dark:text-slate-500 dark:hover:text-brand-400 opacity-0 group-hover:opacity-100 transition" aria-label="Permalink: ${escapeHtml(plain)}">#</a>
+                <a href="#${id}" class="doc-heading-anchor text-label-3 hover:text-accent-text opacity-0 group-hover:opacity-100 transition" aria-label="Permalink: ${escapeHtml(plain)}">#</a>
               </h3>
             `;
           }
           if (depth === 4) {
-            return `<h4 id="${id}" class="text-base sm:text-lg font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">${text}</h4>`;
+            return `<h4 id="${id}" class="text-base sm:text-lg font-semibold text-label mt-6 mb-2">${text}</h4>`;
           }
-          return `<h${depth} id="${id}" class="font-semibold text-slate-800 dark:text-slate-200 mt-4 mb-2">${text}</h${depth}>`;
+          return `<h${depth} id="${id}" class="font-semibold text-label mt-4 mb-2">${text}</h${depth}>`;
         },
 
         code({ text, lang }: any) {
           const cleanLang = (lang || '').trim().toLowerCase();
           const encoded = encodeURIComponent(text);
           return `
-            <div class="doc-code-block relative group rounded-2xl bg-slate-900 dark:bg-slate-950 border border-slate-800 my-5 overflow-hidden shadow-md">
-              <div class="flex items-center justify-between px-4 py-2 bg-slate-800/80 border-b border-slate-800 text-xs font-mono text-slate-400">
-                <span class="font-semibold uppercase tracking-wider text-slate-300">${cleanLang || codeBadge}</span>
+            <div class="doc-code-block relative group rounded-xl bg-[#1c1c1e] dark:bg-[#161618] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.1)] my-5 overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-2 bg-white/[0.04] border-b border-white/[0.08] text-xs font-mono text-[#98989d]">
+                <span class="font-medium text-[#98989d]">${cleanLang || codeBadge}</span>
                 <button
                   type="button"
                   data-copy-code="${encoded}"
-                  class="doc-copy-btn flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-700/60 hover:bg-slate-700 text-slate-300 hover:text-white transition font-sans text-xs cursor-pointer"
+                  class="doc-copy-btn flex items-center gap-1.5 h-6 px-2 rounded-md bg-white/10 hover:bg-white/15 text-[#e5e5ea] transition-colors font-sans text-xs cursor-pointer"
                   title="${copyLabel}"
                   aria-label="${copyLabel}"
                 >
@@ -208,31 +208,31 @@ export function MarkdownRenderer({
                   <span>${copyLabel}</span>
                 </button>
               </div>
-              <pre class="p-4 overflow-x-auto text-sm font-mono leading-relaxed text-slate-200 selection:bg-brand-900"><code>${escapeHtml(text)}</code></pre>
+              <pre class="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed text-[#e5e5ea]"><code>${escapeHtml(text)}</code></pre>
             </div>
           `;
         },
 
         codespan({ text }: any) {
-          return `<code class="px-1.5 py-0.5 rounded font-mono text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200/80 dark:border-slate-700/80 break-words">${escapeHtml(text)}</code>`;
+          return `<code class="px-1.5 py-0.5 rounded-md font-mono text-[0.85em] bg-fill text-label break-words">${escapeHtml(text)}</code>`;
         },
 
         paragraph({ tokens }: any) {
           const text = this.parser.parseInline(tokens);
-          return `<p class="leading-relaxed text-slate-700 dark:text-slate-300 my-4 text-base">${text}</p>`;
+          return `<p class="leading-[1.7] text-label my-4 text-base">${text}</p>`;
         },
 
         strong({ tokens }: any) {
           const text = this.parser.parseInline(tokens);
-          return `<strong class="font-bold text-slate-900 dark:text-white">${text}</strong>`;
+          return `<strong class="font-semibold text-label">${text}</strong>`;
         },
 
         list({ items, ordered }: any) {
           const body = items.map((item: any) => this.listitem(item)).join('');
           if (ordered) {
-            return `<ol class="list-decimal pl-6 my-4 space-y-2 text-slate-700 dark:text-slate-300">${body}</ol>`;
+            return `<ol class="list-decimal pl-6 my-4 space-y-1.5 text-label marker:text-label-2">${body}</ol>`;
           }
-          return `<ul class="list-disc pl-6 my-4 space-y-2 text-slate-700 dark:text-slate-300">${body}</ul>`;
+          return `<ul class="list-disc pl-6 my-4 space-y-1.5 text-label marker:text-label-3">${body}</ul>`;
         },
 
         listitem(item: any) {
@@ -248,8 +248,8 @@ export function MarkdownRenderer({
           if (raw.includes('[!TIP]') || /\*\*Dica\*\*:|\*\*Tip\*\*/i.test(raw)) {
             const cleanText = text.replace(/\[!TIP\]/g, '').replace(/<strong>(?:Dica|Tip)<\/strong>:?/i, '').trim();
             return `
-              <div class="my-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 p-4 text-emerald-900 dark:text-emerald-200 text-sm">
-                <div class="flex items-center gap-2 font-semibold text-emerald-800 dark:text-emerald-300 mb-1">
+              <div class="my-5 rounded-xl bg-emerald-500/10 p-4 text-label text-sm">
+                <div class="flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-300 mb-1">
                   <span>💡 ${tipLabel}</span>
                 </div>
                 <div>${cleanText}</div>
@@ -261,8 +261,8 @@ export function MarkdownRenderer({
           if (raw.includes('[!WARNING]') || /\*\*Atenção\*\*:|\*\*Warning\*\*:|\*\*Nota de Segurança\*\*/i.test(raw)) {
             const cleanText = text.replace(/\[!WARNING\]/g, '').replace(/<strong>(?:Atenção|Warning|Nota de Segurança)<\/strong>:?/i, '').trim();
             return `
-              <div class="my-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-4 text-amber-900 dark:text-amber-200 text-sm">
-                <div class="flex items-center gap-2 font-semibold text-amber-800 dark:text-amber-300 mb-1">
+              <div class="my-5 rounded-xl bg-amber-500/10 p-4 text-label text-sm">
+                <div class="flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-300 mb-1">
                   <span>⚠️ ${warningLabel}</span>
                 </div>
                 <div>${cleanText}</div>
@@ -274,8 +274,8 @@ export function MarkdownRenderer({
           if (raw.includes('[!NOTE]') || /\*\*Nota\*\*:|\*\*Note\*\*:|\*\*Importante\*\*/i.test(raw)) {
             const cleanText = text.replace(/\[!NOTE\]/g, '').replace(/<strong>(?:Nota|Note|Importante)<\/strong>:?/i, '').trim();
             return `
-              <div class="my-5 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/60 p-4 text-sky-900 dark:text-sky-200 text-sm">
-                <div class="flex items-center gap-2 font-semibold text-sky-800 dark:text-sky-300 mb-1">
+              <div class="my-5 rounded-xl bg-sky-500/10 p-4 text-label text-sm">
+                <div class="flex items-center gap-2 font-semibold text-sky-700 dark:text-sky-300 mb-1">
                   <span>ℹ️ ${noteLabel}</span>
                 </div>
                 <div>${cleanText}</div>
@@ -284,7 +284,7 @@ export function MarkdownRenderer({
           }
 
           return `
-            <blockquote class="border-l-4 border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 px-4 py-3 my-5 rounded-r-2xl text-slate-700 dark:text-slate-300 italic">
+            <blockquote class="border-l-[3px] border-accent/60 pl-4 py-1 my-5 text-label-2">
               ${text}
             </blockquote>
           `;
@@ -298,9 +298,9 @@ export function MarkdownRenderer({
                 alt="${escapeHtml(text || '')}"
                 ${title ? `title="${escapeHtml(title)}"` : ''}
                 loading="lazy"
-                class="max-w-full h-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mx-auto"
+                class="max-w-full h-auto rounded-xl shadow-card mx-auto"
               />
-              ${text ? `<figcaption class="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">${escapeHtml(text)}</figcaption>` : ''}
+              ${text ? `<figcaption class="text-xs text-center text-label-2 mt-2">${escapeHtml(text)}</figcaption>` : ''}
             </figure>
           `;
         },
@@ -309,27 +309,27 @@ export function MarkdownRenderer({
           const headerHtml = `<thead>${this.tablerow({ text: header.map((cell: any) => this.tablecell(cell)).join('') })}</thead>`;
           const rowsHtml = `<tbody>${rows.map((row: any) => this.tablerow({ text: row.map((cell: any) => this.tablecell(cell)).join('') })).join('')}</tbody>`;
           return `
-            <div class="overflow-x-auto my-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <div class="overflow-x-auto my-6 rounded-xl bg-surface shadow-card">
               <table class="w-full text-left text-sm border-collapse">${headerHtml}${rowsHtml}</table>
             </div>
           `;
         },
 
         tablerow({ text }: any) {
-          return `<tr class="border-b border-slate-200/80 dark:border-slate-800/80 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">${text}</tr>`;
+          return `<tr class="border-t border-separator">${text}</tr>`;
         },
 
         tablecell(token: any) {
           const content = this.parser.parseInline(token.tokens);
           const alignClass = token.align === 'center' ? ' text-center' : token.align === 'right' ? ' text-right' : ' text-left';
           if (token.header) {
-            return `<th class="px-4 py-3 font-semibold text-slate-900 dark:text-white bg-slate-100/90 dark:bg-slate-800/90${alignClass}">${content}</th>`;
+            return `<th class="px-4 py-2.5 font-semibold text-label bg-fill${alignClass}">${content}</th>`;
           }
-          return `<td class="px-4 py-3 text-slate-700 dark:text-slate-300 align-top${alignClass}">${content}</td>`;
+          return `<td class="px-4 py-2.5 text-label-2 align-top${alignClass}">${content}</td>`;
         },
 
         hr() {
-          return `<hr class="my-8 border-slate-200 dark:border-slate-800" />`;
+          return `<hr class="my-10 border-separator" />`;
         },
 
         link({ href, title, tokens }: any) {
@@ -338,7 +338,7 @@ export function MarkdownRenderer({
 
           if (resolved.type === 'external') {
             return `
-              <a href="${href}" ${title ? `title="${escapeHtml(title)}"` : ''} target="_blank" rel="noopener noreferrer" class="text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium underline underline-offset-2 inline-flex items-center gap-0.5">
+              <a href="${href}" ${title ? `title="${escapeHtml(title)}"` : ''} target="_blank" rel="noopener noreferrer" class="text-accent-text font-medium underline decoration-accent/30 underline-offset-2 hover:decoration-accent inline-flex items-center gap-0.5">
                 <span>${text}</span>
                 <svg class="w-3.5 h-3.5 opacity-60 inline ml-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -348,18 +348,18 @@ export function MarkdownRenderer({
           }
 
           if (resolved.type === 'anchor') {
-            return `<a href="${href}" class="doc-anchor-link text-brand-600 dark:text-brand-400 hover:underline font-medium">${text}</a>`;
+            return `<a href="${href}" class="doc-anchor-link text-accent-text hover:underline font-medium">${text}</a>`;
           }
 
           if (resolved.type === 'board' && resolved.boardId) {
-            return `<a href="${resolved.href}" data-board-id="${resolved.boardId}" class="doc-board-link text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium underline underline-offset-2">${text}</a>`;
+            return `<a href="${resolved.href}" data-board-id="${resolved.boardId}" class="doc-board-link text-accent-text font-medium underline decoration-accent/30 underline-offset-2 hover:decoration-accent">${text}</a>`;
           }
 
           if (resolved.type === 'dashboard') {
-            return `<a href="${resolved.href}" data-is-dashboard="true" class="doc-dashboard-link text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium underline underline-offset-2">${text}</a>`;
+            return `<a href="${resolved.href}" data-is-dashboard="true" class="doc-dashboard-link text-accent-text font-medium underline decoration-accent/30 underline-offset-2 hover:decoration-accent">${text}</a>`;
           }
 
-          return `<a href="${resolved.href}" data-doc-slug="${resolved.targetSlug}" class="doc-internal-link text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 font-medium underline underline-offset-2">${text}</a>`;
+          return `<a href="${resolved.href}" data-doc-slug="${resolved.targetSlug}" class="doc-internal-link text-accent-text font-medium underline decoration-accent/30 underline-offset-2 hover:decoration-accent">${text}</a>`;
         },
       },
     });
@@ -474,7 +474,7 @@ export function MarkdownRenderer({
     <div
       onClick={handleClick}
       dangerouslySetInnerHTML={{ __html: html }}
-      className={`prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 ${className}`}
+      className={`prose max-w-none text-label ${className}`}
     />
   );
 }

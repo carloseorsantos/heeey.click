@@ -1,33 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  ArrowLeft,
+  ChevronLeft,
   CloudCheck,
   CloudOff,
   AlertCircle,
   Loader2,
-  Share2,
-  LogIn,
-  LogOut,
   Eye,
-  Edit2,
-  UserPen,
   Image,
   FileCode,
-  Sun,
-  Moon,
   History,
   Search,
-  Languages,
-  BookOpen,
 } from 'lucide-react';
 import { CollaboratorUser, SyncStatus, AccessLevel } from '../lib/types';
 import { cn } from '../lib/utils';
-import { useAuth } from '../hooks/useAuth';
-import { useTheme } from '../hooks/useTheme';
-import { useDismiss } from '../hooks/useDismiss';
-import { HeeeyLogo } from './Logo';
 import { useI18n } from '../i18n';
 import { Avatar } from './Avatar';
+import { AccountMenu } from './AccountMenu';
+import { Button } from './ui/Button';
+import { MenuItem, MenuLabel, MenuSeparator } from './ui/Menu';
 
 interface HeaderProps {
   title: string;
@@ -50,49 +40,47 @@ interface HeaderProps {
 
 const MAX_VISIBLE_AVATARS = 4;
 
-const menuItemClass =
-  'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 focus:outline-none dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800 flex items-center gap-2.5';
-
-function SyncIndicator({ status }: { status: SyncStatus }) {
+/** Document status as a quiet subtitle under the title, like "Edited" on a macOS window */
+function DocumentStatus({ status, isViewMode, isTrashed }: { status: SyncStatus; isViewMode: boolean; isTrashed: boolean }) {
   const { t } = useI18n();
+  const base = 'flex items-center gap-1 text-2xs leading-none whitespace-nowrap';
+
+  if (isViewMode) {
+    return (
+      <span className={cn(base, 'text-warning')} title={isTrashed ? t('header.trashedReadOnly') : t('header.viewOnlyTitle')}>
+        <Eye className="w-3 h-3" />
+        <span>{t('header.viewOnly')}</span>
+      </span>
+    );
+  }
+
   switch (status) {
     case 'saving':
       return (
-        <span className="flex items-center gap-1.5 text-xs text-brand-700 dark:text-brand-300" role="status">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="hidden md:inline">{t('sync.saving')}</span>
-          <span className="sr-only md:hidden">{t('sync.savingShort')}</span>
+        <span className={cn(base, 'text-label-2')} role="status">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span>{t('sync.saving')}</span>
         </span>
       );
     case 'saved':
       return (
-        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400" role="status" title={t('sync.savedTitle')}>
-          <CloudCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden md:inline">{t('sync.saved')}</span>
-          <span className="sr-only md:hidden">{t('sync.saved')}</span>
+        <span className={cn(base, 'text-label-2')} role="status" title={t('sync.savedTitle')}>
+          <CloudCheck className="w-3 h-3" />
+          <span>{t('sync.saved')}</span>
         </span>
       );
     case 'offline':
       return (
-        <span
-          className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
-          role="status"
-          title={t('sync.offlineTitle')}
-        >
-          <CloudOff className="w-3.5 h-3.5" />
+        <span className={cn(base, 'text-warning')} role="status" title={t('sync.offlineTitle')}>
+          <CloudOff className="w-3 h-3" />
           <span>{t('sync.offline')}</span>
         </span>
       );
     case 'error':
       return (
-        <span
-          className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900"
-          role="alert"
-          title={t('sync.errorTitle')}
-        >
-          <AlertCircle className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">{t('sync.error')}</span>
-          <span className="sm:hidden">{t('sync.errorShort')}</span>
+        <span className={cn(base, 'text-danger-text font-medium')} role="alert" title={t('sync.errorTitle')}>
+          <AlertCircle className="w-3 h-3" />
+          <span>{t('sync.error')}</span>
         </span>
       );
   }
@@ -114,14 +102,10 @@ export function Header({
   onOpenHistory,
   onOpenSearch,
 }: HeaderProps) {
-  const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
-  const [showMenu, setShowMenu] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
-  const menuRef = useDismiss<HTMLDivElement>(showMenu, () => setShowMenu(false));
 
   useEffect(() => {
     setCurrentTitle(title);
@@ -152,11 +136,6 @@ export function Header({
     }
   }
 
-  function runMenuAction(action: () => void) {
-    setShowMenu(false);
-    action();
-  }
-
   const displayTitle = title || t('board.untitled');
   // The current user is already represented by the profile button on the far right
   const otherCollaborators = onlineCollaborators.filter((c) => !c.isCurrentUser);
@@ -164,32 +143,21 @@ export function Header({
   const hiddenCount = otherCollaborators.length - visibleCollaborators.length;
 
   return (
-    <header className="relative h-14 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-2 sm:px-4 flex items-center justify-between gap-2 z-30 select-none dark:bg-slate-900/95 dark:border-slate-800">
-      {/* Left: back + brand + title + status */}
-      <div className="flex items-center gap-1 sm:gap-2 min-w-0">
-        <button
+    <header className="relative h-[3.25rem] material-chrome shadow-[0_0.5px_0_var(--separator)] pl-1.5 pr-2 sm:px-3 flex items-center justify-between gap-2 z-30 select-none">
+      {/* Left: back + document title with its status */}
+      <div className="flex items-center gap-1 min-w-0">
+        <Button
+          variant="plain"
+          iconOnly
           onClick={onBackToDashboard}
-          className="w-10 h-10 flex items-center justify-center flex-shrink-0 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition"
+          className="text-accent-text hover:text-accent-text"
           aria-label={t('header.back')}
           title={t('header.back')}
         >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+          <ChevronLeft className="w-6 h-6" strokeWidth={2.25} />
+        </Button>
 
-        <button
-          onClick={onBackToDashboard}
-          className="hidden lg:flex items-center gap-1.5 rounded-lg pr-1 group flex-shrink-0"
-          aria-label={t('header.home')}
-        >
-          <HeeeyLogo className="w-7 h-7 shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform" />
-          <span className="font-bold text-slate-800 text-sm tracking-tight dark:text-white">
-            heeey<span className="text-brand-600 dark:text-brand-400">.click</span>
-          </span>
-        </button>
-
-        <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 hidden lg:block mx-1" />
-
-        <div className="min-w-0 max-w-[40vw] sm:max-w-xs md:max-w-sm">
+        <div className="min-w-0 max-w-[42vw] sm:max-w-xs md:max-w-sm flex flex-col justify-center">
           {!isViewMode && isEditingTitle ? (
             <input
               ref={titleInputRef}
@@ -199,206 +167,129 @@ export function Header({
               onBlur={handleTitleSubmit}
               onKeyDown={handleKeyDown}
               aria-label={t('header.boardTitle')}
-              className="px-2 py-1.5 text-sm font-semibold bg-brand-50 border border-brand-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white w-full"
+              className="field h-8 px-2 text-sm font-semibold"
             />
-          ) : isViewMode ? (
-            <h1 className="px-2 py-1.5 text-sm font-semibold text-slate-800 truncate dark:text-slate-100" title={displayTitle}>
-              {displayTitle}
-            </h1>
           ) : (
-            <h1 className="min-w-0">
-              <button
-                onClick={() => setIsEditingTitle(true)}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg max-w-full hover:bg-slate-100 group dark:hover:bg-slate-800 transition"
-                title={t('header.clickToRename')}
-              >
-                <span className="text-sm font-semibold text-slate-800 truncate dark:text-slate-100">{displayTitle}</span>
-                <Edit2 className="w-3.5 h-3.5 text-slate-500 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity flex-shrink-0" />
-                <span className="sr-only">{t('header.renameHint')}</span>
-              </button>
-            </h1>
-          )}
-        </div>
-
-        <div className="flex items-center flex-shrink-0">
-          {isViewMode ? (
-            <span
-              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
-              title={
-                isTrashed
-                  ? t('header.trashedReadOnly')
-                  : t('header.viewOnlyTitle')
-              }
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t('header.viewOnly')}</span>
-              <span className="sr-only sm:hidden">{t('header.viewOnly')}</span>
-            </span>
-          ) : (
-            <SyncIndicator status={syncStatus} />
+            <>
+              {isViewMode ? (
+                <h1 className="px-1.5 text-sm font-semibold text-label truncate" title={displayTitle}>
+                  {displayTitle}
+                </h1>
+              ) : (
+                <h1 className="min-w-0">
+                  <button
+                    onClick={() => setIsEditingTitle(true)}
+                    className="max-w-full px-1.5 -my-0.5 py-0.5 rounded-md text-sm font-semibold text-label truncate block hover:bg-fill transition-colors"
+                    title={t('header.clickToRename')}
+                  >
+                    {displayTitle}
+                    <span className="sr-only"> {t('header.renameHint')}</span>
+                  </button>
+                </h1>
+              )}
+              <div className="px-1.5 mt-0.5">
+                <DocumentStatus status={syncStatus} isViewMode={isViewMode} isTrashed={isTrashed} />
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* Right: collaborators + share + profile menu */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <div className="hidden sm:flex items-center -space-x-2 px-1" aria-label={t('header.othersOnline', { count: otherCollaborators.length })}>
-          {visibleCollaborators.map((collab) => (
-            <Avatar
-              key={collab.id}
-              name={collab.name}
-              color={collab.color}
-              className="w-8 h-8 border-2 border-white dark:border-slate-900 hover:z-10 hover:scale-110 transition-transform"
-              title={collab.name}
-            />
-          ))}
-          {hiddenCount > 0 && (
-            <span
-              className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 dark:border-slate-900 dark:bg-slate-700 dark:text-slate-200"
-              title={t('header.moreOnline', { count: hiddenCount })}
-            >
-              +{hiddenCount}
-            </span>
-          )}
-        </div>
+      {/* Right: presence + actions */}
+      <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
+        {otherCollaborators.length > 0 && (
+          <div
+            className="hidden sm:flex items-center -space-x-1.5 pr-1.5"
+            aria-label={t('header.othersOnline', { count: otherCollaborators.length })}
+          >
+            {visibleCollaborators.map((collab) => (
+              <Avatar
+                key={collab.id}
+                name={collab.name}
+                color={collab.color}
+                className="w-7 h-7 text-[10px] shadow-[0_0_0_2px_rgb(var(--surface))] transition-transform duration-200 hover:z-10 hover:-translate-y-0.5"
+                title={collab.name}
+              />
+            ))}
+            {hiddenCount > 0 && (
+              <span
+                className="w-7 h-7 rounded-full bg-fill-2 shadow-[0_0_0_2px_rgb(var(--surface))] flex items-center justify-center text-[10px] font-semibold text-label-2"
+                title={t('header.moreOnline', { count: hiddenCount })}
+              >
+                +{hiddenCount}
+              </span>
+            )}
+          </div>
+        )}
 
-        {/* Compact online counter on mobile */}
+        {/* Compact online counter on phones */}
         {otherCollaborators.length > 0 && (
           <span
-            className="sm:hidden flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold dark:bg-emerald-950/40 dark:text-emerald-300"
+            className="sm:hidden flex items-center gap-1 h-6 px-2 rounded-full bg-success/15 text-success text-xs font-semibold"
             title={t('header.moreOnline', { count: otherCollaborators.length })}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            +{otherCollaborators.length}
+            <span className="w-1.5 h-1.5 rounded-full bg-success" />
+            {otherCollaborators.length}
           </span>
         )}
 
         {onOpenSearch && (
-          <button
+          <Button
+            variant="plain"
+            iconOnly
             onClick={onOpenSearch}
-            className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition"
             aria-label={t('header.goToBoard')}
             title={t('header.goToBoard')}
           >
-            <Search className="w-4 h-4" />
-          </button>
+            <Search className="w-[18px] h-[18px]" />
+          </Button>
         )}
 
-        <button
-          onClick={onOpenShare}
-          className="h-10 flex items-center gap-1.5 px-3 sm:px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white text-sm font-semibold shadow-sm shadow-brand-600/30 transition"
-          aria-label={t('header.share')}
-        >
-          <Share2 className="w-4 h-4" />
-          <span className="hidden sm:inline">{t('header.share')}</span>
-        </button>
+        <Button variant="primary" size="sm" onClick={onOpenShare} className="h-8 px-3.5">
+          {t('header.share')}
+        </Button>
 
-        {/* Profile / options menu */}
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setShowMenu((v) => !v)}
-            className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            aria-haspopup="menu"
-            aria-expanded={showMenu}
-            aria-label={t('header.profileMenu')}
-            title={t('header.profileMenu')}
-          >
-            <Avatar
-              name={effectiveUserName}
-              color={guestProfile.color}
-              className="w-8 h-8 ring-2"
-            />
-          </button>
-
-          {showMenu && (
-            <div
-              role="menu"
-              className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50 dark:bg-slate-900 dark:border-slate-800 animate-pop-in origin-top-right"
-            >
-              <div className="px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                <Avatar name={effectiveUserName} color={guestProfile.color} className="w-9 h-9" />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{effectiveUserName}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {isAuthenticated ? user?.email : t('header.guest')}
-                  </p>
-                </div>
-              </div>
-
-              <div className="py-1">
-                <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(onOpenNickname)}>
-                  <UserPen className="w-4 h-4 text-slate-500" />
-                  <span>{t('header.editProfile')}</span>
-                </button>
-                {onOpenHistory && (
-                  <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(onOpenHistory)}>
-                    <History className="w-4 h-4 text-slate-500" />
-                    <span>{t('header.history')}</span>
-                  </button>
-                )}
-                <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(toggleTheme)}>
-                  {isDark ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-500" />}
-                  <span>{isDark ? t('header.lightTheme') : t('header.darkTheme')}</span>
-                </button>
-                <button
-                  role="menuitem"
-                  lang={locale === 'pt-BR' ? 'en' : 'pt-BR'}
-                  className={menuItemClass}
-                  onClick={() => runMenuAction(() => setLocale(locale === 'pt-BR' ? 'en' : 'pt-BR'))}
+        <AccountMenu onEditProfile={onOpenNickname} onSignIn={onOpenAuth} onOpenDocs={onOpenDocs}>
+          {(close) => (
+            <>
+              {onOpenHistory && (
+                <MenuItem
+                  icon={History}
+                  onClick={() => {
+                    close();
+                    onOpenHistory();
+                  }}
                 >
-                  <Languages className="w-4 h-4 text-slate-500" />
-                  <span>{t('language.switchTo')}</span>
-                </button>
-                {onOpenDocs && (
-                  <button
-                    role="menuitem"
-                    className={menuItemClass}
-                    onClick={() => runMenuAction(onOpenDocs)}
-                  >
-                    <BookOpen className="w-4 h-4 text-slate-500" />
-                    <span>{t('header.documentation')}</span>
-                  </button>
-                )}
-              </div>
-
-              {onExport && (
-                <div className="py-1 border-t border-slate-100 dark:border-slate-800">
-                  <p className="px-4 pt-1.5 pb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{t('header.export')}</p>
-                  <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(() => onExport('png'))}>
-                    <Image className="w-4 h-4 text-slate-500" />
-                    <span>{t('header.exportPng')}</span>
-                  </button>
-                  <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(() => onExport('svg'))}>
-                    <FileCode className="w-4 h-4 text-slate-500" />
-                    <span>{t('header.exportSvg')}</span>
-                  </button>
-                </div>
+                  {t('header.history')}
+                </MenuItem>
               )}
-
-              <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
-                {isAuthenticated ? (
-                  <button
-                    role="menuitem"
-                    className={cn(menuItemClass, 'text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40')}
-                    onClick={() => runMenuAction(() => signOut())}
+              {onExport && (
+                <>
+                  <MenuSeparator />
+                  <MenuLabel>{t('header.export')}</MenuLabel>
+                  <MenuItem
+                    icon={Image}
+                    onClick={() => {
+                      close();
+                      onExport('png');
+                    }}
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>{t('header.signOut')}</span>
-                  </button>
-                ) : (
-                  <button
-                    role="menuitem"
-                    className={cn(menuItemClass, 'text-brand-700 dark:text-brand-300 font-semibold')}
-                    onClick={() => runMenuAction(onOpenAuth)}
+                    {t('header.exportPng')}
+                  </MenuItem>
+                  <MenuItem
+                    icon={FileCode}
+                    onClick={() => {
+                      close();
+                      onExport('svg');
+                    }}
                   >
-                    <LogIn className="w-4 h-4" />
-                    <span>{t('header.signInToSave')}</span>
-                  </button>
-                )}
-              </div>
-            </div>
+                    {t('header.exportSvg')}
+                  </MenuItem>
+                </>
+              )}
+            </>
           )}
-        </div>
+        </AccountMenu>
       </div>
     </header>
   );

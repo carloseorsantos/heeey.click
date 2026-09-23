@@ -13,10 +13,10 @@
     "@dagrejs/dagre": "^3.1.1",
     "@excalidraw/excalidraw": "^0.18.1",
     "@supabase/supabase-js": "^2.49.1",
-    "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "marked": "^16.4.2",
+    "motion": "^13.4.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^3.0.2"
@@ -24,7 +24,6 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@types/canvas-confetti": "^1.9.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",

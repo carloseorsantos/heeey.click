@@ -8,7 +8,10 @@ import {
   useHandleLibrary,
 } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
+import { AnimatePresence, motion } from 'motion/react';
 import { Loader2, X, Trash2, RotateCcw } from 'lucide-react';
+import { spring } from '../lib/motion';
+import { Button } from '../components/ui/Button';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -361,11 +364,11 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
 
   if (loading || !board) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300">
-        <div className="flex flex-col items-center space-y-4" role="status">
-          <HeeeyLogo className="w-14 h-14 shadow-xl shadow-brand-600/30 animate-pulse" />
-          <div className="flex items-center space-x-2 text-sm font-medium">
-            <Loader2 className="w-4 h-4 animate-spin text-brand-600" />
+      <div className="h-screen w-screen flex flex-col items-center justify-center bg-app">
+        <div className="flex flex-col items-center gap-4" role="status">
+          <HeeeyLogo className="w-12 h-12 animate-pulse" />
+          <div className="flex items-center gap-2 text-sm text-label-2">
+            <Loader2 className="w-4 h-4 animate-spin" />
             <span>{t('board.loading')}</span>
           </div>
         </div>
@@ -374,7 +377,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
   }
 
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-white dark:bg-slate-900">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-app">
       {/* Top Header */}
       <Header
         title={board.title}
@@ -395,7 +398,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
       />
 
       {/* Excalidraw Canvas Area */}
-      <main className="flex-1 w-full h-[calc(100vh-3.5rem)] relative">
+      <main className="flex-1 w-full min-h-0 relative">
         <Excalidraw
           excalidrawAPI={(api) => setExcalidrawAPI(api)}
           initialData={{
@@ -426,98 +429,120 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         />
 
         {/* Trashed board banner: read-only until the owner restores it */}
-        {isTrashed && (
-          <div
-            role="status"
-            className="absolute top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-max sm:max-w-[calc(100%-2rem)] flex items-center gap-3 pl-3 pr-2 py-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 animate-pop-in"
-          >
-            <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
-            <span className="text-sm text-slate-700 dark:text-slate-200">
-              {restoreState === 'error'
-                ? t('board.restoreError')
-                : isOwner
-                  ? t('board.trashedOwner')
-                  : t('board.trashedViewer')}
-            </span>
-            {isOwner && (
-              <button
-                onClick={handleRestore}
-                disabled={restoreState === 'restoring'}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition flex-shrink-0 disabled:opacity-60"
+        <AnimatePresence>
+          {isTrashed && (
+            <motion.div key="trashed" className="absolute top-3 inset-x-3 z-30 flex justify-center pointer-events-none">
+              <motion.div
+                role="status"
+                initial={{ opacity: 0, y: -12, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.97 }}
+                transition={spring.default}
+                className="pointer-events-auto w-full sm:w-max max-w-full flex items-center gap-3 pl-3.5 pr-1.5 py-1.5 rounded-2xl material-regular shadow-popover"
               >
-                {restoreState === 'restoring' ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="w-4 h-4" />
+                <Trash2 className="w-4 h-4 text-danger-text flex-shrink-0" />
+                <span className="text-sm text-label">
+                  {restoreState === 'error'
+                    ? t('board.restoreError')
+                    : isOwner
+                      ? t('board.trashedOwner')
+                      : t('board.trashedViewer')}
+                </span>
+                {isOwner && (
+                  <Button variant="primary" size="sm" onClick={handleRestore} disabled={restoreState === 'restoring'}>
+                    {restoreState === 'restoring' ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="w-4 h-4" />
+                    )}
+                    <span>{t('common.restore')}</span>
+                  </Button>
                 )}
-                <span>{t('common.restore')}</span>
-              </button>
-            )}
-          </div>
-        )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* First-time guest visitor prompt banner */}
-        {showGuestPrompt && (
-          <div
-            role="dialog"
-            aria-label={t('board.welcome')}
-            className="absolute bottom-20 right-4 left-4 sm:left-auto z-30 sm:max-w-sm p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-brand-100 dark:border-slate-800 animate-pop-in"
-          >
-            <div className="flex items-start space-x-3">
-              <Avatar name={effectiveUserName} color={guestProfile.color} className="w-10 h-10 text-xs" />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">{t('board.welcomeTitle')}</h4>
-                  <button
-                    onClick={() => {
-                      setShowGuestPrompt(false);
-                      safeSetStorage(sessionStorage, `heeey_guest_prompt_dismissed_${boardId}`, 'true');
-                    }}
-                    className="-mt-2 -mr-2 w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                    aria-label={t('common.close')}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                  {t('board.joinedAsBefore')} <strong className="text-slate-900 dark:text-white">{effectiveUserName}</strong>
-                  {t('board.joinedAsAfter')}
-                </p>
-                <div className="mt-3 flex items-center space-x-2">
-                  <button
-                    onClick={() => {
-                      setShowGuestPrompt(false);
-                      setIsNicknameOpen(true);
-                    }}
-                    className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white rounded-xl text-sm font-semibold shadow-md shadow-brand-600/20 transition"
-                  >
-                    {t('board.customize')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowGuestPrompt(false);
-                      safeSetStorage(sessionStorage, `heeey_guest_prompt_dismissed_${boardId}`, 'true');
-                    }}
-                    className="px-3 py-2 rounded-xl text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 font-medium transition"
-                  >
-                    {t('board.notNow')}
-                  </button>
+        {/* First-time guest visitor prompt: a non-blocking panel, so no scrim */}
+        <AnimatePresence>
+          {showGuestPrompt && (
+            <motion.div
+              key="guest-prompt"
+              role="dialog"
+              aria-label={t('board.welcome')}
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 24, scale: 0.96 }}
+              transition={spring.default}
+              style={{ transformOrigin: 'bottom right' }}
+              className="absolute bottom-20 right-3 left-3 sm:left-auto z-30 sm:max-w-sm p-4 rounded-2xl material-regular shadow-popover"
+            >
+              <div className="flex items-start gap-3">
+                <Avatar name={effectiveUserName} color={guestProfile.color} className="w-10 h-10 text-xs" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="text-sm font-semibold text-label pt-0.5">{t('board.welcomeTitle')}</h4>
+                    <button
+                      onClick={() => {
+                        setShowGuestPrompt(false);
+                        safeSetStorage(sessionStorage, `heeey_guest_prompt_dismissed_${boardId}`, 'true');
+                      }}
+                      className="pressable -mt-1 -mr-1 w-7 h-7 flex items-center justify-center rounded-full bg-fill text-label-2 hover:text-label flex-shrink-0"
+                      aria-label={t('common.close')}
+                    >
+                      <X className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                  <p className="text-callout text-label-2 mt-1">
+                    {t('board.joinedAsBefore')} <strong className="font-semibold text-label">{effectiveUserName}</strong>
+                    {t('board.joinedAsAfter')}
+                  </p>
+                  <div className="mt-3 flex items-center gap-2">
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      onClick={() => {
+                        setShowGuestPrompt(false);
+                        setIsNicknameOpen(true);
+                      }}
+                    >
+                      {t('board.customize')}
+                    </Button>
+                    <Button
+                      variant="plain"
+                      size="sm"
+                      onClick={() => {
+                        setShowGuestPrompt(false);
+                        safeSetStorage(sessionStorage, `heeey_guest_prompt_dismissed_${boardId}`, 'true');
+                      }}
+                    >
+                      {t('board.notNow')}
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Optimizing image indicator pill */}
-        {isOptimizingImage && (
-          <div
-            role="status"
-            className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-900/90 backdrop-blur-md text-white rounded-full text-sm font-medium shadow-2xl flex items-center gap-2 z-30 animate-fade-in"
-          >
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />
-            <span>{t('board.optimizingImage')}</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {isOptimizingImage && (
+            <motion.div key="optimizing" className="absolute top-3 inset-x-0 z-30 flex justify-center pointer-events-none">
+              <motion.div
+                role="status"
+                initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.96 }}
+                transition={spring.snappy}
+                className="h-9 px-4 rounded-full bg-[rgb(40_40_44/0.92)] backdrop-blur-xl text-white text-sm shadow-popover flex items-center gap-2"
+              >
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>{t('board.optimizingImage')}</span>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       {/* Modals */}

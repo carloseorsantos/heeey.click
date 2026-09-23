@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { FolderInput, Folder as FolderIcon, Home, Check, Loader2 } from 'lucide-react';
-import { Modal } from './Modal';
+import { Modal, ModalIcon } from './Modal';
 import { Folder, flattenFolderTree } from '../lib/folders';
 import { cn } from '../lib/utils';
 import { useI18n } from '../i18n';
@@ -49,17 +49,17 @@ export function MoveToFolderModal({
       description={t('folders.moveDescription', { name: itemName })}
       size="sm"
       icon={
-        <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
-          <FolderInput className="w-5 h-5" />
-        </div>
+        <ModalIcon>
+          <FolderInput />
+        </ModalIcon>
       }
     >
       {error && (
-        <p className="mb-3 text-sm text-rose-700 dark:text-rose-400" role="alert">
+        <p className="mb-3 text-sm text-danger-text" role="alert">
           {t('folders.moveError')}
         </p>
       )}
-      <ul className="max-h-[50vh] overflow-y-auto -mx-2 space-y-0.5">
+      <ul className="max-h-[50vh] overflow-y-auto rounded-xl bg-fill p-1 space-y-0.5">
         {options.map((option) => {
           const isCurrent = option.id === currentFolderId;
           const Icon = option.id === null ? Home : FolderIcon;
@@ -68,18 +68,16 @@ export function MoveToFolderModal({
               <button
                 onClick={() => handleMove(option.id)}
                 disabled={isCurrent || movingTo !== undefined}
-                style={{ paddingLeft: `${0.75 + option.depth * 1}rem` }}
+                style={{ paddingLeft: `${0.625 + option.depth * 1}rem` }}
                 className={cn(
-                  'w-full flex items-center gap-2 pr-3 py-2.5 rounded-xl text-sm text-left transition',
-                  isCurrent
-                    ? 'text-slate-500 dark:text-slate-400 cursor-default'
-                    : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-60'
+                  'w-full h-10 flex items-center gap-2.5 pr-3 rounded-lg text-sm text-left transition-colors',
+                  isCurrent ? 'text-label-2 cursor-default' : 'text-label hover:bg-fill-2 disabled:opacity-50'
                 )}
               >
-                <Icon className="w-4 h-4 flex-shrink-0 text-slate-500" />
+                <Icon className="w-4 h-4 flex-shrink-0 text-accent-text" />
                 <span className="truncate flex-1">{option.name}</span>
-                {isCurrent && <Check className="w-4 h-4 flex-shrink-0" aria-label={t('folders.current')} />}
-                {movingTo === option.id && <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />}
+                {isCurrent && <Check className="w-4 h-4 flex-shrink-0 text-accent-text" strokeWidth={2.75} aria-label={t('folders.current')} />}
+                {movingTo === option.id && <Loader2 className="w-4 h-4 animate-spin flex-shrink-0 text-label-2" />}
               </button>
             </li>
           );

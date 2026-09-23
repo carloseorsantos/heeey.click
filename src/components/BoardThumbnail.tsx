@@ -135,9 +135,9 @@ export function BoardThumbnail({ board, isDark, onThumbnailGenerated }: BoardThu
         style={{ filter: darkFilter }}
       />
       {preview.kind !== 'image' && preview.kind !== 'svg' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500">
-          <Palette className="w-8 h-8 group-hover:text-brand-500 transition-colors" />
-          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-label-3">
+          <Palette className="w-7 h-7" strokeWidth={1.5} />
+          <span className="text-xs text-label-2">
             {preview.kind === 'empty'
               ? t('thumbnail.empty')
               : preview.kind === 'failed'
