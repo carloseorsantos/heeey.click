@@ -1,0 +1,2419 @@
+# Heeey (heeey.click) — Full Documentation Dump for LLMs
+
+> Export of the complete technical documentation corpus for the Heeey whiteboard platform.
+
+
+
+================================================================================
+FILE: docs/README.md
+================================================================================
+
+# Documentação do Heeey (heeey.click)
+
+> Lousa interativa e whiteboard colaborativo em tempo real, com persistência na nuvem, API REST pública e servidor MCP para agentes de IA.
+
+Bem-vindo à documentação oficial do **Heeey**. Inspirada na arquitetura e documentação do ecossistema Excalidraw (`https://plus.excalidraw.com/docs`), esta documentação descreve todos os recursos, ferramentas de desenho, colaboração multiplayer, API REST v1, servidor MCP (*Model Context Protocol*) e modelo de dados do Heeey.
+
+---
+
+## 🧭 Navegação Rápida
+
+<div class="grid">
+
+### 🎨 [Recursos & Lousa](features/whiteboard-editor.md)
+Explore o canvas vetorial baseado no `@excalidraw/excalidraw` 0.18, suporte a temas claro/escuro, ferramentas de desenho, formas, texto encadernado, setas inteligentes e atalhos.
+
+### 👥 [Colaboração & Tempo Real](features/collaboration-realtime.md)
+Entenda como funciona o multiplayer via Supabase Realtime (Broadcast e Presence), cursores ao vivo, nomes/cores de colaboradores, modo leitura vs. edição e links compartilháveis.
+
+### 📁 [Organização & Dashboard](features/folders-and-organization.md)
+Aprenda sobre o gerenciamento de quadros, pastas hierárquicas, busca global com destaque de texto, templates (Brainstorming, Fluxograma, Wireframe) e lixeira com proteção contra exclusão acidental.
+
+### 🕒 [Histórico de Versões](features/version-history.md)
+Saiba como snapshots automáticos a cada 10 minutos, retenção de 30 dias e snapshots pré-restauração garantem recuperação de estados com reconciliação sem perdas.
+
+### 🌍 [Internacionalização (i18n)](features/i18n.md)
+Suporte nativo e verificado a Português (`pt-BR`) e Inglês (`en`), detecção automática de idioma do navegador, pluralização ICU e sincronização do idioma do Excalidraw.
+
+### 🧩 [Bibliotecas Pessoais](features/libraries.md)
+Persistência na nuvem de bibliotecas de componentes reutilizáveis para usuários autenticados, cache local para convidados e migração automática no primeiro login.
+
+### 🖼️ [Mídia & Otimização de Imagens](features/media-and-images.md)
+Pipeline automático de compressão WebP/JPEG no cliente (máx 1600px, ~150KB), upload assíncrono para o Supabase Storage (`board-media`) e fallback offline gracioso.
+
+### 🔍 [Busca Global no Canvas](features/search.md)
+Busca full-text no PostgreSQL com `unaccent` e índices GIN, pesquisando em títulos e em todos os textos desenhados nas lousas com snippets destacados.
+
+### 🔌 [API REST v1](api/overview.md)
+Automatize a criação, leitura e manipulação de quadros e pastas. Autenticação por chave pessoal (`hk_...`), formato resumido de elementos, paginação e broadcast em tempo real.
+
+### 🤖 [Servidor MCP para IA](mcp/overview.md)
+Conecte Claude Code, Claude Desktop, Cursor e outros agentes inteligentes via Streamable HTTP (`/api/mcp`). Crie diagramas com layout em camadas automático (Dagre / Sugiyama) e organize quadros programaticamente.
+
+</div>
+
+---
+
+## ⚡ O que é o Heeey?
+
+O Heeey é uma aplicação web moderna de colaboração visual desenvolvida com foco em velocidade, simplicidade e abertura:
+
+- **Whiteboard Core**: Utiliza o motor oficial `@excalidraw/excalidraw` 0.18.x, preservando a estética artesanal desenhada à mão (*hand-drawn*), exportação SVG/PNG com fidelidade total e suporte completo a bibliotecas de elementos.
+- **Multiplayer Ultrarrápido**: Realtime Broadcast e Presence integrados sobre o canal `heeey:room:{boardId}`, permitindo latência mínima em alterações de canvas e cursores ao vivo.
+- **Autenticação Descomplicada**: Acesso híbrido — convidados podem criar quadros instantaneamente; usuários registrados autenticam-se sem senhas via Magic Link (Email OTP) e herdam seus quadros anônimos automaticamente.
+- **Programável & Orientado a Agentes**: Toda a infraestrutura possui suporte de primeira classe para automação via API REST e protocolo MCP, permitindo que agentes LLM leiam, compreendam, gerem e organizem diagramas complexos em segundos.
+- **Totalmente Internacionalizado**: Suporte nativo e verificado em testes a Português (`pt-BR`) e Inglês (`en`).
+
+---
+
+## 📖 Índice Completo de Documentos
+
+1. **Visão Geral & Começando**:
+   - [Guia Rápido Geral (Getting Started)](getting-started.md)
+2. **Funcionalidades da Lousa & Aplicação**:
+   - [Canvas & Ferramentas de Desenho](features/whiteboard-editor.md)
+   - [Colaboração & Tempo Real](features/collaboration-realtime.md)
+   - [Pastas, Organização & Lixeira](features/folders-and-organization.md)
+   - [Histórico de Versões & Restauração](features/version-history.md)
+   - [Internacionalização (i18n)](features/i18n.md)
+   - [Bibliotecas de Componentes](features/libraries.md)
+   - [Imagens & Otimização de Mídia](features/media-and-images.md)
+   - [Busca Global em Texto do Canvas](features/search.md)
+3. **API REST Pública (`/api/v1`)**:
+   - [Visão Geral da API](api/overview.md)
+   - [Primeiros Passos com a API (API Quick Start)](api/getting-started.md)
+   - [Autenticação & Escopos de Chaves](api/authentication.md)
+   - [Paginação de Resultados](api/pagination.md)
+   - [Taxas & Limites Operacionais](api/rate-limiting.md)
+   - [Tratamento de Erros](api/error-handling.md)
+   - [Esquema de Conteúdo da Cena (Element Spec)](api/scene-content-schema.md)
+   - [Referência Completa de Endpoints](api/endpoints.md)
+4. **Servidor MCP (Model Context Protocol)**:
+   - [Visão Geral do MCP](mcp/overview.md)
+   - [Configurando Agentes (Claude Code, Desktop, Cursor)](mcp/getting-started.md)
+   - [Autenticação & Permissões MCP](mcp/auth-and-permissions.md)
+   - [Catálogo Completo das 13 Ferramentas MCP](mcp/tools.md)
+   - [Motor de Layout Automático de Diagramas](mcp/diagram-layout.md)
+5. **Descoberta por Agentes & Modelos de Linguagem**:
+   - [Índice Resumido para LLMs (`llms.txt`)](llms.txt)
+   - [Dump de Texto Completo para LLMs (`llms-full.txt`)](llms-full.txt)
+
+
+================================================================================
+FILE: docs/getting-started.md
+================================================================================
+
+# Começando com o Heeey (Quick Start)
+
+Este guia apresenta como começar a usar o **Heeey**, desde o primeiro acesso no navegador até a automação programática via API e agentes de inteligência artificial.
+
+---
+
+## 🚀 Primeiro Acesso: Criando seu primeiro quadro
+
+O Heeey foi projetado com fricção zero: você não precisa criar conta ou preencher formulários para começar a desenhar.
+
+1. Acesse [heeey.click](https://heeey.click).
+2. Clique no botão **"Criar Quadro em Branco"** ou escolha um dos templates disponíveis:
+   - **Brainstorming**: Post-its e cartões temáticos para ideação rápida.
+   - **Fluxograma**: Estrutura básica com blocos de decisão e setas direcionadas.
+   - **Wireframe**: Telas e componentes básicos de prototipação.
+3. Você será redirecionado para a URL `/b/<id-do-quadro>`.
+4. Comece a desenhar imediatamente! Seu trabalho é salvo localmente em tempo real e sincronizado na nuvem.
+
+---
+
+## 👥 Colaborando com outras pessoas
+
+Para convidar colegas para o mesmo quadro:
+
+1. No cabeçalho superior do quadro, clique no botão **"Compartilhar"**.
+2. Escolha o nível de permissão:
+   - **Pode Editar** (`edit`): Qualquer pessoa com o link pode desenhar, adicionar notas e alterar o conteúdo.
+   - **Apenas Leitura** (`view`): Qualquer pessoa com o link pode visualizar e acompanhar os cursores ao vivo, mas não pode alterar o canvas.
+3. Clique em **"Copiar link"** e envie para a equipe.
+4. Quando outras pessoas acessarem o link, você verá o cursor delas em tempo real, com seus respectivos nomes e cores de identificação.
+
+---
+
+## 🔐 Conectando sua Conta (Magic Link)
+
+Embora o uso anônimo seja suportado, entrar com sua conta traz vantagens essenciais:
+
+- **Seus quadros em qualquer dispositivo**: Acesse seu painel de qualquer navegador.
+- **Herança automática de quadros anônimos**: Quadros criados por você como convidado no navegador são transferidos automaticamente para a sua conta quando você faz login.
+- **Bibliotecas na nuvem**: Os elementos salvos na sua biblioteca de componentes ficam disponíveis em todos os seus quadros.
+- **Geração de Chaves de API**: Habilite integrações com a API REST pública e o servidor MCP para IA.
+
+### Como entrar:
+1. No Dashboard ou no menu superior do quadro, clique em **"Entrar"**.
+2. Digite seu endereço de e-mail.
+3. Um código OTP de 6 dígitos será enviado instantaneamente para a sua caixa de entrada.
+4. Digite o código na tela para confirmar. Pronto! Não é necessário lembrar senhas.
+
+---
+
+## 🤖 Automação em 3 Minutos: Claude Code & MCP
+
+Se você utiliza o **Claude Code**, **Cursor** ou outro agente compatível com MCP:
+
+1. Acesse o Dashboard conectado à sua conta.
+2. Clique no ícone de chave (**Chaves de API**).
+3. Digite um nome (ex.: `claude-code`) e clique em **"Criar Chave"**.
+4. Copie a chave gerada (`hk_...`). O aplicativo já exibe o comando formatado para o seu terminal:
+
+```bash
+claude mcp add --transport http heeey https://heeey.click/api/mcp --header "Authorization: Bearer hk_SEU_TOKEN_AQUI"
+```
+
+5. Abra o terminal e execute o comando acima.
+6. Agora seu assistente de IA pode criar diagramas inteiros, buscar em suas lousas e organizar seus quadros diretamente pelo prompt!
+
+---
+
+## 💻 Exemplo Rápido via cURL (API REST)
+
+Você também pode criar quadros a partir de scripts ou automações CI/CD:
+
+```bash
+curl -X POST https://heeey.click/api/v1/boards \
+  -H "Authorization: Bearer hk_SEU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Fluxo de Aprovação",
+    "elements": [
+      { "id": "req", "type": "rectangle", "x": 100, "y": 100, "label": "Solicitação Enviada", "backgroundColor": "#a5d8ff" },
+      { "id": "dec", "type": "diamond", "x": 380, "y": 85, "label": "Aprovado?", "backgroundColor": "#ffec99" },
+      { "type": "arrow", "start": { "id": "req" }, "end": { "id": "dec" } }
+    ]
+  }'
+```
+
+O Heeey responderá com os dados do quadro criado e o link direto (`url`) para você abri-lo no navegador.
+
+
+================================================================================
+FILE: docs/features/whiteboard-editor.md
+================================================================================
+
+# Lousa & Ferramentas de Desenho
+
+O Heeey é construído em torno da versão oficial do componente `@excalidraw/excalidraw` (0.18.x), oferecendo um canvas infinito vetorial com a renomada estética orgânica e feita à mão (*hand-drawn*).
+
+---
+
+## 🎨 Principais Ferramentas e Formas
+
+A barra superior de ferramentas oferece suporte nativo para criação e manipulação vetorial:
+
+| Ferramenta | Tecla de Atalho | Descrição |
+|---|---|---|
+| **Seleção** | `V` ou `1` | Move, redimensiona, agrupa e rotaciona elementos existentes. |
+| **Retângulo** | `R` ou `2` | Desenha blocos, cartões e painéis com cantos retos ou arredondados. |
+| **Losango (Diamond)** | `D` ou `3` | Ideal para decisões em fluxogramas e nós condicionais. |
+| **Elipse / Círculo** | `E` ou `4` | Usado para inícios/fins de fluxos, anotações circulares e nós de redes. |
+| **Seta Conectada** | `A` ou `5` | Conecta-se magneticamente às bordas das formas. Ajusta-se dinamicamente quando a forma é movida. |
+| **Linha** | `L` ou `6` | Segmentos retos ou polilinhas para divisões e gráficos. |
+| **Desenho Livre (Pen)** | `P` or `7` | Escrita à mão livre com sensibilidade à velocidade do traço. |
+| **Texto** | `T` ou `8` | Texto avulso ou texto vinculado a formas (*bound text container*). |
+| **Imagem** | `9` | Insere imagens (com otimização automática para WebP). |
+| **Borracha** | `E` ou `0` | Apaga elementos ao clicar ou arrastar por cima. |
+| **Laser Pointer** | `K` | Apontador laser temporário visível em tempo real para todos os participantes da sessão. |
+| **Moldura (Frame)** | `F` | Agrupa logicamente elementos para exportação em lote ou apresentação. |
+
+---
+
+## 🔤 Texto Vinculado a Formas (Bound Text)
+
+Uma das maiores facilidades no Heeey é o texto contido:
+- Ao dar duplo clique em qualquer forma fechada (retângulo, elipse, losango), o texto digitado é automaticamente centralizado dentro do objeto.
+- Se o elemento for movido ou redimensionado, o texto acompanha a forma.
+- Ao deletar uma forma, o texto interno vinculado a ela é removido automaticamente, evitando elementos órfãos no canvas.
+- No nível técnico, o Excalidraw cria um elemento de tipo `text` com `containerId` apontando para o `id` da forma, e a forma registra o `id` do texto em seu array `boundElements`.
+
+---
+
+## 📐 Conexão Inteligente de Setas
+
+As setas no Heeey fornecem vínculo magnético real:
+- Ao desenhar uma seta em direção a uma forma, os pontos de ancoragem se iluminam.
+- Ao conectar, a seta preenche suas propriedades `startBinding` e `endBinding` com `{ elementId, focus, gap }`.
+- Caso você reposicione a forma conectada, a seta recalcula sua curvatura e ângulo para manter a conexão intacta.
+- Rótulos em setas (`arrow label`) também são suportados, centralizando-se no ponto médio do traço.
+
+---
+
+## 🌓 Modos Claro e Escuro (Dark Mode)
+
+O Heeey adapta-se perfeitamente à preferência de sistema do usuário ou à alternância manual:
+- O tema pode ser alterado no botão de alternância no Dashboard ou através do menu de preferências.
+- No modo escuro, o canvas inverte suavemente as cores de fundo e os traços escuros ganham contraste para visualização noturna confortável.
+- A paleta de exportação respeita as preferências de fundo configuradas no canvas.
+
+---
+
+## 💾 Exportação e Download
+
+Você pode exportar seus diagramas em qualquer momento sem marcas d'água:
+- **PNG**: Bitmap de alta resolução, ideal para apresentações e compartilhamento no Slack/Discord.
+- **SVG**: Gráfico vetorial infinito e escalável, ideal para incorporar na web ou abrir em softwares como Figma ou Illustrator.
+- O diálogo de exportação permite escolher se deseja incluir o fundo da tela ou gerar um arquivo com transparência.
+
+
+================================================================================
+FILE: docs/features/collaboration-realtime.md
+================================================================================
+
+# Colaboração & Tempo Real (Multiplayer)
+
+O Heeey utiliza a infraestrutura do **Supabase Realtime** para entregar uma experiência multiplayer de baixa latência e alta resiliência, combinando canais de **Broadcast**, **Presence** e sincronização periódica de banco de dados.
+
+---
+
+## ⚡ Como Funciona a Sincronização
+
+A colaboração em tempo real opera no canal temático:
+```
+heeey:room:{boardId}
+```
+
+Nenhum elemento precisa passar por filas lentas ou polling. Quando um colaborador move o cursor ou altera elementos:
+
+```
+[Cliente A] --(Broadcast via WebSocket)--> [Supabase Realtime] --(Fan-out)--> [Cliente B, Cliente C, ...]
+```
+
+### 1. Broadcast de Elementos (`canvas-update`)
+- Enquanto um usuário desenha ou move elementos, as alterações são enviadas pelo evento `canvas-update`.
+- O payload inclui os elementos modificados, metadados de cor de fundo da cena e um timestamp.
+- **Reconciliação de Versão**: Cada elemento possui campos de controle de versão (`version`, `versionNonce`). O cliente local compara os elementos recebidos com os do canvas e aplica apenas as atualizações com número de versão estritamente maior ou que resolvam empates deterministicamente.
+
+### 2. Sincronização de Presença & Cursores (`cursor-update` & Presence)
+- As posições dos mouses e ponteiros laser são transmitidas com alta frequência sem poluir o histórico de desenho.
+- Cada participante tem:
+  - Nome visível no cursor.
+  - Cor única de avatar e halo de cursor (gerada de forma consistente a partir da paleta de 12 tons do Heeey).
+  - Estado do laser pointer quando ativo.
+  - Elementos atualmente selecionados destacados em tempo real.
+- Quando uma aba é fechada ou a conexão cai, o Supabase Presence desliga o cursor automaticamente após poucos segundos.
+
+---
+
+## 🔒 Níveis de Acesso e Permissões
+
+Cada quadro possui um campo `access_level`:
+
+| Nível de Acesso | Valor no Banco | Descrição |
+|---|---|---|
+| **Pode Editar** | `'edit'` | Qualquer visitante com o link pode interagir, desenhar e adicionar notas. |
+| **Apenas Leitura** | `'view'` | Visitantes visualizam as alterações em tempo real e os cursores dos colegas, mas o canvas fica bloqueado contra edições locais. O proprietário do quadro mantém permissão irrestrita de edição. |
+
+### Alterando o Nível de Acesso:
+1. No cabeçalho do quadro, abra o modal de **Compartilhar**.
+2. Alterne entre **"Pode Editar"** e **"Apenas Leitura"**.
+3. A mudança reflete imediatamente para todos os visitantes conectados através de uma mensagem `meta-update`.
+
+---
+
+## 🛡️ Salvamento Automático & Persistência Local
+
+O Heeey utiliza uma estratégia híbrida em camadas:
+1. **Cache Local Imediato (`localStorage`)**: Todas as alterações locais são registradas no armazenamento do navegador instantaneamente. Se a conexão cair, nada é perdido.
+2. **Auto-Save com Debounce no Banco (`PostgreSQL`)**: As alterações consolidadas são enviadas ao Supabase com debounce inteligente (aproximadamente 1,5 segundos de inatividade após o último traço).
+3. **Indicador de Status de Sincronização**:
+   - 🟢 **Salvo**: O estado na nuvem está sincronizado com a tela atual.
+   - 🟡 **Salvando...**: Alterações pendentes estão sendo enviadas ao banco.
+   - 🟠 **Offline**: Conexão perdida; alterações retidas com segurança no cache local.
+   - 🔴 **Erro**: Falha de rede temporária; nova tentativa automática será disparada.
+
+---
+
+## 👤 Personalização de Colaboradores
+
+Visitantes convidados podem personalizar sua presença a qualquer momento:
+- Clique no avatar de identificação no canto superior direito.
+- Escolha um apelido (*nickname*) e selecione sua cor favorita na paleta.
+- A personalização é memorizada no navegador e aplicada automaticamente em todos os quadros futuros que você visitar.
+
+
+================================================================================
+FILE: docs/features/folders-and-organization.md
+================================================================================
+
+# Pastas, Organização & Lixeira
+
+O Dashboard do Heeey oferece uma experiência completa para estruturar, classificar e proteger seus quadros de trabalho.
+
+---
+
+## 📁 Pastas Hierárquicas
+
+Para manter projetos, equipes ou matérias organizadas, você pode criar árvores de pastas com profundidade ilimitada:
+
+- **Criação de Pastas**: No Dashboard, clique em **"Nova Pasta"**, digite o nome e escolha se ela ficará na raiz ou dentro de uma pasta existente.
+- **Navegação com Breadcrumbs**: Caminho visual completo (ex.: `Início > Design System > Componentes Web`) que permite saltar para qualquer nível intermediário com um clique.
+- **Mover Quadros**:
+  - No menu de três pontos de qualquer cartão de quadro, selecione **"Mover para pasta"**.
+  - A árvore completa é apresentada, permitindo realocar o quadro para qualquer pasta ou de volta à raiz.
+- **Exclusão de Pastas**:
+  - Ao excluir uma pasta que contém subpastas, todas as subpastas são removidas recursivamente.
+  - **Segurança de Conteúdo**: Os quadros que estavam dentro da pasta excluída **não são apagados**; eles retornam com segurança para o nível raiz do seu painel (`folder_id = null`).
+
+---
+
+## 🗑️ Lixeira (Soft Delete) & Proteção contra Exclusão Acidental
+
+O Heeey adota um modelo de exclusão em duas etapas:
+
+### 1. Enviar para a Lixeira
+- Mover um quadro para a lixeira atualiza o campo `deleted_at = now()`.
+- O quadro desaparece imediatamente das listagens ativas, das pastas e das buscas padrão.
+- Se o quadro estiver aberto por alguém durante o descarte, ele entra automaticamente em modo somente leitura com um banner informativo superior.
+
+### 2. Restauração
+- A qualquer momento, acesse a aba **"Lixeira"** no Dashboard.
+- Clique no botão de restauração do cartão para devolver o quadro à sua pasta original.
+- Um toast de desfazer (*Undo*) também é exibido logo após qualquer exclusão acidental.
+
+### 3. Exclusão Permanente
+- Apenas o proprietário autenticado pode solicitar a exclusão definitiva de um quadro na lixeira.
+- A exclusão definitiva remove:
+  - O registro do quadro na tabela `boards`.
+  - Todas as imagens associadas no bucket `board-media` do Supabase Storage.
+  - Todas as versões históricas em `board_versions`.
+
+---
+
+## 🖼️ Miniaturas Inteligentes (Thumbnails)
+
+Para que o Dashboard carregue instantaneamente mesmo com dezenas de quadros complexos:
+- Enquanto você desenha, uma miniatura rasterizada em **WebP** (`maxWidthOrHeight = 480px`, qualidade 0.7) é renderizada em segundo plano no cliente a cada 20 segundos de atividade.
+- A string codificada em base64 é salva na coluna `thumbnail` da tabela `boards`.
+- O Dashboard baixa apenas os metadados e as miniaturas compactas (`fetchBoardSummaries`), sem precisar fazer download dos elementos brutos de dezenas de cenas completas.
+- No modo escuro do Dashboard, um filtro visual CSS inverte harmoniosamente as miniaturas claras sem exigir processamento gráfico adicional.
+
+---
+
+## 📑 Modelos Iniciais (Templates)
+
+Ao criar um novo quadro, você pode partir de templates prontos:
+
+1. **Brainstorming**:
+   - Quadros temáticos com post-its coloridos agrupados por ideias, desafios e próximos passos.
+2. **Fluxograma**:
+   - Nós de processo pré-conectados com blocos de início, término e losango de decisão.
+3. **Wireframe**:
+   - Elementos estruturais de interface: barra de navegação, caixas de conteúdo e botões interativos.
+
+
+================================================================================
+FILE: docs/features/version-history.md
+================================================================================
+
+# Histórico de Versões & Restauração
+
+O Heeey inclui um sistema integrado de controle de versão point-in-time que protege o trabalho da sua equipe contra edições indesejadas, desconfigurações acidentais ou perdas de dados.
+
+---
+
+## 🕒 Como Funcionam os Snapshots
+
+O banco de dados grava snapshots do quadro na tabela `board_versions` em duas situações:
+
+1. **Snapshots Automáticos (`reason: 'auto'`)**:
+   - Disparados em segundo plano pelo servidor sempre que o quadro sofre edições ativas.
+   - O servidor respeita um intervalo mínimo de **10 minutos** entre snapshots automáticos sucessivos para evitar excesso de dados em sessões contínuas.
+2. **Snapshots de Pré-Restauração (`reason: 'before_restore'`)**:
+   - Antes de restaurar qualquer versão antiga, o estado atual do quadro é arquivado imediatamente no histórico.
+   - Isso significa que restaurar uma versão **nunca é uma operação destrutiva**; você pode sempre desfazer a restauração e voltar ao momento exato anterior.
+
+---
+
+## 🗄️ Política de Retenção
+
+- **Capacidade**: Até **30 versões** mais recentes por quadro.
+- **Validade Temporal**: Versões com mais de **30 dias** são automaticamente limpas por gatilhos do banco.
+- Ao salvar a 31ª versão, o gatilho SQL remove a versão mais antiga do quadro correspondente de forma transparente.
+
+---
+
+## 🔄 Algoritmo de Reconciliação sem Conflitos (`buildRestoredElements`)
+
+Um problema comum em aplicações colaborativas ao restaurar versões antigas é o conflito com colaboradores que continuam desenhando: elementos antigos com versão baixa seriam ignorados pelos clientes conectados.
+
+O Heeey resolve isso com um algoritmo determinístico de bumping:
+
+```typescript
+export function buildRestoredElements(
+  currentElements: readonly any[],
+  versionElements: readonly any[],
+  now: number = Date.now(),
+  randomNonce: () => number = () => Math.floor(Math.random() * 2 ** 31)
+): any[] {
+  // 1. Cada elemento da versão histórica recebe um número de 'version'
+  // estritamente superior ao que está atualmente no canvas.
+  // 2. Elementos que existem no canvas atual mas NÃO existiam na versão restaurada
+  // são marcados com isDeleted: true com versão elevada.
+}
+```
+
+### Vantagens do Algoritmo:
+- **Propagação Imediata**: A versão restaurada vence a reconciliação do Excalidraw em todos os navegadores conectados na hora.
+- **Eliminação de Resíduos**: Desenhos feitos após o ponto histórico desaparecem do canvas de forma limpa.
+- **Transmissão em Tempo Real**: Uma mensagem de `canvas-update` é transmitida pelo canal Supabase, atualizando a tela de todos os participantes ao vivo.
+
+---
+
+## 🖥️ Como Acessar o Histórico
+
+1. Dentro do quadro aberto, clique no ícone de relógio (**Histórico de Versões**) no cabeçalho superior.
+2. A lista de pontos de restauração será exibida com data, hora, quantidade de elementos e miniatura visual.
+3. Clique em uma versão para inspecioná-la.
+4. Clique em **"Restaurar esta versão"**. O canvas será atualizado instantaneamente.
+
+
+================================================================================
+FILE: docs/features/i18n.md
+================================================================================
+
+# Internacionalização (i18n)
+
+O **Heeey** foi construído com arquitetura de internacionalização nativa e fortemente tipada, oferecendo suporte completo a múltiplos idiomas tanto na interface da aplicação quanto no editor gráfico Excalidraw.
+
+---
+
+## 🌍 Idiomas Suportados
+
+| Idioma | Código (`Locale`) | Código Excalidraw (`excalidrawLangCode`) | Status |
+|---|---|---|---|
+| **Português (Brasil)** | `pt-BR` | `pt-BR` | Idioma primário e de referência |
+| **English (US)** | `en` | `en` | Totalmente traduzido e verificado |
+
+---
+
+## 🧠 Arquitetura do Sistema (`src/i18n/`)
+
+A solução de i18n do Heeey foi desenvolvida sob medida para ser extremamente leve, reativa e sem dependências pesadas externas:
+
+```
+src/i18n/
+├── index.tsx          # Provider React, hook useI18n, detector e formatador ICU
+└── locales/
+    ├── pt-BR.ts       # Dicionário de mensagens em Português (tipagem base)
+    └── en.ts          # Dicionário de mensagens em Inglês
+```
+
+### 1. Tipagem Estrita em Tempo de Compilação
+- O TypeScript extrai recursivamente todas as chaves aninhadas do dicionário `ptBR` gerando o tipo union `MessageKey` (ex.: `'dashboard.newBoard'`, `'header.saving'`, `'errors.unauthorized'`).
+- Se qualquer componente tentar utilizar uma chave inexistente ou com erro de digitação, a compilação falha imediatamente.
+- O arquivo `en.ts` implementa a interface `Messages`, garantindo que nenhuma tradução fique faltando em inglês.
+
+### 2. Suporte a Plurais no Padrão ICU
+Mensagens dinâmicas suportam regras de pluralização complexas através do formatador `formatMessage`, que utiliza a API nativa `Intl.PluralRules`:
+
+```typescript
+// Exemplo em pt-BR.ts:
+elementCount: '{count, plural, one {# elemento} other {# elementos}}',
+collaboratorsOnline: '{count, plural, one {# pessoa conectada} other {# pessoas conectadas}}',
+```
+
+### 3. Interpolação de Parâmetros
+Substituição simples de variáveis envoltas por chaves:
+```typescript
+t('common.welcomeUser', { name: 'Carlos' });
+// "Bem-vindo, Carlos!" ou "Welcome, Carlos!"
+```
+
+---
+
+## 🔄 Detecção e Persistência de Preferência
+
+O Heeey seleciona o idioma do usuário de forma inteligente em três etapas:
+
+1. **Preferência Salva (`localStorage`)**:
+   - Se o usuário já selecionou um idioma anteriormente no seletor de idiomas, a chave `heeey_locale` é lida do navegador.
+2. **Detecção do Navegador (`navigator.languages`)**:
+   - Se for o primeiro acesso, o sistema inspeciona a lista ordenada de idiomas preferidos do navegador.
+   - Navegadores com preferência por `pt*` recebem `pt-BR`; navegadores com preferência por `en*` recebem `en`.
+3. **Fallback Padrão**:
+   - Para qualquer outro idioma não mapeado, o padrão do sistema é `pt-BR`.
+
+---
+
+## 🎨 Sincronização com o Canvas do Excalidraw
+
+O motor gráfico Excalidraw possui suas próprias traduções internas (ferramentas, diálogos de exportação, paleta de cores e atalhos).
+
+O Heeey sincroniza o idioma selecionado diretamente na propriedade `langCode` do componente Excalidraw através da variável `excalidrawLangCode`:
+- Quando o usuário altera o idioma no Heeey, os botões, menus contextuais e caixas de diálogo do canvas mudam de idioma instantaneamente, mantendo a experiência perfeitamente uniforme.
+
+---
+
+## 📅 Formatação de Datas e Números
+
+Todas as datas exibidas nos cartões de quadros e no histórico de versões adaptam-se dinamicamente ao idioma ativo:
+- Em `pt-BR`: `"editado há 5 minutos"`, `"23 de setembro de 2026"`.
+- Em `en`: `"edited 5 minutes ago"`, `"September 23, 2026"`.
+
+---
+
+## 🛠️ Como Adicionar um Novo Idioma
+
+Para estender o suporte a um novo idioma (por exemplo, Espanhol `es`):
+
+1. Crie o arquivo `src/i18n/locales/es.ts` implementando a interface `Messages`.
+2. Adicione a entrada correspondente no array `LOCALES` em `src/i18n/index.tsx`:
+   ```typescript
+   export const LOCALES = [
+     { id: 'pt-BR', label: 'Português', excalidrawLangCode: 'pt-BR' },
+     { id: 'en', label: 'English', excalidrawLangCode: 'en' },
+     { id: 'es', label: 'Español', excalidrawLangCode: 'es-ES' },
+   ];
+   ```
+3. Registre o dicionário no mapa `DICTIONARIES`.
+4. Os testes automatizados em `src/__tests__/i18n.test.ts` validarão automaticamente a integridade das mensagens!
+
+
+================================================================================
+FILE: docs/features/libraries.md
+================================================================================
+
+# Bibliotecas de Componentes (Libraries)
+
+O Heeey integra-se profundamente ao ecossistema de bibliotecas do Excalidraw, permitindo salvar ícones, diagramas de arquitetura, wireframes e blocos gráficos reutilizáveis para agilizar sua rotina.
+
+---
+
+## 📦 O que são Bibliotecas?
+
+No Excalidraw, uma biblioteca é uma coleção de itens compostos por um ou mais elementos gráficos pré-fabricados (por exemplo: ícones de serviços AWS, símbolos UML, botões de UI ou ilustrações).
+
+No Heeey, você pode:
+- Salvar qualquer seleção de elementos do canvas diretamente na sua biblioteca pessoal.
+- Navegar pela biblioteca oficial pública do Excalidraw e instalar pacotes prontos com um clique.
+- Arrastar itens da sua biblioteca diretamente para qualquer quadro.
+
+---
+
+## ☁️ Persistência na Nuvem vs. Cache Local
+
+O Heeey implementa um adaptador sob medida (`createLibraryAdapter` via `useHandleLibrary`):
+
+| Contexto do Usuário | Onde os Itens são Armazenados | Comportamento |
+|---|---|---|
+| **Usuário Autenticado** | Tabela `user_libraries` no Supabase + Cache Local | Sincronização em nuvem automática. A biblioteca pessoal acompanha o usuário em qualquer navegador ou computador. Se estiver temporariamente offline, o cache local garante leitura e escrita sem erros. |
+| **Convidado / Não Autenticado** | `localStorage` (`heeey_library`) | Mantida com segurança no navegador atual do dispositivo. |
+
+---
+
+## 🔄 Migração Automática no Primeiro Login
+
+Se você utilizou o Heeey como visitante e construiu uma biblioteca de elementos personalizada, você não precisa exportá-la manualmente:
+
+- Quando você entra na sua conta pela primeira vez (via Magic Link), o adaptador de migração (`createGuestLibraryMigration`) é acionado.
+- Ele lê automaticamente os itens de `localStorage` e os envia para a sua conta na tabela `user_libraries`.
+- O cache temporário anônimo é limpo com segurança e seus itens passam a estar disponíveis na nuvem.
+
+
+================================================================================
+FILE: docs/features/media-and-images.md
+================================================================================
+
+# Imagens & Otimização de Mídia
+
+Colar ou arrastar capturas de tela e fotografias pesadas diretamente em uma lousa interativa pode degradar drasticamente o desempenho de renderização e o consumo de largura de banda de todos os colaboradores. O Heeey possui um pipeline especializado e automatizado de processamento de mídia no cliente.
+
+---
+
+## ⚡ Pipeline de Otimização Automática
+
+Sempre que uma imagem é **colada** (`Ctrl+V` / `Cmd+V`) ou **arrastada** (*drag & drop*) para o canvas:
+
+```
+[Imagem Original] 
+       │
+       ▼ (Interceptação no navegador)
+[Redimensionamento Proporcional: max 1600px]
+       │
+       ▼ (Compressão Canvas 2D)
+[Conversão para WebP / Qualidade 0.8 (Meta < 150 KB)]
+       │
+       ├───► Sucesso ────► Upload assíncrono para Supabase Storage: board-media/{boardId}/{fileId}.webp
+       │
+       └───► Fallback ───► Preserva DataURL em base64 localmente caso offline ou storage indisponível
+```
+
+---
+
+## 📊 Regras de Dimensionamento e Compressão
+
+1. **Limite Dimensional (`MAX_IMAGE_DIMENSION`)**:
+   - Nenhuma imagem é inserida no quadro com largura ou altura superior a **1600px**. O aspecto original é rigorosamente mantido.
+2. **Compressão para WebP**:
+   - Imagens são codificadas nativamente em formato **WebP** com qualidade `0.8`, resultando geralmente em arquivos menores que **150 KB** (uma economia de 70% a 90% em comparação com PNGs brutos de telas Retina).
+   - Se o navegador não suportar exportação WebP no elemento Canvas, o pipeline recorre automaticamente a **JPEG** com preenchimento de fundo branco (evitando que áreas transparentes fiquem pretas).
+3. **Posicionamento Inteligente no Canvas**:
+   - A imagem é inserida centralizada no campo de visão atual do usuário (`viewportCoordsToSceneCoords`).
+   - Imagens excessivamente amplas recebem uma escala visual padrão de exibição inicial (máx 600px) para não cobrir outros elementos já desenhados na tela.
+
+---
+
+## 🗄️ Armazenamento no Supabase (`board-media`)
+
+- As imagens otimizadas são armazenadas no bucket público `board-media` do Supabase Storage no caminho:
+  ```
+  board-media/{boardId}/{fileId}.webp
+  ```
+- **Políticas de Acesso RLS no Storage**:
+  - Leitura pública para qualquer visitante que possua o link do quadro.
+  - Upload permitido para qualquer pessoa com permissão de edição no quadro.
+  - Exclusão permitida apenas ao proprietário do quadro durante a exclusão permanente.
+- **Fallback Resiliente**: Se o bucket não estiver configurado ou se a conexão cair, o Heeey armazena a imagem como DataURL em base64 diretamente nos metadados do quadro, garantindo que o usuário nunca perca seu trabalho.
+
+
+================================================================================
+FILE: docs/features/search.md
+================================================================================
+
+# Busca Global em Texto do Canvas
+
+O Heeey conta com um sistema de busca rápida em texto completo (*full-text search*) que localiza quadros não apenas pelo título, mas por **qualquer texto ou rótulo escrito dentro do canvas**.
+
+---
+
+## 🔍 Como Funciona a Busca
+
+A busca pode ser acionada:
+- No **Dashboard**: pela barra de busca superior ou atalho.
+- Dentro de um **Quadro**: pelo modal de busca de quadros (`BoardSearchModal`), permitindo alternar de lousa sem voltar ao painel inicial.
+
+---
+
+## 🧠 Características Técnicas da Busca
+
+1. **Insensível a Acentos & Caixa Alta/Baixa**:
+   - Graças à extensão PostgreSQL `unaccent` e normalização NFD, buscar por `reuniao`, `Reunião`, `REUNIÃO` ou `reunião` trará os mesmos resultados com precisão total.
+2. **Indexação Automática de Texto do Canvas (`tsvector` & GIN)**:
+   - Toda vez que um quadro é salvo, um gatilho de banco extrai todos os elementos de tipo `text` (incluindo rótulos internos de formas e setas).
+   - O título recebe peso **A** (maior relevância) e o conteúdo dos elementos recebe peso **B**.
+   - Um índice GIN (`idx_boards_search`) garante respostas em milissegundos mesmo em bases volumosas.
+3. **Busca Local & Remota**:
+   - **Remota**: Usuários conectados pesquisam remotamente através da função RPC `search_boards`.
+   - **Local**: Convidados pesquisam nos quadros salvos no cache do navegador através da função `searchLoadedBoards`.
+4. **Trechos de Pré-Visualização (Snippets com Destaque)**:
+   - O resultado da busca não exibe apenas o nome do quadro: ele recorta um trecho contextual de até 40 caracteres ao redor da primeira palavra encontrada, preservando a acentuação original e destacando o termo correspondente.
+
+
+================================================================================
+FILE: docs/api/overview.md
+================================================================================
+
+# Visão Geral da API REST v1
+
+A API pública do **Heeey** (`/api/v1`) permite criar, ler, atualizar, mover e buscar quadros e pastas de maneira programática.
+
+A API foi projetada para ser leve, amigável para desenvolvedores e agentes autônomos, e executada diretamente em arquitetura de borda (*Edge Runtime* no Vercel).
+
+---
+
+## 🌐 Informações de Integração
+
+- **URL Base de Produção**: `https://heeey.click/api/v1`
+- **Ambiente Local**: `http://localhost:5173/api/v1`
+- **Padrão de Troca de Dados**: JSON UTF-8
+- **Autenticação**: Bearer Token via cabeçalho HTTP `Authorization`
+- **CORS**: Habilitado para todos os domínios (`*`), suportando requisições diretas de ferramentas baseadas em navegador, webhooks e CLIs.
+
+---
+
+## ⚡ Princípios de Design da API
+
+1. **Segurança no Banco (Zero-Secrets na Edge)**:
+   - A função de borda (`apiHandler.ts`) não armazena chaves mestras ou segredos de superusuário.
+   - Toda requisição é autenticada diretamente no PostgreSQL via hash criptográfico SHA-256 (`api_authenticate`). O contexto do usuário (`auth.uid()`) é aplicado no nível da transação, garantindo que as políticas de Row Level Security (RLS) protejam cada operação.
+2. **Atualização em Tempo Real (Live Broadcast)**:
+   - Sempre que você altera ou adiciona elementos a um quadro via `POST` ou `PATCH`, o servidor dispara uma mensagem de broadcast Supabase Realtime no canal `heeey:room:{boardId}`.
+   - Qualquer pessoa com o quadro aberto no navegador verá os novos elementos surgirem ao vivo em sua tela sem precisar recarregar a página!
+3. **Links Prontos para Uso (`url`)**:
+   - Todas as respostas de quadros incluem a propriedade `url` formatada (ex.: `https://heeey.click/b/550e8400-e29b-41d4-a716-446655440000`), facilitando que scripts e bots entreguem o link direto para o usuário final.
+4. **Formato Resumido de Elementos (Element Skeleton)**:
+   - Você não precisa montar objetos gigantescos com dezenas de propriedades internas do Excalidraw. A API aceita especificações enxutas (`label`, `shape`, `start`, `end`) e gera os elementos completos automaticamente.
+
+---
+
+## 🧭 Sumário de Recursos da API
+
+| Recurso | Método | Rota | Descrição |
+|---|---|---|---|
+| **Índice da API** | `GET` | `/api/v1` | Retorna o catálogo de rotas e formatos aceitos. |
+| **Quadros** | `GET` | `/api/v1/boards` | Lista quadros do usuário (com paginação e filtro por pasta). |
+| **Criar Quadro** | `POST` | `/api/v1/boards` | Cria um novo quadro com ou sem elementos iniciais. |
+| **Obter Quadro** | `GET` | `/api/v1/boards/:id` | Retorna metadados e todos os elementos da cena. |
+| **Atualizar Quadro** | `PATCH` | `/api/v1/boards/:id` | Atualiza título, adiciona/modifica elementos ou deleta por ID. |
+| **Lixeira** | `DELETE` | `/api/v1/boards/:id` | Move o quadro para a lixeira (*soft delete*). |
+| **Mover Quadro** | `POST` | `/api/v1/boards/:id/move` | Aloca o quadro em uma pasta (ou na raiz com `null`). |
+| **Busca Global** | `GET` | `/api/v1/search?q=` | Busca full-text em títulos e no texto desenhado nas lousas. |
+| **Listar Pastas** | `GET` | `/api/v1/folders` | Lista todas as pastas do usuário. |
+| **Criar Pasta** | `POST` | `/api/v1/folders` | Cria uma pasta na raiz ou dentro de outra pasta. |
+
+
+================================================================================
+FILE: docs/api/getting-started.md
+================================================================================
+
+# Começando com a API (API Getting Started)
+
+> Crie seu primeiro quadro programaticamente no Heeey em menos de 3 minutos.
+
+A API REST v1 do **Heeey** permite criar, consultar, atualizar e organizar lousas e diagramas diretamente via código, scripts de automação, webhooks ou agentes autônomos.
+
+---
+
+## ⚡ Passo 1: Gerar sua Chave de API
+
+Todas as chamadas à API são autenticadas por uma **Chave Pessoal de API** vinculada à sua conta:
+
+1. Acesse o [heeey.click](https://heeey.click) e entre na sua conta (via Magic Link).
+2. No Dashboard, clique no ícone de chave (**Chaves de API**) no cabeçalho superior.
+3. Clique em **"Criar Nova Chave"**:
+   - Dê um nome para a chave (ex.: `script-teste`).
+   - Marque os escopos de **Leitura** (`read`) e **Escrita** (`write`).
+4. Copie a chave gerada (`hk_...`). Ela só é exibida uma única vez.
+
+---
+
+## 🚀 Passo 2: Criar seu Primeiro Quadro
+
+Envie uma requisição `POST` para `/api/v1/boards` com o título do quadro e formas básicas.
+
+Você pode usar o formato resumido de elementos (**Element Spec**), passando apenas tipo, coordenadas e o texto (`label`):
+
+```bash
+curl -X POST https://heeey.click/api/v1/boards \
+  -H "Authorization: Bearer hk_SUA_CHAVE_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Primeiro Fluxo via API",
+    "elements": [
+      {
+        "id": "step-1",
+        "type": "rectangle",
+        "x": 100,
+        "y": 150,
+        "label": "Início do Processo",
+        "backgroundColor": "#a5d8ff",
+        "strokeColor": "#1971c2"
+      },
+      {
+        "id": "step-2",
+        "type": "diamond",
+        "x": 380,
+        "y": 135,
+        "label": "Aprovado?",
+        "backgroundColor": "#ffec99",
+        "strokeColor": "#f08c00"
+      },
+      {
+        "type": "arrow",
+        "start": { "id": "step-1" },
+        "end": { "id": "step-2" },
+        "label": "submete"
+      }
+    ]
+  }'
+```
+
+### Resposta de Sucesso (`201 Created`):
+```json
+{
+  "board": {
+    "id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "title": "Primeiro Fluxo via API",
+    "folder_id": null,
+    "access_level": "edit",
+    "created_at": "2026-09-23T14:00:00Z",
+    "updated_at": "2026-09-23T14:00:00Z",
+    "deleted_at": null,
+    "element_count": 5,
+    "url": "https://heeey.click/b/e67e3a1e-8e89-4089-a5f1-382a39281a92"
+  }
+}
+```
+
+> **Dica**: Copie o link retornado em `url` e abra-o no seu navegador para ver o quadro desenhado com as cores e vinculações magnéticas perfeitamente ajustadas!
+
+---
+
+## 👁️ Passo 3: Consultar os Dados do Quadro
+
+Para ler o estado atual do quadro criado:
+
+```bash
+curl -X GET https://heeey.click/api/v1/boards/e67e3a1e-8e89-4089-a5f1-382a39281a92 \
+  -H "Authorization: Bearer hk_SUA_CHAVE_AQUI"
+```
+
+A resposta conterá os metadados do quadro e o array completo `elements` com todos os objetos vetoriais Excalidraw renderizáveis.
+
+---
+
+## 🔴 Passo 4: Atualização em Tempo Real (Live Update)
+
+Deixe o quadro aberto em uma aba do navegador e execute a chamada `PATCH` abaixo para adicionar uma nova etapa ao fluxo:
+
+```bash
+curl -X PATCH https://heeey.click/api/v1/boards/e67e3a1e-8e89-4089-a5f1-382a39281a92 \
+  -H "Authorization: Bearer hk_SUA_CHAVE_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "elements": [
+      {
+        "id": "step-3",
+        "type": "rectangle",
+        "x": 650,
+        "y": 150,
+        "label": "Produção Concluída",
+        "backgroundColor": "#b2f2bb",
+        "strokeColor": "#2f9e44"
+      },
+      {
+        "type": "arrow",
+        "start": { "id": "step-2" },
+        "end": { "id": "step-3" },
+        "label": "sim"
+      }
+    ]
+  }'
+```
+
+Olhe para a aba do navegador: o novo bloco e a seta aparecerão instantaneamente na tela sem você recarregar a página! O Heeey faz o broadcast das alterações pelo canal Supabase Realtime automaticamente.
+
+---
+
+## 📚 Próximos Passos
+
+- Conheça o formato detalhado de formas, rótulos e setas no [Esquema de Conteúdo da Cena](scene-content-schema.md).
+- Consulte todos os métodos disponíveis na [Referência de Endpoints](endpoints.md).
+- Entenda como paginar resultados em [Paginação](pagination.md).
+- Conheça os limites de tamanho de payload em [Taxas & Limites Operacionais](rate-limiting.md).
+
+
+================================================================================
+FILE: docs/api/authentication.md
+================================================================================
+
+# Autenticação & Chaves de API
+
+O Heeey utiliza **Chaves Pessoais de API** (*Personal API Keys*) para autorizar requisições feitas à API REST (`/api/v1`) e ao servidor MCP (`/api/mcp`).
+
+---
+
+## 🔑 Como Obter uma Chave de API
+
+1. Acesse o [heeey.click](https://heeey.click) e entre na sua conta (via Magic Link).
+2. No Dashboard, clique no ícone de chave (**Chaves de API**) no cabeçalho.
+3. Clique em **"Criar Nova Chave"**:
+   - Defina um nome identificador (ex.: `script-backup`, `claude-code`, `github-actions`).
+   - Selecione os escopos desejados:
+     - **Leitura (`read`)**: Permite listar quadros, pastas e ler o conteúdo das cenas.
+     - **Escrita (`write`)**: Permite criar, alterar, mover e enviar quadros para a lixeira.
+4. **Guarde sua chave com segurança**: A chave completa com o formato `hk_<prefixo>_<segredo>` só é exibida **uma única vez** no momento da criação.
+
+---
+
+## 🔒 Formato da Chave & Armazenamento Seguro
+
+- **Formato**: `hk_` seguido de 8 caracteres hexadecimais de prefixo e 40 caracteres de segredo criptográfico gerado via `gen_random_bytes(24)`.
+  Exemplo: `hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4`
+- **Armazenamento no Banco**: O segredo puro **nunca** é gravado no banco de dados. O Supabase armazena apenas:
+  - O `prefix` (ex.: `hk_1a2b3c4d`), exibido na interface para que você saiba qual chave é qual.
+  - O `key_hash`: digest criptográfico gerado com `sha256(chave)`.
+- **Limite por Conta**: Cada usuário pode manter até **20 chaves ativas simultaneamente**.
+
+---
+
+## 📤 Enviando a Chave nas Requisições
+
+Você pode enviar a chave através do cabeçalho padrão `Authorization` ou do cabeçalho customizado `X-API-Key`:
+
+### Opção 1: Cabeçalho Authorization Bearer (Recomendado)
+```http
+GET /api/v1/boards HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+```
+
+### Opção 2: Cabeçalho X-API-Key
+```http
+GET /api/v1/boards HTTP/1.1
+Host: heeey.click
+X-API-Key: hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+```
+
+---
+
+## 🚫 Revogando uma Chave
+
+Caso sua chave tenha vazado ou você deseje desativar uma integração antiga:
+1. Abra o modal de **Chaves de API** no Dashboard.
+2. Localize a chave pelo seu prefixo ou nome.
+3. Clique em **"Revogar"**.
+4. A chave é marcada com `revoked_at = now()` e deixará de funcionar imediatamente. A revogação é definitiva e não pode ser desfeita.
+
+
+================================================================================
+FILE: docs/api/pagination.md
+================================================================================
+
+# Paginação na API (Pagination)
+
+Ao listar recursos volumosos (como quadros de trabalho ou resultados de busca), o Heeey utiliza o modelo padrão de paginação por **Deslocamento e Limite** (*Offset & Limit*).
+
+---
+
+## 🧭 Parâmetros de Paginação
+
+Os endpoints que suportam paginação aceitam os seguintes parâmetros de consulta na URL (*query parameters*):
+
+| Parâmetro | Tipo | Padrão | Mínimo | Máximo | Descrição |
+|---|---|---|---|---|---|
+| `limit` | `integer` | `50` | `1` | `200` | Quantidade máxima de registros a retornar na página atual. |
+| `offset` | `integer` | `0` | `0` | — | Quantidade de registros a saltar a partir do início da ordenação. |
+
+> **Nota de Segurança**: Se você enviar um valor de `limit` maior que 200 ou menor que 1, o banco de dados do Heeey ajustará automaticamente o valor para os limites permitidos (`least(greatest(limit, 1), 200)`), sem lançar erro.
+
+---
+
+## 📋 Endpoints com Suporte a Paginação
+
+### 1. `GET /api/v1/boards`
+Lista os quadros pertencentes ao usuário da chave de API, ordenados de forma decrescente pela data da última edição (`updated_at desc`).
+
+```http
+GET /api/v1/boards?limit=25&offset=50 HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_...
+```
+
+**Filtros combináveis com paginação:**
+- `folder_id=<uuid>`: Pagina apenas quadros contidos na pasta especificada.
+- `include_trashed=true`: Inclui quadros na lixeira na paginação.
+
+### 2. `GET /api/v1/search`
+Busca textual em títulos e conteúdo desenhado no canvas. Aceita o parâmetro:
+- `limit`: Quantidade máxima de resultados (padrão: `20`).
+- Resultados são ordenados pela pontuação de relevância (`rank desc`).
+
+```http
+GET /api/v1/search?q=kubernetes&limit=10 HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_...
+```
+
+---
+
+## 💻 Exemplos de Implementação
+
+### Exemplo 1: cURL
+
+Para buscar as 3 primeiras páginas de 50 quadros:
+
+```bash
+# Página 1 (quadros 0 a 49)
+curl "https://heeey.click/api/v1/boards?limit=50&offset=0" \
+  -H "Authorization: Bearer hk_..."
+
+# Página 2 (quadros 50 a 99)
+curl "https://heeey.click/api/v1/boards?limit=50&offset=50" \
+  -H "Authorization: Bearer hk_..."
+
+# Página 3 (quadros 100 a 149)
+curl "https://heeey.click/api/v1/boards?limit=50&offset=100" \
+  -H "Authorization: Bearer hk_..."
+```
+
+---
+
+### Exemplo 2: TypeScript / JavaScript (Iterando Todas as Páginas)
+
+```typescript
+interface BoardSummary {
+  id: string;
+  title: string;
+  url: string;
+  updated_at: string;
+}
+
+async function fetchAllBoards(apiKey: string): Promise<BoardSummary[]> {
+  const allBoards: BoardSummary[] = [];
+  const pageSize = 100;
+  let offset = 0;
+
+  while (true) {
+    const response = await fetch(
+      `https://heeey.click/api/v1/boards?limit=${pageSize}&offset=${offset}`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Falha na API: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const boards: BoardSummary[] = data.boards || [];
+    allBoards.push(...boards);
+
+    // Se a página retornou menos itens que o limite, atingimos o final
+    if (boards.length < pageSize) {
+      break;
+    }
+
+    offset += pageSize;
+  }
+
+  return allBoards;
+}
+```
+
+---
+
+### Exemplo 3: Python
+
+```python
+import requests
+
+API_KEY = "hk_..."
+BASE_URL = "https://heeey.click/api/v1/boards"
+
+def get_all_boards():
+    boards = []
+    limit = 50
+    offset = 0
+
+    while True:
+        resp = requests.get(
+            BASE_URL,
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            params={"limit": limit, "offset": offset}
+        )
+        resp.raise_for_status()
+        batch = resp.json().get("boards", [])
+        boards.extend(batch)
+
+        if len(batch) < limit:
+            break
+        offset += limit
+
+    return boards
+```
+
+---
+
+## 🎯 Boas Práticas
+
+1. **Evite Offsets Gigantescos**: Para contas com milhares de quadros, combine a paginação com o filtro `folder_id` para manter as consultas em faixas reduzidas.
+2. **Condição de Parada**: Como a API não retorna um contador total para manter latência mínima, a condição ideal de encerramento do loop é checar se o número de itens retornados em `boards` é estritamente menor do que o `limit` solicitado.
+
+
+================================================================================
+FILE: docs/api/rate-limiting.md
+================================================================================
+
+# Taxas & Limites Operacionais (Rate Limiting)
+
+Para garantir estabilidade, baixa latência e consumo equilibrado de recursos entre todos os usuários e integrações, o Heeey estabelece limites operacionais para a API REST (`/api/v1`) e para o servidor MCP (`/api/mcp`).
+
+---
+
+## 🛑 Limites Estruturais de Dados
+
+| Escopo | Limite | Código de Erro | Detalhes |
+|---|---|---|---|
+| **Elementos por Chamada (`elements`)** | Máx. **5.000 elementos** | `400 Bad Request` (`invalid_request`) | Validado pela função de banco `api_check_elements`. Evita payloads excessivos que sobrecarreguem o canvas no navegador dos clientes conectados. |
+| **Nós por Diagrama (`create_diagram`)** | Máx. **300 nós** | `400 Bad Request` (`invalid_request`) | O motor de layout Dagre calcula a disposição de até 300 nós com alta velocidade e roteamento sem colisão de setas. |
+| **Chaves de API Ativas por Usuário** | Máx. **20 chaves** | `400 Bad Request` (`invalid_request`) | Cada conta pode manter até 20 chaves ativas simultâneas. Revogue chaves antigas antes de gerar novas se atingir a cota. |
+| **Dimensão Máxima de Imagens** | **1.600 px** (largura/altura) | Redimensionamento automático | Imagens arrastadas ou coladas são redimensionadas no cliente antes do envio ao Supabase Storage (`board-media`). |
+| **Tamanho Alvo de Mídia Otimizada** | **< 150 KB** por imagem | Compressão automática | Pipeline converte para WebP (qualidade 0.8) mantendo alta fidelidade com baixíssimo consumo de banda. |
+| **Tempo Limite de Execução (Edge)** | **25 segundos** | `504 Gateway Timeout` | As funções de borda (`api/v1.ts` e `api/mcp.ts`) executam no Vercel Edge Runtime e respondem tipicamente em menos de 100ms. |
+
+---
+
+## 🚦 Limites de Concorrência & Rede
+
+1. **Requisições Simultâneas**:
+   - A arquitetura serverless no Vercel Edge escala automaticamente para atender picos de requisições concorrentes.
+   - Chamadas simultâneas de atualização (`PATCH /boards/:id` ou chamadas MCP) são serializadas por transações no PostgreSQL com bloqueio de linha (`for update`), evitando corrupção de estado.
+
+2. **Cotas do Supabase Database**:
+   - As funções da API conectam-se diretamente ao PostgreSQL via chamadas RPC autenticadas.
+   - Em caso de saturação do pool de conexões do banco, a API responderá com status `500 Server Error`.
+
+---
+
+## 💡 Recomendações e Boas Práticas
+
+### 1. Agrupe Atualizações de Elementos (Batching)
+Em vez de enviar 50 requisições individuais com um elemento cada via `PATCH /api/v1/boards/:id`, envie um único array contendo todos os 50 elementos. Isso reduz o overhead de rede e dispara apenas uma notificação de broadcast em tempo real para os colaboradores.
+
+### 2. Tratamento com Backoff Exponencial
+Caso sua integração receba um erro temporário de rede ou status 500/504, implemente uma política de repetição com atraso progressivo:
+
+```typescript
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 500) {
+  try {
+    const res = await fetch(url, options);
+    if (res.status >= 500 && retries > 0) {
+      await new Promise((r) => setTimeout(r, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    return res;
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((r) => setTimeout(r, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+}
+```
+
+### 3. Use `originBeside` e Nós Reutilizáveis
+Ao gerar diagramas em lousas existentes via MCP, reutilize os IDs de nós existentes para atualizá-los no lugar, ou confie no motor de layout para calcular as distâncias sem sobrecarregar a memória do canvas.
+
+
+================================================================================
+FILE: docs/api/error-handling.md
+================================================================================
+
+# Tratamento de Erros na API
+
+A API do Heeey segue os padrões REST tradicionais, utilizando códigos de status HTTP convencionais para sinalizar o sucesso ou a falha de uma requisição.
+
+---
+
+## 📋 Formato de Erro Padrão
+
+Todas as respostas de erro retornam um objeto JSON uniforme:
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "elements deve ser uma lista de objetos com type."
+  }
+}
+```
+
+Onde:
+- **`code`**: Identificador programático estável da classe do erro (adequado para checagens via `switch/case` em seu código).
+- **`message`**: Descrição legível em linguagem natural explicando o motivo específico da falha.
+
+---
+
+## 🚦 Códigos de Status HTTP
+
+| Status HTTP | Código (`code`) | Causa / Descrição |
+|---|---|---|
+| **`400 Bad Request`** | `invalid_request` ou `invalid_json` | Parâmetros obrigatórios ausentes, JSON malformatado, UUIDs inválidos ou tipo de elemento inexistente. |
+| **`401 Unauthorized`** | `unauthorized` | Cabeçalho `Authorization` ausente, chave malformatada, chave revogada ou inexistente. |
+| **`403 Forbidden`** | `forbidden` | A chave de API utilizada não possui escopo suficiente (ex.: chave somente leitura tentando fazer `POST`, `PATCH` ou `DELETE`). |
+| **`404 Not Found`** | `not_found` | Quadro, pasta ou rota requisitada não existe ou não pertence à conta associada à chave. |
+| **`409 Conflict`** | `conflict` | Conflito de estado do recurso (ex.: tentativa de editar ou adicionar elementos em um quadro que já está na lixeira). |
+| **`500 Internal Server Error`** | `server_error` | Erro não previsto no processamento de banco ou na função de borda. |
+
+---
+
+## 🛡️ Exemplos de Respostas de Erro Comuns
+
+### 1. Chave Ausente ou Inválida (401)
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Envie sua chave de API em Authorization: Bearer <chave>."
+  }
+}
+```
+
+### 2. Escopo Insuficiente (403)
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "forbidden",
+    "message": "Esta chave de API não tem permissão de escrita."
+  }
+}
+```
+
+### 3. Modificação em Quadro na Lixeira (409)
+```http
+HTTP/1.1 409 Conflict
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "conflict",
+    "message": "Quadro na lixeira é somente leitura."
+  }
+}
+```
+
+### 4. Payload Inválido (400)
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "id deve ser um UUID."
+  }
+}
+```
+
+
+================================================================================
+FILE: docs/api/scene-content-schema.md
+================================================================================
+
+# Esquema de Conteúdo da Cena (Element Spec)
+
+O Heeey foi projetado para que você e modelos de IA não precisem montar objetos verbosos com as dezenas de propriedades internas do formato nativo do Excalidraw. A API e as ferramentas MCP aceitam uma especificação enxuta (**Element Spec**) e preenchem automaticamente posições, fontes, caixas delimitadoras e vinculações magnéticas.
+
+Elementos nativos completos do Excalidraw continuam sendo 100% suportados e passam direto pelo conversor.
+
+---
+
+## 🧩 O Formato Resumido (Element Spec)
+
+Qualquer elemento no array `elements` pode ser descrito com os seguintes campos essenciais:
+
+```typescript
+interface ElementSpec {
+  /** Identificador estável do elemento (opcional; gerado automaticamente se omitido) */
+  id?: string;
+  /** Tipo da forma ou traço */
+  type: 'rectangle' | 'ellipse' | 'diamond' | 'text' | 'arrow' | 'line' | 'frame';
+  /** Coordenadas no canvas em pixels */
+  x?: number;
+  y?: number;
+  /** Dimensões (opcionais; calculadas automaticamente a partir do label quando omitidas) */
+  width?: number;
+  height?: number;
+  /** Rótulo exibido dentro da forma ou sobre a seta */
+  label?: string | { text: string; fontSize?: number };
+  /** Conteúdo textual direto (obrigatório para type: "text") */
+  text?: string;
+  fontSize?: number;
+  /** Cores em formato CSS (#hex, rgb, etc.) */
+  strokeColor?: string;
+  backgroundColor?: string;
+  /** Extremidades conectadas para setas (apontando para o id da forma de origem/destino) */
+  start?: { id: string };
+  end?: { id: string };
+  /** Pontos relativos para setas e linhas manuais: [[0, 0], [200, 50]] */
+  points?: [number, number][];
+}
+```
+
+---
+
+## 🎨 Exemplos Práticos por Tipo de Elemento
+
+### 1. Formas com Texto Interno Centralizado (`rectangle`, `ellipse`, `diamond`)
+Basta passar a propriedade `label`. O servidor cria a forma geométrica e um elemento de texto acoplado (`boundElements` e `containerId`) perfeitamente centralizado:
+
+```json
+{
+  "id": "node-auth",
+  "type": "rectangle",
+  "x": 100,
+  "y": 150,
+  "label": "Serviço de Autenticação",
+  "backgroundColor": "#a5d8ff",
+  "strokeColor": "#1971c2"
+}
+```
+
+Para uma decisão condicional em um fluxograma:
+```json
+{
+  "id": "node-check",
+  "type": "diamond",
+  "x": 380,
+  "y": 130,
+  "label": "Token Válido?",
+  "backgroundColor": "#ffec99"
+}
+```
+
+### 2. Setas Conectadas e Magnéticas (`arrow`)
+Para ligar duas formas, utilize as propriedades `start` e `end` informando os IDs correspondentes. O Heeey calcula o centro das formas, direciona os pontos da seta e aplica o espaçamento correto das bordas (`gap: 8px`):
+
+```json
+{
+  "id": "arrow-auth-check",
+  "type": "arrow",
+  "start": { "id": "node-auth" },
+  "end": { "id": "node-check" },
+  "label": "valida token"
+}
+```
+
+> **Dica**: As setas podem se conectar a formas enviadas na mesma requisição ou a formas que **já existiam anteriormente no quadro**!
+
+### 3. Texto Avulso (`text`)
+Para cabeçalhos, títulos ou anotações livres:
+
+```json
+{
+  "type": "text",
+  "x": 100,
+  "y": 50,
+  "text": "Arquitetura do Sistema v2",
+  "fontSize": 24,
+  "strokeColor": "#1e1e1e"
+}
+```
+
+### 4. Molduras / Painéis de Agrupamento (`frame`)
+Para delimitar áreas funcionais ou seções de um diagrama:
+
+```json
+{
+  "id": "frame-backend",
+  "type": "frame",
+  "x": 50,
+  "y": 80,
+  "width": 600,
+  "height": 400,
+  "label": "Zona Segura / VPC"
+}
+```
+
+---
+
+## 🧠 Valores Padrão Atribuídos Automaticamente
+
+Quando campos cosméticos são omitidos na especificação, o Heeey aplica valores estéticos consistentes:
+
+- **Fonte**: Família 5 (`Excalifont`, fonte padrão manual do Excalidraw).
+- **Tamanhos Padrão de Formas**:
+  - `rectangle`: 180 × 80 px (expande conforme o texto).
+  - `ellipse`: 140 × 100 px.
+  - `diamond`: 180 × 110 px.
+- **Cores Padrão**:
+  - `strokeColor`: `#1e1e1e`
+  - `backgroundColor`: `transparent`
+  - `fillStyle`: `solid`
+  - `roughness`: `1` (estilo desenhado à mão característico)
+  - `opacity`: `100`
+
+---
+
+## 🔄 Visão Compacta (`describeElements`)
+
+Ao fazer chamadas de leitura com formatos otimizados para modelos de linguagem (como nas ferramentas MCP), o Heeey faz o processo inverso de descompressão:
+- Rótulos acoplados a formas são reincorporados na propriedade `label` da forma receptora.
+- Setas revelam `start: { id }` e `end: { id }`.
+- Coordenadas flutuantes são arredondadas para inteiros.
+- Essa compactação economiza até 80% dos tokens consumidos pela janela de contexto do LLM.
+
+
+================================================================================
+FILE: docs/api/endpoints.md
+================================================================================
+
+# Referência Completa de Endpoints da API REST
+
+Esta página documenta todos os endpoints disponíveis na API REST v1 do Heeey (`https://heeey.click/api/v1`).
+
+Todas as requisições (exceto `GET /api/v1`) requerem autenticação através do cabeçalho:
+```http
+Authorization: Bearer hk_...
+```
+
+---
+
+## 📌 Índice de Endpoints
+
+- [GET /api/v1](#get-apiv1) — Catálogo da API
+- [GET /api/v1/boards](#get-apiv1boards) — Listar quadros
+- [POST /api/v1/boards](#post-apiv1boards) — Criar quadro
+- [GET /api/v1/boards/:id](#get-apiv1boardsid) — Obter quadro e cena completa
+- [PATCH /api/v1/boards/:id](#patch-apiv1boardsid) — Atualizar quadro
+- [DELETE /api/v1/boards/:id](#delete-apiv1boardsid) — Enviar quadro para a lixeira
+- [POST /api/v1/boards/:id/move](#post-apiv1boardsidmove) — Mover quadro para pasta
+- [GET /api/v1/search](#get-apiv1search) — Buscar quadros por texto
+- [GET /api/v1/folders](#get-apiv1folders) — Listar pastas
+- [POST /api/v1/folders](#post-apiv1folders) — Criar pasta
+
+---
+
+## 🔍 Detalhes dos Endpoints
+
+### `GET /api/v1`
+Retorna informações gerais sobre a API, instruções de autenticação e rotas suportadas.
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "name": "heeey.click API",
+  "version": "v1",
+  "auth": "Authorization: Bearer <chave de API criada em heeey.click>",
+  "endpoints": [
+    "GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=",
+    "POST   /api/v1/boards { title, elements?, folder_id? }",
+    "GET    /api/v1/boards/:id",
+    "PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }",
+    "DELETE /api/v1/boards/:id  (move para a lixeira)",
+    "POST   /api/v1/boards/:id/move { folder_id }",
+    "GET    /api/v1/search?q=",
+    "GET    /api/v1/folders",
+    "POST   /api/v1/folders { name, parent_id? }"
+  ]
+}
+```
+
+---
+
+### `GET /api/v1/boards`
+Lista os quadros pertencentes ao usuário da chave de API, ordenados pelos editados mais recentemente.
+
+**Parâmetros de Consulta (Query Params):**
+- `folder_id` *(opcional, UUID)*: Filtra apenas quadros localizados dentro desta pasta.
+- `include_trashed` *(opcional, boolean)*: Quando `true`, inclui quadros que estão na lixeira. Padrão: `false`.
+- `limit` *(opcional, integer)*: Quantidade máxima de resultados (padrão: `50`, máx: `200`).
+- `offset` *(opcional, integer)*: Deslocamento para paginação (padrão: `0`).
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "boards": [
+    {
+      "id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+      "title": "Arquitetura de Microsserviços",
+      "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822",
+      "access_level": "edit",
+      "created_at": "2026-09-20T14:30:00Z",
+      "updated_at": "2026-09-23T01:15:00Z",
+      "deleted_at": null,
+      "element_count": 42,
+      "url": "https://heeey.click/b/e67e3a1e-8e89-4089-a5f1-382a39281a92"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/v1/boards`
+Cria um novo quadro com título e elementos opcionais.
+
+**Corpo da Requisição (JSON):**
+- `title` *(opcional, string)*: Título do quadro (se omitido, recebe o título padrão do sistema).
+- `folder_id` *(opcional, UUID)*: Pasta de destino. Se omitido ou `null`, o quadro é criado na raiz.
+- `elements` *(opcional, array)*: Lista de elementos nativos do Excalidraw ou especificações resumidas (`ElementSpec`).
+
+**Exemplo de Requisição:**
+```bash
+curl -X POST https://heeey.click/api/v1/boards \
+  -H "Authorization: Bearer hk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Pipeline de CI/CD",
+    "elements": [
+      { "id": "git", "type": "rectangle", "x": 50, "y": 100, "label": "Git Push" },
+      { "id": "build", "type": "rectangle", "x": 280, "y": 100, "label": "Build Docker" },
+      { "type": "arrow", "start": { "id": "git" }, "end": { "id": "build" } }
+    ]
+  }'
+```
+
+**Exemplo de Resposta (201 Created):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "title": "Pipeline de CI/CD",
+    "folder_id": null,
+    "access_level": "edit",
+    "created_at": "2026-09-23T02:00:00Z",
+    "updated_at": "2026-09-23T02:00:00Z",
+    "deleted_at": null,
+    "element_count": 4,
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `GET /api/v1/boards/:id`
+Retorna os metadados do quadro e o array completo com todos os elementos desenhados na cena.
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "title": "Pipeline de CI/CD",
+    "elements": [
+      {
+        "id": "git",
+        "type": "rectangle",
+        "x": 50,
+        "y": 100,
+        "width": 180,
+        "height": 80,
+        "strokeColor": "#1e1e1e",
+        "backgroundColor": "transparent",
+        "boundElements": [{ "type": "text", "id": "git-label" }]
+      }
+    ],
+    "app_state": { "viewBackgroundColor": "#ffffff" },
+    "files": {},
+    "access_level": "edit",
+    "created_at": "2026-09-23T02:00:00Z",
+    "updated_at": "2026-09-23T02:00:00Z",
+    "deleted_at": null,
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `PATCH /api/v1/boards/:id`
+Altera propriedades de um quadro existente. Atualizações de elementos transmitem broadcast em tempo real para colaboradores com a tela aberta.
+
+**Corpo da Requisição (JSON):**
+- `title` *(opcional, string)*: Novo título.
+- `elements` *(opcional, array)*: Elementos a adicionar ou atualizar. Elementos cujo `id` já existe na lousa serão atualizados (*upsert*); novos IDs serão inseridos.
+- `delete_element_ids` *(opcional, array de strings)*: Lista de IDs de elementos a remover. Se você remover uma forma com texto interno acoplado, o texto vinculado é removido em conjunto.
+
+**Exemplo de Requisição:**
+```json
+{
+  "title": "Pipeline de CI/CD (Produção)",
+  "elements": [
+    { "id": "deploy", "type": "rectangle", "x": 510, "y": 100, "label": "Deploy K8s", "backgroundColor": "#b2f2bb" },
+    { "type": "arrow", "start": { "id": "build" }, "end": { "id": "deploy" } }
+  ]
+}
+```
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "title": "Pipeline de CI/CD (Produção)",
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `DELETE /api/v1/boards/:id`
+Move o quadro para a lixeira (*soft delete*). O quadro pode ser restaurado posteriormente na interface do Heeey.
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "deleted_at": "2026-09-23T02:05:00Z",
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `POST /api/v1/boards/:id/move`
+Move o quadro para uma pasta específica ou devolve para a raiz.
+
+**Corpo da Requisição (JSON):**
+- `folder_id` *(UUID ou null)*: O ID da pasta de destino, ou `null` para mover para o nível raiz.
+
+**Exemplo de Requisição:**
+```json
+{
+  "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
+}
+```
+
+---
+
+### `GET /api/v1/search?q=`
+Pesquisa por termos em todos os quadros da conta. A busca pesquisa tanto no **título** quanto no **texto e rótulos desenhados dentro das lousas**, ignorando acentos e maiúsculas.
+
+**Parâmetros de Consulta (Query Params):**
+- `q` *(obrigatório, string)*: Termo de busca (mínimo 1 caractere).
+- `limit` *(opcional, integer)*: Limite de resultados (padrão: `20`).
+
+Consulte também o guia de [Paginação](pagination.md).
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "results": [
+    {
+      "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+      "title": "Pipeline de CI/CD",
+      "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822",
+      "updated_at": "2026-09-23T02:00:00Z",
+      "text": "Git Push · Build Docker · Deploy K8s",
+      "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+    }
+  ]
+}
+```
+
+---
+
+### `GET /api/v1/folders`
+Retorna a lista de todas as pastas criadas pelo usuário, incluindo `parent_id` para montagem de árvore (onde `parent_id: null` indica raiz).
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "folders": [
+    {
+      "id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822",
+      "name": "DevOps",
+      "parent_id": null
+    },
+    {
+      "id": "2da33d11-5cb2-4a1e-9d21-fb21bc118833",
+      "name": "Kubernetes",
+      "parent_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/v1/folders`
+Cria uma nova pasta na raiz ou aninhada dentro de outra pasta existente.
+
+**Corpo da Requisição (JSON):**
+- `name` *(obrigatório, string)*: Nome da pasta (1 a 60 caracteres).
+- `parent_id` *(opcional, UUID ou null)*: ID da pasta pai para aninhamento.
+
+**Exemplo de Resposta (201 Created):**
+```json
+{
+  "folder": {
+    "id": "3cc44e22-6dc3-5b2f-0e32-gc32cd229944",
+    "name": "Frontend",
+    "parent_id": null
+  }
+}
+```
+
+
+================================================================================
+FILE: docs/mcp/overview.md
+================================================================================
+
+# Visão Geral do Servidor MCP (Model Context Protocol)
+
+O **Heeey** disponibiliza um servidor nativo de **Model Context Protocol (MCP)**, o padrão aberto da indústria para conectar modelos de linguagem (LLMs) a fontes de dados e ferramentas externas.
+
+Com o MCP do Heeey, agentes autônomos (como Claude Code, Claude Desktop, Cursor e outros) podem inspecionar lousas existentes, criar diagramas arquiteturais complexos, reorganizar quadros bagunçados e colaborar ativamente com humanos em tempo real.
+
+---
+
+## 🚀 Como Funciona o MCP no Heeey
+
+- **Endpoint Único de Produção**: `https://heeey.click/api/mcp`
+- **Transporte**: **Streamable HTTP** (POST com payload JSON-RPC 2.0 e cabeçalhos de controle).
+- **Sem Estado (Stateless)**: Cada requisição é autenticada de forma independente via banco de dados, permitindo escalabilidade instantânea em ambientes serverless/edge sem necessidade de gerenciar daemons ou WebSockets dedicados para o agente.
+- **Versões Suportadas do Protocolo**:
+  - `2025-06-18`
+  - `2025-03-26`
+  - `2024-11-05`
+- **Interoperabilidade Verificada**: O servidor passa em testes automatizados de integração contra o SDK oficial `@modelcontextprotocol/sdk`.
+
+---
+
+## 🤖 Capacidades do Agente de IA
+
+Ao conectar um agente ao Heeey, ele recebe um conjunto completo de ferramentas capazes de:
+
+1. **Leitura Inteligente de Cenas (`get_board`)**:
+   - Por padrão, o agente recebe uma visão compacta e contextualizada da cena: formas com seus textos internos (`label`), setas indicando quais nós conectam (`start`, `end`) e coordenadas arredondadas. Isso economiza até 80% do contexto do LLM.
+2. **Geração Automatizada de Diagramas (`create_diagram`)**:
+   - O agente só precisa listar os nós (`label`, `shape`, `color`) e as ligações (`from`, `to`, `label`).
+   - O motor gráfico interno do Heeey calcula o tamanho de cada caixa pelo texto, distribui os elementos em camadas sem sobreposições e roteia as setas contornando as formas.
+3. **Organização de Lousas Existentes (`layout_board`)**:
+   - Um usuário desenhou um fluxo desorganizado? O agente pode acionar `layout_board` para alinhar formas e rotear setas automaticamente no sentido especificado (`TB`, `LR`, `BT`, `RL`).
+4. **Colaboração Visível ao Vivo**:
+   - Quando o agente insere ou edita elementos, a alteração é transmitida instantaneamente pelo Supabase Realtime. O usuário vê as formas surgirem no canvas enquanto conversa com o assistente!
+
+
+================================================================================
+FILE: docs/mcp/getting-started.md
+================================================================================
+
+# Conectando Agentes de IA ao Heeey via MCP
+
+Este guia mostra passo a passo como conectar o servidor MCP do Heeey aos clientes de IA mais populares: **Claude Code**, **Claude Desktop** e **Cursor**.
+
+---
+
+## 🔑 Pré-requisito: Obter uma Chave de API
+
+1. Acesse o [heeey.click](https://heeey.click) e entre na sua conta (Magic Link).
+2. Abra o modal de **Chaves de API** (ícone de chave no Dashboard).
+3. Crie uma chave com escopo de **Leitura e Escrita** (`read`, `write`).
+4. Copie o valor gerado (iniciado com `hk_...`).
+
+---
+
+## 1. Claude Code (CLI)
+
+O Claude Code suporta servidores MCP HTTP diretamente pelo terminal com um único comando:
+
+```bash
+claude mcp add --transport http heeey https://heeey.click/api/mcp --header "Authorization: Bearer hk_SUA_CHAVE_AQUI"
+```
+
+Para verificar a conexão:
+```bash
+claude mcp list
+```
+
+Você verá o servidor `heeey` conectado com ferramentas como `create_diagram`, `list_boards`, etc.
+
+---
+
+## 2. Claude Desktop
+
+Para utilizar o Heeey na aplicação desktop da Anthropic:
+
+1. Abra o arquivo de configuração do Claude Desktop:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+2. Adicione a configuração do Heeey na seção `mcpServers`:
+
+```json
+{
+  "mcpServers": {
+    "heeey": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote-client",
+        "https://heeey.click/api/mcp",
+        "--header",
+        "Authorization: Bearer hk_SUA_CHAVE_AQUI"
+      ]
+    }
+  }
+}
+```
+*(Nota: o Claude Desktop nativamente requer clientes SSE/HTTP através de um adaptador local ou conexão direta se suportado na versão instalada).*
+
+3. Reinicie o Claude Desktop. O ícone de ferramentas (martelo) indicará as funções do Heeey ativas.
+
+---
+
+## 3. Cursor IDE
+
+No Cursor, você pode registrar o servidor MCP nas configurações:
+
+1. Abra **Settings** > **Cursor Settings** > **Features** > **MCP Servers**.
+2. Clique em **Add New MCP Server**.
+3. Preencha os campos:
+   - **Name**: `heeey`
+   - **Type**: `command` (ou `sse`/`http` conforme sua versão)
+   - **Command**:
+     ```bash
+     npx -y mcp-remote-client https://heeey.click/api/mcp --header "Authorization: Bearer hk_SUA_CHAVE_AQUI"
+     ```
+4. Salve e recarregue o editor.
+
+---
+
+## 💡 Exemplos de Prompts para o seu Agente
+
+Assim que o agente estiver conectado, experimente comandos naturais como:
+
+> *"Crie um fluxograma no Heeey ilustrando o ciclo de vida de uma requisição HTTP passando por Nginx, API Gateway, microsserviço de usuários e PostgreSQL. Use cores agradáveis."*
+
+> *"Liste meus quadros recentes no Heeey e resuma o que está desenhado no quadro 'Arquitetura Backend'."*
+
+> *"O quadro 'Fluxo de Compra' está meio desordenado. Use a ferramenta layout_board para organizá-lo no sentido Left-to-Right."*
+
+
+================================================================================
+FILE: docs/mcp/auth-and-permissions.md
+================================================================================
+
+# Autenticação & Permissões no Servidor MCP
+
+O servidor MCP do Heeey opera sobre transporte **Streamable HTTP** (`https://heeey.click/api/mcp`) e autentica cada requisição através de **Chaves Pessoais de API** (*Personal API Keys*).
+
+Este documento explica como o acesso é validado, como as políticas de segurança são aplicadas no banco de dados e como as anotações de ferramentas orientam a execução segura por modelos de linguagem (LLMs).
+
+---
+
+## 🔑 Como a Autenticação Funciona
+
+Ao configurar um cliente MCP (como Claude Code, Claude Desktop ou Cursor), a chave de API deve ser fornecida nos cabeçalhos HTTP da conexão:
+
+```http
+POST /api/mcp HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+Content-Type: application/json
+Accept: application/json
+```
+
+O cabeçalho alternativo `X-API-Key` também é aceito:
+```http
+X-API-Key: hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+```
+
+### Ausência de Chave ou Chave Inválida
+Caso a requisição não contenha uma credencial válida:
+- Retorna HTTP status `401 Unauthorized`.
+- Inclui o cabeçalho `WWW-Authenticate: Bearer realm="heeey.click"`.
+- O corpo responde com o erro JSON-RPC 2.0 padrão:
+  ```json
+  {
+    "jsonrpc": "2.0",
+    "id": null,
+    "error": {
+      "code": -32001,
+      "message": "Envie sua chave de API do heeey.click em Authorization: Bearer <chave>."
+    }
+  }
+  ```
+
+---
+
+## 🛡️ Escopos & Isolamento de Dados no Banco
+
+As ferramentas MCP não executam com permissões administrativas globais. Cada ferramenta aciona funções no PostgreSQL que invocam `public.api_authenticate(p_key, required_scope)`:
+
+1. **Contexto do Usuário (`v_user`)**: O banco descobre quem é o dono da chave a partir do hash SHA-256 e atua estritamente sobre os registros daquele usuário.
+2. **Escopos Suportados**:
+   - **`read`**: Permissão para consultar e ler informações.
+   - **`write`**: Permissão para criar, atualizar, desenhar e excluir.
+
+### Mapeamento de Escopos por Ferramenta MCP:
+
+| Ferramenta MCP | Escopo Mínimo Requerido | Ação Executada |
+|---|---|---|
+| `list_boards` | `read` | Lista os quadros da conta. |
+| `search_boards` | `read` | Busca full-text em títulos e textos. |
+| `get_board` | `read` | Lê elementos e estado da lousa. |
+| `list_folders` | `read` | Lista pastas organizadoras. |
+| `create_board` | `write` | Cria um novo quadro. |
+| `add_elements` | `write` | Insere ou atualiza elementos no canvas. |
+| `delete_elements` | `write` | Apaga elementos específicos da cena. |
+| `rename_board` | `write` | Altera o título de um quadro. |
+| `trash_board` | `write` | Envia o quadro para a lixeira. |
+| `create_diagram` | `write` | Cria diagramas com auto-layout Dagre. |
+| `layout_board` | `write` | Reorganiza visualmente uma lousa existente. |
+| `create_folder` | `write` | Cria uma nova pasta. |
+| `move_board` | `write` | Aloca um quadro dentro de uma pasta. |
+
+> Se uma chave configurada apenas com o escopo `read` tentar invocar uma ferramenta de escrita (como `create_diagram`), a chamada não alterará nada e retornará a mensagem de erro da ferramenta: `"Esta chave de API não tem permissão de escrita."`.
+
+---
+
+## 🚦 Anotações de Ferramentas (Tool Annotations)
+
+O protocolo MCP permite sinalizar aos clientes de IA as características de segurança de cada ferramenta. O Heeey implementa três anotações fundamentais em seu catálogo:
+
+### 1. `readOnlyHint: true`
+- **Ferramentas**: `list_boards`, `search_boards`, `get_board`, `list_folders`.
+- **Efeito no Agente**: Indica que a chamada não realiza nenhuma alteração de estado. Agentes autônomos podem executá-las livremente em segundo plano para inspecionar e planejar antes de desenhar.
+
+### 2. `destructiveHint: true`
+- **Ferramentas**: `delete_elements`, `trash_board`.
+- **Efeito no Agente**: Sinaliza que dados serão removidos ou arquivados. Clientes de IA normalmente solicitam confirmação explícita ao usuário humano antes de executar ferramentas com esta anotação.
+
+### 3. `idempotentHint: true`
+- **Ferramentas**: `rename_board`, `trash_board`, `layout_board`, `move_board`.
+- **Efeito no Agente**: Indica que disparar a mesma chamada repetidas vezes produz o mesmo resultado final, permitindo retentativas seguras em caso de falhas transitórias de conexão.
+
+---
+
+## ⚙️ Protocolo vs. Erros de Ferramenta
+
+O servidor MCP do Heeey diferencia com precisão os dois níveis de erro:
+
+### 1. Erros de Protocolo JSON-RPC 2.0
+Falhas de rede, formato de requisição inválido ou métodos não implementados respondem no nível do protocolo:
+- `-32700`: JSON malformatado (*Parse error*).
+- `-32600`: Objeto não obedece à especificação JSON-RPC 2.0 (*Invalid Request*).
+- `-32601`: Método desconhecido (*Method not found*).
+- `-32602`: Nome de ferramenta desconhecido ou argumentos ausentes.
+- `-32001`: Autenticação ausente ou chave revogada.
+
+### 2. Erros de Execução de Ferramentas (`isError: true`)
+Quando a requisição é válida mas a operação no Heeey falha (por exemplo: tentar editar um quadro que já está na lixeira, passar um UUID inexistente ou violar permissões), o servidor retorna uma resposta JSON-RPC bem-sucedida contendo o payload de erro da ferramenta:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Quadro na lixeira é somente leitura."
+      }
+    ],
+    "isError": true
+  }
+}
+```
+
+Essa abordagem é crucial para agentes de IA: em vez de travar a conexão do cliente, o LLM lê a explicação textual do erro e é capaz de raciocinar e corrigir seu plano (ex.: restaurar o quadro antes de desenhar ou escolher outro quadro válido).
+
+
+================================================================================
+FILE: docs/mcp/tools.md
+================================================================================
+
+# Catálogo Completo de Ferramentas MCP do Heeey
+
+Esta página descreve a especificação técnica detalhada de todas as **13 ferramentas MCP** disponibilizadas pelo servidor do Heeey em `https://heeey.click/api/mcp`.
+
+---
+
+## 🗂️ Tabela de Referência Rápida
+
+| Ferramenta | Escopo | Anotação MCP | Finalidade Principal |
+|---|---|---|---|
+| [`list_boards`](#1-list_boards) | `read` | `readOnlyHint: true` | Lista os quadros da conta do usuário. |
+| [`search_boards`](#2-search_boards) | `read` | `readOnlyHint: true` | Busca full-text em títulos e texto desenhado no canvas. |
+| [`get_board`](#3-get_board) | `read` | `readOnlyHint: true` | Lê metadados e elementos (compacto ou detalhado). |
+| [`create_board`](#4-create_board) | `write` | — | Cria um novo quadro vazio ou com elementos. |
+| [`add_elements`](#5-add_elements) | `write` | — | Insere novos elementos ou atualiza existentes reusando IDs. |
+| [`delete_elements`](#6-delete_elements) | `write` | `destructiveHint: true` | Remove elementos por ID (rótulos de texto vão juntos). |
+| [`rename_board`](#7-rename_board) | `write` | `idempotentHint: true` | Altera o título de exibição de um quadro. |
+| [`trash_board`](#8-trash_board) | `write` | `destructiveHint: true`, `idempotentHint: true` | Envia um quadro para a lixeira (reversível). |
+| [`create_diagram`](#9-create_diagram) | `write` | — | Desenha diagramas em camadas com layout automático Dagre. |
+| [`layout_board`](#10-layout_board) | `write` | `idempotentHint: true` | Reorganiza e alinha um quadro existente automaticamente. |
+| [`list_folders`](#11-list_folders) | `read` | `readOnlyHint: true` | Lista todas as pastas criadas na conta. |
+| [`create_folder`](#12-create_folder) | `write` | — | Cria uma pasta na raiz ou dentro de outra pasta. |
+| [`move_board`](#13-move_board) | `write` | `idempotentHint: true` | Move um quadro para uma pasta ou de volta à raiz. |
+
+---
+
+## 🛠️ Especificação Individual de Ferramentas
+
+### 1. `list_boards`
+> Lista os quadros pertencentes ao usuário, ordenados a partir dos editados mais recentemente.
+
+- **Anotações**: `readOnlyHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `folder_id` *(string, opcional, UUID)*: Filtra apenas quadros localizados dentro desta pasta.
+  - `limit` *(integer, opcional)*: Quantidade máxima de quadros (padrão: `50`, mín: `1`, máx: `200`).
+- **Retorno**:
+  - `boards`: Lista de resumos de quadros, incluindo `id`, `title`, `folder_id`, `access_level`, `created_at`, `updated_at`, `deleted_at`, `element_count` e `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "list_boards",
+  "arguments": {
+    "limit": 10
+  }
+}
+```
+
+---
+
+### 2. `search_boards`
+> Busca full-text insensível a acentos sobre títulos de quadros e o texto escrito nas formas e setas do canvas.
+
+- **Anotações**: `readOnlyHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `query` *(string, obrigatório)*: Termo ou frase de busca (ex.: `"microserviços"`, `"login"`).
+- **Retorno**:
+  - `results`: Lista de quadros encontrados ordenados por relevância, contendo `id`, `title`, `folder_id`, `updated_at`, `text` (trecho de até 500 caracteres do conteúdo coincidente) e `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "search_boards",
+  "arguments": {
+    "query": "autenticação"
+  }
+}
+```
+
+---
+
+### 3. `get_board`
+> Lê os dados e elementos de uma lousa. Suporta visão compacta inteligente para economizar tokens de contexto do modelo.
+
+- **Anotações**: `readOnlyHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `board_id` *(string, obrigatório, UUID)*: ID do quadro a consultar.
+  - `detail` *(string, enum: `["compact", "full"]`, padrão: `"compact"`)*:
+    - `"compact"`: Formas combinadas com seus textos internos (`label`), setas indicando quais nós conectam (`start`, `end`) e coordenadas simplificadas. Recomendado para agentes de IA.
+    - `"full"`: Lista bruta contendo todos os elementos nativos do Excalidraw.
+- **Retorno**:
+  - `board`: Metadados do quadro com `url`.
+  - `elements`: Elementos no formato compacto ou completo solicitado.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "get_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "detail": "compact"
+  }
+}
+```
+
+---
+
+### 4. `create_board`
+> Cria um novo quadro no Heeey, opcionalmente com elementos iniciais. Retorna o quadro com sua URL pronta para abertura.
+
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `title` *(string, obrigatório)*: Título do novo quadro.
+  - `folder_id` *(string, opcional, UUID)*: Pasta de destino. Se omitido, é criado na raiz.
+  - `elements` *(array de `ElementSpec`, opcional)*: Formas ou setas a incluir na criação.
+- **Retorno**:
+  - `board`: Quadro criado contendo `id`, `title`, datas, contagem de elementos e `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "create_board",
+  "arguments": {
+    "title": "Arquitetura de Dados",
+    "elements": [
+      { "id": "db", "type": "rectangle", "x": 100, "y": 100, "label": "PostgreSQL", "backgroundColor": "#a5d8ff" }
+    ]
+  }
+}
+```
+
+---
+
+### 5. `add_elements`
+> Adiciona elementos a uma lousa existente ou atualiza formas existentes reusando seus IDs. Pessoas com o quadro aberto veem a alteração ao vivo.
+
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `board_id` *(string, obrigatório, UUID)*: ID do quadro.
+  - `elements` *(array de `ElementSpec`, obrigatório, mín 1 item)*: Formas, textos ou setas a inserir/atualizar.
+- **Retorno**:
+  - `board`: Metadados atualizados do quadro com `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "add_elements",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "elements": [
+      { "id": "cache", "type": "rectangle", "x": 350, "y": 100, "label": "Redis Cache", "backgroundColor": "#ffc9c9" },
+      { "type": "arrow", "start": { "id": "db" }, "end": { "id": "cache" }, "label": "sync" }
+    ]
+  }
+}
+```
+
+---
+
+### 6. `delete_elements`
+> Remove elementos de um quadro pelos seus IDs. Textos vinculados a formas deletadas são removidos automaticamente em cascata.
+
+- **Anotações**: `destructiveHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `board_id` *(string, obrigatório, UUID)*: ID do quadro.
+  - `element_ids` *(array de strings, obrigatório, mín 1 item)*: Lista de IDs de elementos a remover.
+- **Retorno**:
+  - `board`: Metadados atualizados do quadro com `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "delete_elements",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "element_ids": ["cache"]
+  }
+}
+```
+
+---
+
+### 7. `rename_board`
+> Altera o título de exibição de um quadro.
+
+- **Anotações**: `idempotentHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `board_id` *(string, obrigatório, UUID)*: ID do quadro.
+  - `title` *(string, obrigatório)*: Novo título para a lousa.
+- **Retorno**:
+  - `board`: Metadados atualizados do quadro com `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "rename_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "title": "Arquitetura de Dados v2"
+  }
+}
+```
+
+---
+
+### 8. `trash_board`
+> Move um quadro para a lixeira do usuário (*soft delete*). O quadro pode ser recuperado pela interface a qualquer momento.
+
+- **Anotações**: `destructiveHint: true`, `idempotentHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `board_id` *(string, obrigatório, UUID)*: ID do quadro.
+- **Retorno**:
+  - `board`: Metadados do quadro com `deleted_at` preenchido.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "trash_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92"
+  }
+}
+```
+
+---
+
+### 9. `create_diagram`
+> **A ferramenta mais poderosa para agentes de IA**. Desenha fluxogramas, arquiteturas, pipelines e árvores com dimensionamento automático pelo texto e algoritmo em camadas de Sugiyama (Dagre).
+
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `title` *(string, obrigatório quando `board_id` não for informado)*: Título da nova lousa.
+  - `board_id` *(string, opcional, UUID)*: Se informado, desenha o diagrama **ao lado do conteúdo existente** desta lousa (`originBeside`).
+  - `folder_id` *(string, opcional, UUID)*: Pasta de destino para a nova lousa.
+  - `direction` *(enum: `["TB", "LR", "BT", "RL"]`, padrão: `"TB"`)*: Orientação do fluxo.
+  - `nodes` *(array de objetos, obrigatório, 1 a 300 itens)*:
+    - `id` *(string, obrigatório)*: Identificador estável do nó.
+    - `label` *(string, obrigatório)*: Texto contido no nó (quebra automática de linhas inclusa).
+    - `shape` *(enum: `["rectangle", "ellipse", "diamond"]`, padrão: `"rectangle"`)*: Formato geométrico.
+    - `color` *(enum: `["blue", "green", "yellow", "red", "violet", "gray"]`)*: Paleta de preenchimento e traço Excalidraw.
+  - `edges` *(array de objetos, opcional)*:
+    - `from` *(string, obrigatório)*: ID do nó de origem.
+    - `to` *(string, obrigatório)*: ID do nó de destino.
+    - `label` *(string, opcional)*: Texto centralizado na seta.
+- **Retorno**:
+  - `board`: Metadados do quadro com `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "create_diagram",
+  "arguments": {
+    "title": "Pipeline de CI/CD",
+    "direction": "LR",
+    "nodes": [
+      { "id": "git", "label": "Git Push", "shape": "rectangle", "color": "blue" },
+      { "id": "ci", "label": "Testes Automatizados", "shape": "diamond", "color": "yellow" },
+      { "id": "deploy", "label": "Deploy Produção", "shape": "rectangle", "color": "green" }
+    ],
+    "edges": [
+      { "from": "git", "to": "ci", "label": "gatilho" },
+      { "from": "ci", "to": "deploy", "label": "sucesso" }
+    ]
+  }
+}
+```
+
+---
+
+### 10. `layout_board`
+> Reorganiza uma lousa existente desordenada, redistribuindo caixas e setas conectadas em camadas regulares sem afetar outros elementos soltos.
+
+- **Anotações**: `idempotentHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `board_id` *(string, obrigatório, UUID)*: ID do quadro.
+  - `direction` *(enum: `["TB", "LR", "BT", "RL"]`, opcional, padrão: `"TB"`)*: Nova orientação do layout.
+- **Retorno**:
+  - `board`: Metadados da lousa com `url`.
+  - `moved`: Quantidade de formas e setas reposicionadas.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "layout_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "direction": "LR"
+  }
+}
+```
+
+---
+
+### 11. `list_folders`
+> Lista todas as pastas criadas pelo usuário, permitindo navegar na hierarquia organizacional.
+
+- **Anotações**: `readOnlyHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - Objeto vazio `{}`.
+- **Retorno**:
+  - `folders`: Lista de pastas, onde cada item possui `id`, `name` e `parent_id` (`null` para pastas no nível raiz).
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "list_folders",
+  "arguments": {}
+}
+```
+
+---
+
+### 12. `create_folder`
+> Cria uma nova pasta organizadora de quadros, com suporte a aninhamento recursivo.
+
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `name` *(string, obrigatório)*: Nome da pasta.
+  - `parent_id` *(string, opcional, UUID)*: ID da pasta pai (para criar uma subpasta). Se omitido, a pasta é criada na raiz.
+- **Retorno**:
+  - `folder`: Objeto contendo `id`, `name` e `parent_id`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "create_folder",
+  "arguments": {
+    "name": "Infraestrutura Cloud",
+    "parent_id": null
+  }
+}
+```
+
+---
+
+### 13. `move_board`
+> Move um quadro para uma pasta de destino, ou devolve o quadro para a raiz do painel.
+
+- **Anotações**: `idempotentHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - `board_id` *(string, obrigatório, UUID)*: ID do quadro.
+  - `folder_id` *(string ou null, opcional)*: ID da pasta de destino, ou `null` para mover o quadro de volta para a raiz.
+- **Retorno**:
+  - `board`: Metadados do quadro atualizado com `url`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "move_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
+  }
+}
+```
+
+
+================================================================================
+FILE: docs/mcp/diagram-layout.md
+================================================================================
+
+# Motor de Layout Automático de Diagramas
+
+Desenhar diagramas bonitos através de modelos de linguagem costuma ser um desafio: LLMs não possuem percepção espacial nativa de pixels, resultando frequentemente em caixas sobrepostas, setas que cruzam formas e textos cortados.
+
+O Heeey resolve esse problema com um motor de layout determinístico embutido no servidor (`diagramLayout.ts`), construído sobre o algoritmo em camadas de Sugiyama via **Dagre**.
+
+---
+
+## 🏗️ Como Funciona o Algoritmo
+
+Quando o agente invoca a ferramenta `create_diagram` ou `layout_board`:
+
+```
+[Nós & Arestas Simples]
+         │
+         ▼
+1. Cálculo Textual & Auto-Wrap:
+   - Mede as dimensões reais do texto com base na fonte Excalifont.
+   - Aplica quebra automática de palavras (word wrap) em largura ideal.
+   - Expande retângulos, elipses e losangos para acomodar o texto com folga interna (padding).
+         │
+         ▼
+2. Algoritmo em Camadas (Sugiyama via Dagre):
+   - Atribui nós a camadas sequenciais conforme a direção do fluxo (TB, LR, BT, RL).
+   - Minimiza cruzamento de setas (crossing reduction).
+   - Distribui espaçamentos harmônicos (nodeSpacing: 50px, rankSpacing: 70px).
+         │
+         ▼
+3. Roteamento Inteligente de Setas & Polyline:
+   - As arestas dobram suavemente ao redor das formas para evitar colisão.
+   - Aplica o recuo das pontas (`trimEnds`) para que as pontas de seta não toquem a borda das caixas.
+   - Vincula magneticamente o início e o fim aos nós correspondentes.
+         │
+         ▼
+[Cena Excalidraw Pronta & Transmitida ao Vivo]
+```
+
+---
+
+## 🧭 Direções de Fluxo Suportadas (`direction`)
+
+O parâmetro `direction` define a orientação geral do diagrama:
+
+| Direção | Nome | Uso Típico |
+|---|---|---|
+| `'TB'` (Padrão) | *Top to Bottom* | Fluxogramas verticais, organogramas, árvores de decisão. |
+| `'LR'` | *Left to Right* | Pipelines de CI/CD, esteiras de dados, jornadas do usuário. |
+| `'BT'` | *Bottom to Top* | Modelagens de camadas inferiores para superiores. |
+| `'RL'` | *Right to Left* | Diagramas com sentido reverso ou fluxos de retorno. |
+
+---
+
+## 🎨 Paleta de Cores dos Nós
+
+O motor possui uma paleta de 6 tons pastéis selecionados da estética nativa do Excalidraw:
+
+| Cor (`color`) | Cor de Traço (`strokeColor`) | Cor de Fundo (`backgroundColor`) | Significado Sugerido |
+|---|---|---|---|
+| `'blue'` | `#1971c2` | `#a5d8ff` | Serviços, bancos de dados, nós neutros |
+| `'green'` | `#2f9e44` | `#b2f2bb` | Sucesso, nós finais, aprovação |
+| `'yellow'` | `#f08c00` | `#ffec99` | Decisões, avisos, filas, processamento |
+| `'red'` | `#e03131` | `#ffc9c9` | Erros, falhas, zonas críticas |
+| `'violet'` | `#6741d9` | `#d0bfff` | Usuários, clientes externos, gateways |
+| `'gray'` | `#495057` | `#e9ecef` | Componentes secundários, infraestrutura |
+
+---
+
+## 📍 Posicionamento ao Lado de Conteúdo Existente (`originBeside`)
+
+Se você instruir o agente a adicionar um diagrama em um quadro que **já possui desenhos existentes** (passando o parâmetro `board_id`):
+
+- O motor calcula a caixa delimitadora (*bounding box*) de todos os elementos vivos atualmente na lousa.
+- Posiciona o novo diagrama automaticamente **à direita do conteúdo anterior** com uma margem de segurança de `160px`.
+- Dessa forma, nenhum desenho existente é sobrescrito ou tampado!
+
