@@ -1,0 +1,6 @@
+/* The app locks the viewport for the canvas; landing pages scroll like documents */
+html,
+body {
+  height: auto;
+  overflow: visible;
+}

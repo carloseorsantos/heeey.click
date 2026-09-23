@@ -18,9 +18,9 @@ Two audiences, one page each (don't mix them on the same page):
 - Secondary (diagnostic only, not a conversion): `board_created`, `api_key_created`
 
 ## Money pages
-None yet — `/` is the app dashboard, not a landing page. To create:
-- Landing for audience 1 (PT-BR)
-- Landing for audience 2 (EN) — can build on /docs/mcp
+- https://www.heeey.click/lousa-online — audience 1 (PT-BR). Target: "lousa online colaborativa", "quadro branco online grátis". CTA: /?settings=account
+- https://www.heeey.click/whiteboard-mcp — audience 2 (EN). Target: "whiteboard MCP server", "Excalidraw MCP". CTA: /?settings=account (then API key)
+- `/` is still the app dashboard, not a landing page
 
 ## Brand guardrails
 <!-- Things we never say, tone, claims we can't make. -->

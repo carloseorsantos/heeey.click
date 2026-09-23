@@ -43,6 +43,10 @@ const SECTIONS: { id: SettingsSection; label: MessageKey; icon: LucideIcon; tint
   { id: 'about', label: 'settings.about', icon: Info, tint: 'bg-[#8e8e93]' },
 ];
 
+export function isSettingsSection(value: string): value is SettingsSection {
+  return SECTIONS.some((s) => s.id === value);
+}
+
 const APP_VERSION = '0.1.0';
 const MOD_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
