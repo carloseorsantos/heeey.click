@@ -13,6 +13,8 @@ import {
   X,
   Trash2,
   ArrowLeft,
+  FolderPlus,
+  ChevronRight,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -40,6 +42,11 @@ import { NicknameModal } from '../components/NicknameModal';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
 import { Modal } from '../components/Modal';
+import { FolderCard } from '../components/FolderCard';
+import { FolderNameModal } from '../components/FolderNameModal';
+import { MoveToFolderModal } from '../components/MoveToFolderModal';
+import { useFolders } from '../hooks/useFolders';
+import { Folder, getFolderPath, moveBoardToFolder } from '../lib/folders';
 
 interface DashboardPageProps {
   onNavigateToBoard: (boardId: string) => void;
@@ -99,6 +106,18 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
   const [boardToPurge, setBoardToPurge] = useState<Board | null>(null);
   const [isPurging, setIsPurging] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    folders,
+    available: foldersAvailable,
+    createFolder,
+    renameFolder,
+    deleteFolder,
+  } = useFolders(user?.id);
+  const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [folderModal, setFolderModal] = useState<{ mode: 'create' } | { mode: 'rename'; folder: Folder } | null>(null);
+  const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
+  const [isDeletingFolder, setIsDeletingFolder] = useState(false);
+  const [boardToMove, setBoardToMove] = useState<Board | null>(null);
 
   // Load boards from Supabase and merge with local boards
   useEffect(() => {
@@ -174,6 +193,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       access_level: 'edit',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      // New boards land in the folder being viewed
+      ...(activeFolderId ? { folder_id: activeFolderId } : {}),
     };
 
     markBoardAsCreated(newId);
@@ -329,16 +350,84 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     saveBoardThumbnail(id, thumbnail);
   }
 
+  async function handleCreateFolder(name: string) {
+    return !!(await createFolder(name, activeFolderId));
+  }
+
+  async function handleConfirmDeleteFolder() {
+    if (!folderToDelete) return;
+    const folder = folderToDelete;
+    setIsDeletingFolder(true);
+    const removed = await deleteFolder(folder.id);
+    setIsDeletingFolder(false);
+    setFolderToDelete(null);
+
+    if (!removed) {
+      showToast({ message: 'Não foi possível excluir a pasta. Tente novamente.' });
+      return;
+    }
+    // Boards inside go back to the root (the database does the same with on delete set null)
+    setBoards((prev) =>
+      prev.map((b) => {
+        if (!b.folder_id || !removed.has(b.folder_id)) return b;
+        updateLocalBoardMeta(b.id, { folder_id: null });
+        return { ...b, folder_id: null };
+      })
+    );
+    if (activeFolderId && removed.has(activeFolderId)) setCurrentFolderId(folder.parent_id);
+    showToast({ message: `Pasta “${folder.name}” excluída` });
+  }
+
+  async function handleMoveBoard(folderId: string | null) {
+    if (!boardToMove) return false;
+    const { id, folder_id: previous = null } = boardToMove;
+    const setFolder = (value: string | null) =>
+      setBoards((prev) => prev.map((b) => (b.id === id ? { ...b, folder_id: value } : b)));
+
+    setFolder(folderId);
+    if (!(await moveBoardToFolder(id, folderId))) {
+      setFolder(previous);
+      return false;
+    }
+    updateLocalBoardMeta(id, { folder_id: folderId });
+    const target = folders.find((f) => f.id === folderId);
+    showToast({ message: `Movido para “${target?.name ?? 'Meus quadros'}”` });
+    return true;
+  }
+
   const activeBoards = boards.filter((b) => !b.deleted_at);
   const trashedBoards = boards.filter((b) => !!b.deleted_at);
   const isTrashView = view === 'trash';
-  const visibleBoards = isTrashView ? trashedBoards : activeBoards;
+
+  // Folders: a board or folder pointing to an unknown folder is shown at the root
+  const folderIds = new Set(folders.map((f) => f.id));
+  const parentOf = (id: string | null | undefined) => (id && folderIds.has(id) ? id : null);
+  const activeFolderId = foldersAvailable ? parentOf(currentFolderId) : null;
+  const currentFolder = folders.find((f) => f.id === activeFolderId) ?? null;
+  const folderPath = getFolderPath(folders, activeFolderId);
+  const isSearching = searchQuery.trim().length > 0;
+  const showFolders = foldersAvailable && !isTrashView && !isSearching;
+  const visibleFolders = showFolders
+    ? folders
+        .filter((f) => parentOf(f.parent_id) === activeFolderId)
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }))
+    : [];
+  const folderItemCount = (folderId: string) =>
+    activeBoards.filter((b) => parentOf(b.folder_id) === folderId).length +
+    folders.filter((f) => f.parent_id === folderId).length;
+
+  // Search covers every folder; otherwise only the folder being viewed
+  const visibleBoards = isTrashView
+    ? trashedBoards
+    : isSearching || !foldersAvailable
+      ? activeBoards
+      : activeBoards.filter((b) => parentOf(b.folder_id) === activeFolderId);
 
   const filteredBoards = visibleBoards.filter((b) =>
     (b.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
   // Trashed boards still count, so trashing the last board does not jump back to the hero
-  const isFirstRun = !loading && boards.length === 0;
+  const isFirstRun = !loading && boards.length === 0 && folders.length === 0;
 
   const templatesSection = (
     <section aria-labelledby="templates-heading">
@@ -456,36 +545,57 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
         ) : (
           <section aria-labelledby="boards-heading" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {isTrashView && (
+              <div className="flex items-center gap-2 min-w-0 sm:flex-1">
+                {(isTrashView || currentFolder) && (
                   <button
-                    onClick={() => setView('boards')}
+                    onClick={() => (isTrashView ? setView('boards') : setCurrentFolderId(currentFolder?.parent_id ?? null))}
                     className="w-9 h-9 -ml-2 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition flex-shrink-0"
-                    aria-label="Voltar para meus quadros"
-                    title="Voltar para meus quadros"
+                    aria-label={isTrashView ? 'Voltar para meus quadros' : 'Voltar para a pasta anterior'}
+                    title={isTrashView ? 'Voltar para meus quadros' : 'Voltar'}
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                 )}
-                <h1
-                  id="boards-heading"
-                  className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap"
-                >
-                  <span>{isTrashView ? 'Lixeira' : 'Meus quadros'}</span>
-                  {!loading && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                      {visibleBoards.length}
-                    </span>
+                <div className="min-w-0">
+                  {!isTrashView && folderPath.length > 0 && (
+                    <nav aria-label="Caminho da pasta">
+                      <ol className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 min-w-0">
+                        {[{ id: null as string | null, name: 'Meus quadros' }, ...folderPath.slice(0, -1)].map((crumb) => (
+                          <li key={crumb.id ?? 'root'} className="flex items-center gap-1 min-w-0">
+                            <button
+                              onClick={() => setCurrentFolderId(crumb.id)}
+                              className="truncate max-w-[10rem] hover:text-brand-700 dark:hover:text-brand-300 hover:underline"
+                            >
+                              {crumb.name}
+                            </button>
+                            <ChevronRight className="w-3 h-3 flex-shrink-0" aria-hidden="true" />
+                          </li>
+                        ))}
+                      </ol>
+                    </nav>
                   )}
-                </h1>
+                  <h1
+                    id="boards-heading"
+                    className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap min-w-0"
+                  >
+                    <span className="truncate">
+                      {isTrashView ? 'Lixeira' : currentFolder?.name ?? 'Meus quadros'}
+                    </span>
+                    {!loading && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+                        {visibleBoards.length}
+                      </span>
+                    )}
+                  </h1>
+                </div>
               </div>
 
               <div className="flex items-center gap-2 min-w-0">
-                <div className="relative flex-1 min-w-0 sm:w-64 sm:flex-initial">
+                <div className="relative flex-1 min-w-0 sm:w-56 sm:flex-initial">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none" />
                   <input
                     type="search"
-                    placeholder={isTrashView ? 'Buscar na lixeira' : 'Buscar quadros'}
+                    placeholder={isTrashView ? 'Buscar na lixeira' : currentFolder ? 'Buscar em todas as pastas' : 'Buscar quadros'}
                     aria-label={isTrashView ? 'Buscar na lixeira por título' : 'Buscar quadros por título'}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -508,13 +618,24 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                     </span>
                   </button>
                 )}
+                {showFolders && (
+                  <button
+                    onClick={() => setFolderModal({ mode: 'create' })}
+                    className={`${iconButtonClass} flex-shrink-0`}
+                    aria-label="Nova pasta"
+                    title="Nova pasta"
+                  >
+                    <FolderPlus className="w-4 h-4" />
+                  </button>
+                )}
                 {!isTrashView && (
                   <button
                     onClick={() => handleCreateBoard()}
+                    aria-label="Novo quadro"
                     className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition flex-shrink-0"
                   >
                     <Plus className="w-4 h-4 stroke-[2.5]" />
-                    <span>Novo quadro</span>
+                    <span className="inline sm:hidden md:inline">Novo quadro</span>
                   </button>
                 )}
               </div>
@@ -526,7 +647,22 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 {!isAuthenticated && ' Entre na sua conta para excluir quadros definitivamente.'}
               </p>
             ) : (
-              !searchQuery && templatesSection
+              !isSearching && !currentFolder && templatesSection
+            )}
+
+            {visibleFolders.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {visibleFolders.map((folder) => (
+                  <FolderCard
+                    key={folder.id}
+                    folder={folder}
+                    itemCount={folderItemCount(folder.id)}
+                    onOpen={setCurrentFolderId}
+                    onRename={(f) => setFolderModal({ mode: 'rename', folder: f })}
+                    onDelete={setFolderToDelete}
+                  />
+                ))}
+              </div>
             )}
 
             {loading ? (
@@ -546,6 +682,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                     onDuplicate={handleDuplicate}
                     onDelete={handleMoveToTrash}
                     onThumbnailGenerated={handleThumbnailGenerated}
+                    onMove={foldersAvailable && !isTrashView ? setBoardToMove : undefined}
                     trash={
                       isTrashView
                         ? {
@@ -587,6 +724,20 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>Voltar para meus quadros</span>
+                </button>
+              </div>
+            ) : currentFolder && visibleFolders.length === 0 ? (
+              <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
+                <h2 className="text-base font-bold text-slate-800 dark:text-white">Esta pasta está vazia</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1.5">
+                  Crie um quadro aqui ou mova quadros existentes pelo menu de cada um.
+                </p>
+                <button
+                  onClick={() => handleCreateBoard()}
+                  className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Novo quadro nesta pasta</span>
                 </button>
               </div>
             ) : null}
@@ -640,6 +791,55 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition disabled:opacity-60"
           >
             {isPurging ? 'Excluindo…' : 'Excluir definitivamente'}
+          </button>
+        </div>
+      </Modal>
+
+      <FolderNameModal
+        isOpen={!!folderModal}
+        mode={folderModal?.mode ?? 'create'}
+        initialName={folderModal?.mode === 'rename' ? folderModal.folder.name : ''}
+        onClose={() => setFolderModal(null)}
+        onSubmit={(name) =>
+          folderModal?.mode === 'rename' ? renameFolder(folderModal.folder.id, name) : handleCreateFolder(name)
+        }
+      />
+
+      <MoveToFolderModal
+        isOpen={!!boardToMove}
+        itemName={boardToMove?.title || DEFAULT_BOARD_TITLE}
+        folders={folders}
+        currentFolderId={parentOf(boardToMove?.folder_id)}
+        onClose={() => setBoardToMove(null)}
+        onMove={handleMoveBoard}
+      />
+
+      <Modal
+        isOpen={!!folderToDelete}
+        onClose={() => !isDeletingFolder && setFolderToDelete(null)}
+        title="Excluir pasta?"
+        description={`A pasta “${folderToDelete?.name ?? ''}” e as subpastas dela serão excluídas. Os quadros de dentro voltam para Meus quadros.`}
+        icon={
+          <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+            <Trash2 className="w-5 h-5" />
+          </div>
+        }
+        size="sm"
+      >
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => setFolderToDelete(null)}
+            disabled={isDeletingFolder}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleConfirmDeleteFolder}
+            disabled={isDeletingFolder}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition disabled:opacity-60"
+          >
+            {isDeletingFolder ? 'Excluindo…' : 'Excluir pasta'}
           </button>
         </div>
       </Modal>
