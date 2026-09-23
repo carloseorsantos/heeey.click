@@ -119,3 +119,60 @@ export function electSyncPeer(
 
   return eligiblePeers[0].id;
 }
+
+/** Same window Excalidraw uses before dropping deleted elements from a scene */
+export const TOMBSTONE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Drops deleted elements (tombstones) older than maxAgeMs before persisting.
+ * Recent tombstones are kept so a collaborator with a stale copy cannot resurrect them.
+ */
+export function pruneStaleTombstones<T extends { isDeleted?: boolean; updated?: number }>(
+  elements: readonly T[],
+  now: number = Date.now(),
+  maxAgeMs: number = TOMBSTONE_MAX_AGE_MS
+): T[] {
+  return elements.filter(
+    (el) => !el.isDeleted || typeof el.updated !== 'number' || now - el.updated < maxAgeMs
+  );
+}
+
+/**
+ * Returns only the elements whose version changed since they were last broadcast,
+ * recording the new versions in sentVersions. Peers reconcile partial updates
+ * with reconcileElements, which keeps their elements that are not in the payload.
+ */
+export function takeChangedElements<T extends { id: string; version: number }>(
+  elements: readonly T[],
+  sentVersions: Map<string, number>
+): T[] {
+  const changed: T[] = [];
+  for (const el of elements) {
+    const sent = sentVersions.get(el.id);
+    if (sent === undefined || el.version > sent) {
+      changed.push(el);
+      sentVersions.set(el.id, el.version);
+    }
+  }
+  return changed;
+}
+
+/**
+ * Returns only the sanitized files whose broadcast payload changed since last sent
+ * (new file, or a base64 image that now has its uploaded storage URL).
+ */
+export function takeChangedFiles(
+  sanitizedFiles: Record<string, any> | undefined,
+  sentFiles: Map<string, string>
+): Record<string, any> | undefined {
+  if (!sanitizedFiles) return undefined;
+  const changed: Record<string, any> = {};
+  for (const [id, file] of Object.entries(sanitizedFiles)) {
+    const key = typeof file?.dataURL === 'string' ? file.dataURL : '';
+    if (sentFiles.get(id) !== key) {
+      changed[id] = file;
+      sentFiles.set(id, key);
+    }
+  }
+  return Object.keys(changed).length > 0 ? changed : undefined;
+}

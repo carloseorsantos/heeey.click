@@ -16,7 +16,15 @@ import {
   RealtimeSyncResponse,
 } from '../lib/types';
 import { getLocalBoard, saveLocalBoard, isBoardLocallyCreated, markBoardAsCreated, getBoardCreatorGuestId } from '../lib/storage';
-import { sanitizeFilesForBroadcast, computeSceneSignature, electSyncPeer } from '../lib/realtimeUtils';
+import {
+  sanitizeFilesForBroadcast,
+  computeSceneSignature,
+  electSyncPeer,
+  pruneStaleTombstones,
+  takeChangedElements,
+  takeChangedFiles,
+} from '../lib/realtimeUtils';
+import { renderBoardThumbnail, THUMBNAIL_INTERVAL_MS } from '../lib/thumbnail';
 import { useAuth } from './useAuth';
 import { debounce, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
@@ -51,6 +59,14 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   const lastChangeSignatureRef = useRef<string>('');
   const lastSentCursorRef = useRef<{ x: number; y: number; button?: string } | null>(null);
   const processedFilesRef = useRef<Set<string>>(new Set());
+  // Delta broadcasts: what this client already sent (or received) on the current channel
+  const sentVersionsRef = useRef<Map<string, number>>(new Map());
+  const sentFilesRef = useRef<Map<string, string>>(new Map());
+  const lastSentBackgroundRef = useRef<string | undefined>(undefined);
+  // Dashboard thumbnails: rendered at most every THUMBNAIL_INTERVAL_MS, flushed on leave
+  const lastThumbnailAtRef = useRef<number>(0);
+  const thumbnailDirtyRef = useRef<boolean>(false);
+  const thumbnailsSupportedRef = useRef<boolean>(true);
 
   // Determine permissions accurately:
   // - If board has owner_id, current user must match owner_id.
@@ -67,6 +83,9 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
 
   const isOwnerRef = useRef<boolean>(isOwner);
   isOwnerRef.current = isOwner;
+
+  const canEditRef = useRef<boolean>(canEdit);
+  canEditRef.current = canEdit;
 
   const effectiveUserIdRef = useRef<string>(effectiveUserId);
   effectiveUserIdRef.current = effectiveUserId;
@@ -189,18 +208,43 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
 
       setSyncStatus('saving');
       try {
-        saveLocalBoard(boardData);
+        const elements = pruneStaleTombstones(boardData.elements);
 
-        const { error, data } = await supabase
+        let thumbnail: string | null = null;
+        if (thumbnailsSupportedRef.current) {
+          if (Date.now() - lastThumbnailAtRef.current >= THUMBNAIL_INTERVAL_MS) {
+            lastThumbnailAtRef.current = Date.now();
+            thumbnailDirtyRef.current = false;
+            thumbnail = await renderBoardThumbnail(elements, boardData.files);
+            if (thumbnail === null) thumbnailDirtyRef.current = true;
+          } else {
+            thumbnailDirtyRef.current = true;
+          }
+        }
+
+        saveLocalBoard({ ...boardData, elements, ...(thumbnail !== null ? { thumbnail } : {}) });
+
+        const sceneUpdate = {
+          elements,
+          app_state: boardData.app_state,
+          files: boardData.files,
+          updated_at: new Date().toISOString(),
+        };
+        let { error, data } = await supabase
           .from('boards')
-          .update({
-            elements: boardData.elements,
-            app_state: boardData.app_state,
-            files: boardData.files,
-            updated_at: new Date().toISOString(),
-          })
+          .update(thumbnail !== null ? { ...sceneUpdate, thumbnail } : sceneUpdate)
           .eq('id', boardData.id)
           .select('id');
+
+        // Database without the thumbnail migration yet: keep saving the scene without previews
+        if (error && thumbnail !== null && error.message.includes('thumbnail')) {
+          thumbnailsSupportedRef.current = false;
+          ({ error, data } = await supabase
+            .from('boards')
+            .update(sceneUpdate)
+            .eq('id', boardData.id)
+            .select('id'));
+        }
 
         if (error) {
           console.warn('Erro ao salvar no Supabase:', error.message);
@@ -232,19 +276,45 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     }, 1200)
   ).current;
 
+  // 3.1 On leave: save pending changes now and make sure the dashboard thumbnail is current
+  useEffect(() => {
+    return () => {
+      if (!canEditRef.current || !thumbnailsSupportedRef.current) return;
+      lastThumbnailAtRef.current = 0; // a pending save renders a fresh thumbnail
+      debouncedSaveToDb.flush();
+
+      const current = boardRef.current;
+      if (!thumbnailDirtyRef.current || !current) return;
+      thumbnailDirtyRef.current = false;
+      const elements = pruneStaleTombstones(current.elements);
+      renderBoardThumbnail(elements, current.files).then((thumbnail) => {
+        if (thumbnail === null) return;
+        saveLocalBoard({ ...current, elements, thumbnail });
+        supabase.from('boards').update({ thumbnail }).eq('id', current.id).then();
+      });
+    };
+  }, [boardId, debouncedSaveToDb]);
+
   // 4. Debounced Broadcast of Canvas Changes (sanitizes files to keep heavy base64 dataURLs local)
   const debouncedBroadcastCanvas = useRef(
     debounce((elements: readonly ExcalidrawElement[], appState: AppState, files?: Record<string, any>) => {
       if (!channelRef.current) return;
 
+      // Only send what peers do not have yet; they merge it with reconcileElements
+      const changedElements = takeChangedElements(elements, sentVersionsRef.current);
+      const changedFiles = takeChangedFiles(sanitizeFilesForBroadcast(files), sentFilesRef.current);
+      const backgroundChanged = appState.viewBackgroundColor !== lastSentBackgroundRef.current;
+      if (changedElements.length === 0 && !changedFiles && !backgroundChanged) return;
+      lastSentBackgroundRef.current = appState.viewBackgroundColor;
+
       const payload: RealtimeCanvasUpdate = {
         type: 'canvas-update',
         boardId,
-        elements,
+        elements: changedElements,
         appState: {
           viewBackgroundColor: appState.viewBackgroundColor,
         },
-        files: sanitizeFilesForBroadcast(files),
+        files: changedFiles,
         senderId: effectiveUserIdRef.current,
         timestamp: Date.now(),
       };
@@ -289,6 +359,20 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     });
 
     channelRef.current = channel;
+
+    // New channel: the next local change is broadcast in full once, then as deltas
+    sentVersionsRef.current = new Map();
+    sentFilesRef.current = new Map();
+    lastSentBackgroundRef.current = undefined;
+
+    // Elements and files received from peers do not need to be echoed back
+    const markReceived = (elements: readonly any[], files?: Record<string, any>) => {
+      for (const el of elements) {
+        const sent = sentVersionsRef.current.get(el.id);
+        if (sent === undefined || el.version > sent) sentVersionsRef.current.set(el.id, el.version);
+      }
+      if (files) takeChangedFiles(files, sentFilesRef.current);
+    };
 
     // Presence: track online users with deduplication
     channel
@@ -360,6 +444,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             payload.elements as any,
             currentAppState
           );
+          markReceived(payload.elements, payload.files);
 
           // Sync binary files into Excalidraw if present in the broadcast and has valid dataURL
           if (payload.files && Object.keys(payload.files).length > 0) {
@@ -497,6 +582,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
               payload.elements as any,
               api.getAppState()
             );
+            markReceived(payload.elements, payload.files);
 
             if (payload.files) {
               const filesWithData = Object.values(payload.files).filter(

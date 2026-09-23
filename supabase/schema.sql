@@ -15,7 +15,9 @@ create table if not exists public.boards (
   created_at timestamptz not null default timezone('utc'::text, now()),
   updated_at timestamptz not null default timezone('utc'::text, now()),
   -- Lixeira: preenchido quando o quadro é arquivado (soft delete)
-  deleted_at timestamptz
+  deleted_at timestamptz,
+  -- Prévia WebP (data URL) para o dashboard; '' = quadro vazio, null = ainda não gerada
+  thumbnail text
 );
 
 -- 2. Índices de performance
@@ -70,8 +72,9 @@ begin
   ) then
     raise exception 'Quadro na lixeira é somente leitura. Restaure-o para editar.';
   end if;
-  -- Mover para a lixeira ou restaurar não conta como edição
-  if (to_jsonb(new) - 'deleted_at' - 'updated_at') = (to_jsonb(old) - 'deleted_at' - 'updated_at') then
+  -- Mover para a lixeira, restaurar ou atualizar a miniatura não conta como edição
+  if (to_jsonb(new) - 'deleted_at' - 'updated_at' - 'thumbnail')
+     = (to_jsonb(old) - 'deleted_at' - 'updated_at' - 'thumbnail') then
     new.updated_at = old.updated_at;
   else
     new.updated_at = timezone('utc'::text, now());
