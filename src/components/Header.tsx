@@ -286,7 +286,7 @@ export function Header({
 
         <button
           onClick={onOpenShare}
-          className="h-10 flex items-center gap-1.5 px-3 sm:px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-semibold shadow-sm shadow-brand-600/30 transition"
+          className="h-10 flex items-center gap-1.5 px-3 sm:px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white text-sm font-semibold shadow-sm shadow-brand-600/30 transition"
           aria-label={t('header.share')}
         >
           <Share2 className="w-4 h-4" />

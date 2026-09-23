@@ -122,7 +122,7 @@ export function ShareModal({
             onClick={handleCopy}
             className={cn(
               'flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold text-sm text-white transition shadow-sm flex-shrink-0',
-              copied ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-brand-600 hover:bg-brand-700 active:scale-95'
+              copied ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-brand-600 hover:bg-brand-700 active:scale-[0.97]'
             )}
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}

@@ -81,7 +81,7 @@ export function BoardCard({
   const displayTitle = board.title || t('board.untitled');
 
   return (
-    <article className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 shadow-sm hover:shadow-lg hover:border-brand-300 dark:hover:border-brand-700/50 focus-within:border-brand-400 transition-all duration-200 flex flex-col">
+    <article className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 shadow-sm hover:shadow-lg hover:border-brand-300 dark:hover:border-brand-700/50 focus-within:border-brand-400 transition-[box-shadow,border-color] duration-200 flex flex-col">
       {/* Canvas preview */}
       <div
         aria-hidden="true"
@@ -147,7 +147,7 @@ export function BoardCard({
           {showMenu && (
             <div
               role="menu"
-              className="absolute right-0 bottom-10 sm:bottom-auto sm:top-10 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-pop-in"
+              className="absolute right-0 bottom-10 sm:bottom-auto sm:top-10 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-pop-in origin-bottom-right sm:origin-top-right"
             >
               {trash ? (
                 <>

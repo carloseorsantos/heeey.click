@@ -54,3 +54,21 @@ html, body, #root {
   background-color: transparent;
 }
 
+
+/* Reduced motion: fewer and gentler animations, not zero.
+   Keep fades and spinners; drop movement and scale. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop-in {
+    animation-name: fade-in;
+  }
+
+  [class*='hover:scale-'],
+  [class*='active:scale-'],
+  .motion-fade-only {
+    transform: none !important;
+  }
+
+  .motion-slide {
+    transition: none !important;
+  }
+}

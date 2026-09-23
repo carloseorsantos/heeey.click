@@ -21,7 +21,7 @@ export function FolderCard({ folder, itemCount, onOpen, onRename, onDelete }: Fo
   const menuRef = useDismiss<HTMLDivElement>(showMenu, () => setShowMenu(false));
 
   return (
-    <article className="group relative flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-brand-700/50 focus-within:border-brand-400 transition-all">
+    <article className="group relative flex items-center gap-3 p-3 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm hover:shadow-md hover:border-brand-300 dark:hover:border-brand-700/50 focus-within:border-brand-400 transition-[box-shadow,border-color]">
       <span className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-brand-50 text-brand-700 dark:bg-brand-950/40 dark:text-brand-300">
         <FolderIcon className="w-5 h-5" />
       </span>
@@ -54,7 +54,7 @@ export function FolderCard({ folder, itemCount, onOpen, onRename, onDelete }: Fo
         {showMenu && (
           <div
             role="menu"
-            className="absolute right-0 top-10 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-pop-in"
+            className="absolute right-0 top-10 w-48 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-pop-in origin-top-right"
           >
             <button
               role="menuitem"

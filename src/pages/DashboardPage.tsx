@@ -60,6 +60,7 @@ interface DashboardPageProps {
 }
 
 const TOAST_MS = 5000;
+const TOAST_EXIT_MS = 150;
 
 interface TemplateOption {
   title: MessageKey;
@@ -126,6 +127,8 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'boards' | 'trash'>('boards');
   const [toast, setToast] = useState<Toast | null>(null);
+  // Kept separate from `toast` so the last message stays mounted while it animates out
+  const [isToastOpen, setIsToastOpen] = useState(false);
   const [boardToPurge, setBoardToPurge] = useState<Board | null>(null);
   const [isPurging, setIsPurging] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -338,7 +341,15 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
   function showToast(next: Toast) {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast(next);
-    toastTimerRef.current = setTimeout(() => setToast(null), TOAST_MS);
+    setIsToastOpen(true);
+    toastTimerRef.current = setTimeout(hideToast, TOAST_MS);
+  }
+
+  // Animate out, then unmount once the (faster) exit transition has finished
+  function hideToast() {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setIsToastOpen(false);
+    toastTimerRef.current = setTimeout(() => setToast(null), TOAST_EXIT_MS);
   }
 
   function applyTrashedLocally(id: string, deletedAt: string | null) {
@@ -523,7 +534,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
           <button
             key={title}
             onClick={() => handleCreateBoard(t(boardTitle), getElements())}
-            className={`flex flex-col sm:flex-row items-center gap-2 sm:gap-3 p-3 rounded-2xl text-center sm:text-left bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition group ${hoverClass}`}
+            className={`flex flex-col sm:flex-row items-center gap-2 sm:gap-3 p-3 rounded-2xl text-center sm:text-left bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition active:scale-[0.97] group ${hoverClass}`}
           >
             <span
               className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform ${iconClass}`}
@@ -644,7 +655,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
                 <div className="flex flex-wrap items-center gap-3 mt-6">
                   <button
                     onClick={() => handleCreateBoard()}
-                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-brand-700 font-bold text-sm shadow-lg hover:bg-brand-50 active:scale-95 transition"
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-brand-700 font-bold text-sm shadow-lg hover:bg-brand-50 active:scale-[0.97] transition"
                   >
                     <Plus className="w-5 h-5 stroke-[2.5]" />
                     <span>{t('dashboard.createFirst')}</span>
@@ -757,7 +768,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
                   <button
                     onClick={() => handleCreateBoard()}
                     aria-label={t('dashboard.newBoard')}
-                    className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition flex-shrink-0"
+                    className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition flex-shrink-0"
                   >
                     <Plus className="w-4 h-4 stroke-[2.5]" />
                     <span className="inline sm:hidden md:inline">{t('dashboard.newBoard')}</span>
@@ -907,13 +918,19 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
       {/* Toast (with optional undo) */}
       <div aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm">
         {toast && (
-          <div className="flex items-center justify-between gap-3 pl-4 pr-2 py-2 min-h-[3.25rem] bg-slate-900 text-white rounded-xl shadow-2xl animate-pop-in dark:bg-slate-800 dark:border dark:border-slate-700">
+          <div
+            className={`flex items-center justify-between gap-3 pl-4 pr-2 py-2 min-h-[3.25rem] bg-slate-900 text-white rounded-xl shadow-2xl dark:bg-slate-800 dark:border dark:border-slate-700 motion-fade-only transition-[opacity,transform] [@starting-style]:opacity-0 [@starting-style]:translate-y-2 [@starting-style]:scale-[0.97] ${
+              isToastOpen
+                ? 'duration-[250ms] ease-out'
+                : 'duration-150 ease-out opacity-0 translate-y-2 scale-[0.97] pointer-events-none'
+            }`}
+          >
             <span className="text-sm truncate">{toast.message}</span>
             {toast.onUndo && (
               <button
                 onClick={() => {
                   toast.onUndo?.();
-                  setToast(null);
+                  hideToast();
                 }}
                 className="px-3 py-2 rounded-lg text-sm font-semibold text-brand-300 hover:bg-white/10 transition flex-shrink-0"
               >

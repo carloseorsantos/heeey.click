@@ -351,7 +351,7 @@ export function DocsPage({
         {/* Left Sidebar */}
         <aside
           className={`
-            fixed lg:static top-16 bottom-0 left-0 z-30 w-72 sm:w-80 bg-slate-50 dark:bg-slate-900/70 border-r border-slate-200/80 dark:border-slate-800 flex flex-col flex-shrink-0 transition-transform duration-200 ease-in-out
+            fixed lg:static top-16 bottom-0 left-0 z-30 w-72 sm:w-80 bg-slate-50 dark:bg-slate-900/70 border-r border-slate-200/80 dark:border-slate-800 flex flex-col flex-shrink-0 motion-slide transition-transform duration-300 ease-drawer
             ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           `}
         >

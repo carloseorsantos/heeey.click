@@ -88,7 +88,7 @@ export function NicknameModal({ isOpen, onClose }: NicknameModalProps) {
                   key={c.stroke}
                   type="button"
                   onClick={() => setSelectedColor({ background: c.background, stroke: c.stroke })}
-                  className={`h-10 rounded-xl flex items-center justify-center transition-all ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ${
+                  className={`h-10 rounded-xl flex items-center justify-center transition-[transform,box-shadow] ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ${
                     isSelected ? 'ring-2 ring-slate-900 dark:ring-white scale-105' : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: c.stroke }}

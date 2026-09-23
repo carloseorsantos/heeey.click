@@ -489,7 +489,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
                       setShowGuestPrompt(false);
                       setIsNicknameOpen(true);
                     }}
-                    className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white rounded-xl text-sm font-semibold shadow-md shadow-brand-600/20 transition"
+                    className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 active:scale-[0.97] text-white rounded-xl text-sm font-semibold shadow-md shadow-brand-600/20 transition"
                   >
                     {t('board.customize')}
                   </button>
