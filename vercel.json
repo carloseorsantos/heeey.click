@@ -3,6 +3,12 @@
     { "source": "/lousa-online", "destination": "/", "permanent": true },
     { "source": "/whiteboard-mcp", "destination": "/mcp", "permanent": true }
   ],
+  "headers": [
+    {
+      "source": "/excalidraw-assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ],
   "rewrites": [
     { "source": "/api/v1/:path*", "destination": "/api/v1?path=:path*" },
     { "source": "/mcp", "destination": "/mcp/index.html" },
