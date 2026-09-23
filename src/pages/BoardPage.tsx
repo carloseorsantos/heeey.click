@@ -6,6 +6,7 @@ import {
   exportToBlob,
   exportToSvg,
 } from '@excalidraw/excalidraw';
+import '@excalidraw/excalidraw/index.css';
 import { Loader2, X, Trash2, RotateCcw } from 'lucide-react';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
 import { useAuth } from '../hooks/useAuth';

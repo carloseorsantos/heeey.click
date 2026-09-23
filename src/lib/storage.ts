@@ -313,6 +313,34 @@ export function saveLocalBoard(board: Board): void {
   }
 }
 
+/**
+ * Updates metadata of a cached board without touching its scene content.
+ * Safe to call with dashboard summaries, which do not carry elements/files.
+ */
+export function updateLocalBoardMeta(
+  id: string,
+  patch: Partial<Pick<Board, 'title' | 'updated_at' | 'deleted_at' | 'thumbnail'>>
+): void {
+  try {
+    const individualRaw = localStorage.getItem(`${BOARD_CONTENT_PREFIX}${id}`);
+    if (individualRaw) {
+      localStorage.setItem(
+        `${BOARD_CONTENT_PREFIX}${id}`,
+        JSON.stringify({ ...JSON.parse(individualRaw), ...patch })
+      );
+    }
+
+    const raw = localStorage.getItem(STORAGE_BOARDS_KEY);
+    if (raw) {
+      const boards: Board[] = JSON.parse(raw);
+      const next = boards.map((b) => (b.id === id ? toIndexEntry({ ...b, ...patch }) : b));
+      localStorage.setItem(STORAGE_BOARDS_KEY, JSON.stringify(next));
+    }
+  } catch (e) {
+    console.warn('Erro ao atualizar metadados do board local:', e);
+  }
+}
+
 export function deleteLocalBoard(id: string): void {
   try {
     localStorage.removeItem(`${BOARD_CONTENT_PREFIX}${id}`);

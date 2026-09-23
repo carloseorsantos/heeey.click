@@ -78,6 +78,25 @@ describe('utils', () => {
     vi.useRealTimers();
   });
 
+  it('debounce.flush should run the pending call immediately, once', () => {
+    vi.useFakeTimers();
+    const mockFn = vi.fn();
+    const debounced = debounce(mockFn, 200);
+
+    debounced.flush();
+    expect(mockFn).not.toHaveBeenCalled();
+
+    debounced('x');
+    debounced.flush();
+    expect(mockFn).toHaveBeenCalledTimes(1);
+    expect(mockFn).toHaveBeenCalledWith('x');
+
+    vi.advanceTimersByTime(250);
+    expect(mockFn).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
+  });
+
   it('throttle should limit execution rate and process trailing call', async () => {
     vi.useFakeTimers();
     const mockFn = vi.fn();

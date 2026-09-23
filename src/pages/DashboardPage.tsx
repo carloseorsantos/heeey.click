@@ -19,10 +19,12 @@ import { supabase } from '../lib/supabase';
 import {
   getLocalBoards,
   saveLocalBoard,
+  updateLocalBoardMeta,
   deleteLocalBoard,
   markBoardAsCreated,
   isBoardLocallyCreated,
 } from '../lib/storage';
+import { fetchBoardSummaries, fetchBoardContent, saveBoardThumbnail } from '../lib/boardQueries';
 import {
   generateId,
   getBrainstormingTemplate,
@@ -106,16 +108,12 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
 
       try {
         if (user?.id) {
-          // Authenticated: load user boards from Supabase
-          const { data, error } = await supabase
-            .from('boards')
-            .select('*')
-            .eq('owner_id', user.id)
-            .order('updated_at', { ascending: false });
+          // Authenticated: load light summaries (no scene data) of the user's boards
+          const data = await fetchBoardSummaries(user.id);
 
-          if (data && !error) {
+          if (data) {
             const remoteMap = new Map<string, Board>();
-            data.forEach((b: any) => remoteMap.set(b.id, b as Board));
+            data.forEach((b) => remoteMap.set(b.id, b));
 
             // Include local boards belonging to this user or created by the active guest session
             localList.forEach((local) => {
@@ -199,7 +197,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       prev.map((b) => {
         if (b.id === id) {
           const updated = { ...b, title: newTitle, updated_at: new Date().toISOString() };
-          saveLocalBoard(updated);
+          updateLocalBoardMeta(id, { title: updated.title, updated_at: updated.updated_at });
           (async () => {
             try {
               await supabase
@@ -215,10 +213,22 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     );
   }
 
-  function handleDuplicate(board: Board) {
+  async function handleDuplicate(source: Board) {
+    // Dashboard summaries do not carry the scene: load it before copying
+    let board = source;
+    if (source.contentLoaded === false) {
+      const content = await fetchBoardContent(source.id);
+      if (!content) {
+        showToast({ message: 'Não foi possível duplicar o quadro. Tente novamente.' });
+        return;
+      }
+      board = { ...source, ...content };
+    }
+
+    const { contentLoaded: _contentLoaded, ...boardData } = board;
     const newId = generateId();
     const duplicate: Board = {
-      ...board,
+      ...boardData,
       id: newId,
       title: `${board.title} (cópia)`,
       owner_id: user?.id || null,
@@ -253,9 +263,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     setBoards((prev) =>
       prev.map((b) => {
         if (b.id !== id) return b;
-        const updated = { ...b, deleted_at: deletedAt };
-        saveLocalBoard(updated);
-        return updated;
+        updateLocalBoardMeta(id, { deleted_at: deletedAt });
+        return { ...b, deleted_at: deletedAt };
       })
     );
   }
@@ -312,6 +321,12 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     } else {
       showToast({ message: 'Não foi possível excluir o quadro. Tente novamente.' });
     }
+  }
+
+  function handleThumbnailGenerated(id: string, thumbnail: string) {
+    setBoards((prev) => prev.map((b) => (b.id === id ? { ...b, thumbnail } : b)));
+    updateLocalBoardMeta(id, { thumbnail });
+    saveBoardThumbnail(id, thumbnail);
   }
 
   const activeBoards = boards.filter((b) => !b.deleted_at);
@@ -530,6 +545,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                     onRename={handleRename}
                     onDuplicate={handleDuplicate}
                     onDelete={handleMoveToTrash}
+                    onThumbnailGenerated={handleThumbnailGenerated}
                     trash={
                       isTrashView
                         ? {

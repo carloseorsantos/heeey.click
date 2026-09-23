@@ -1,8 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { AuthProvider } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
 import { DashboardPage } from './pages/DashboardPage';
-import { BoardPage } from './pages/BoardPage';
+import { HeeeyLogo } from './components/Logo';
+
+// The editor (Excalidraw) is only downloaded when a board is opened
+const BoardPage = lazy(() =>
+  import('./pages/BoardPage').then((module) => ({ default: module.BoardPage }))
+);
+
+function BoardLoadingScreen() {
+  return (
+    <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950" role="status">
+      <HeeeyLogo className="w-14 h-14 shadow-xl shadow-brand-600/30 animate-pulse" />
+      <span className="sr-only">Carregando a lousa…</span>
+    </div>
+  );
+}
 
 export function App() {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
@@ -29,7 +43,9 @@ export function App() {
     <ThemeProvider>
       <AuthProvider>
         {boardId ? (
-          <BoardPage boardId={boardId} onBackToDashboard={() => navigate('/')} />
+          <Suspense fallback={<BoardLoadingScreen />}>
+            <BoardPage boardId={boardId} onBackToDashboard={() => navigate('/')} />
+          </Suspense>
         ) : (
           <DashboardPage onNavigateToBoard={(id) => navigate(`/b/${id}`)} />
         )}

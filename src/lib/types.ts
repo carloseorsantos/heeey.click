@@ -12,6 +12,10 @@ export interface Board {
   updated_at: string;
   /** Set when the board is in the trash (soft delete) */
   deleted_at?: string | null;
+  /** WebP data URL preview for the dashboard; '' = empty board, null = not generated yet */
+  thumbnail?: string | null;
+  /** Client-only: false when only the dashboard summary columns were fetched */
+  contentLoaded?: boolean;
 }
 
 export interface CollaboratorUser {

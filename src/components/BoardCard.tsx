@@ -12,6 +12,7 @@ interface BoardCardProps {
   onRename: (id: string, newTitle: string) => void;
   onDuplicate: (board: Board) => void;
   onDelete: (id: string) => void;
+  onThumbnailGenerated?: (boardId: string, thumbnail: string) => void;
   /** Present when the card is shown in the trash */
   trash?: {
     onRestore: (id: string) => void;
@@ -29,6 +30,7 @@ export function BoardCard({
   onRename,
   onDuplicate,
   onDelete,
+  onThumbnailGenerated,
   trash,
 }: BoardCardProps) {
   const { isDark } = useTheme();
@@ -76,7 +78,7 @@ export function BoardCard({
         aria-hidden="true"
         className="h-36 w-full rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 overflow-hidden group-hover:bg-brand-50/40 dark:group-hover:bg-slate-800 transition-colors"
       >
-        <BoardThumbnail board={board} isDark={isDark} />
+        <BoardThumbnail board={board} isDark={isDark} onThumbnailGenerated={onThumbnailGenerated} />
       </div>
 
       {/* Title + meta */}
