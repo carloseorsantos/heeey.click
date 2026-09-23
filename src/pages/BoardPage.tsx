@@ -6,14 +6,16 @@ import {
   exportToBlob,
   exportToSvg,
 } from '@excalidraw/excalidraw';
-import { Loader2, UserCircle, X, Sparkles } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
 import { Header } from '../components/Header';
 import { ShareModal } from '../components/ShareModal';
 import { AuthModal } from '../components/AuthModal';
 import { NicknameModal } from '../components/NicknameModal';
 import { HeeeyLogo } from '../components/Logo';
+import { Avatar } from '../components/Avatar';
 import { isBoardLocallyCreated } from '../lib/storage';
 import { generateId } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
@@ -56,20 +58,13 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
   } = useRealtimeBoard({ boardId });
 
   const { user, effectiveUserName, guestProfile } = useAuth();
+  const { theme } = useTheme();
 
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
-
-  // Initialize theme from storage or system preference
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('heeey_theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    }
-  }, []);
 
   // Export board as PNG or SVG
   const handleExport = async (format: 'png' | 'svg') => {
@@ -337,11 +332,11 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
   if (loading || !board) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 text-slate-700 dark:text-slate-300">
-        <div className="flex flex-col items-center space-y-4">
-          <HeeeyLogo className="w-14 h-14 shadow-xl shadow-violet-600/30 animate-pulse" />
+        <div className="flex flex-col items-center space-y-4" role="status">
+          <HeeeyLogo className="w-14 h-14 shadow-xl shadow-brand-600/30 animate-pulse" />
           <div className="flex items-center space-x-2 text-sm font-medium">
-            <Loader2 className="w-4 h-4 animate-spin text-violet-600" />
-            <span>Carregando sua lousa...</span>
+            <Loader2 className="w-4 h-4 animate-spin text-brand-600" />
+            <span>Carregando sua lousa…</span>
           </div>
         </div>
       </div>
@@ -382,13 +377,15 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
           onPointerUpdate={handlePointerUpdate}
           viewModeEnabled={isViewMode}
           isCollaborating={true}
+          theme={theme}
+          langCode="pt-BR"
           UIOptions={{
             canvasActions: {
               changeViewBackgroundColor: !isViewMode,
               clearCanvas: !isViewMode,
               loadScene: false,
               saveToActiveFile: false,
-              toggleTheme: true,
+              toggleTheme: false,
               saveAsImage: true,
             },
           }}
@@ -396,33 +393,29 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
 
         {/* First-time guest visitor prompt banner */}
         {showGuestPrompt && (
-          <div className="absolute top-4 right-4 z-30 max-w-sm p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-violet-100 dark:border-slate-800 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div
+            role="dialog"
+            aria-label="Boas-vindas"
+            className="absolute bottom-20 right-4 left-4 sm:left-auto z-30 sm:max-w-sm p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl shadow-2xl border border-brand-100 dark:border-slate-800 animate-pop-in"
+          >
             <div className="flex items-start space-x-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold flex-shrink-0 shadow-md transition-colors"
-                style={{ backgroundColor: guestProfile.color.stroke }}
-              >
-                <UserCircle className="w-6 h-6" />
-              </div>
+              <Avatar name={effectiveUserName} color={guestProfile.color} className="w-10 h-10 text-xs" />
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold text-slate-900 dark:text-white flex items-center space-x-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
-                    <span>Bem-vindo à lousa!</span>
-                  </h4>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Boas-vindas à lousa!</h4>
                   <button
                     onClick={() => {
                       setShowGuestPrompt(false);
                       safeSetStorage(sessionStorage, `heeey_guest_prompt_dismissed_${boardId}`, 'true');
                     }}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                    title="Fechar"
+                    className="-mt-2 -mr-2 w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    aria-label="Fechar"
                   >
-                    <X className="w-3.5 h-3.5" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                  Você entrou como <strong className="text-violet-600 dark:text-violet-400">{effectiveUserName}</strong>. Deseja escolher seu próprio apelido e cor de cursor?
+                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Você entrou como <strong className="text-slate-900 dark:text-white">{effectiveUserName}</strong>. Quer escolher seu nome e a cor do cursor?
                 </p>
                 <div className="mt-3 flex items-center space-x-2">
                   <button
@@ -430,16 +423,16 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
                       setShowGuestPrompt(false);
                       setIsNicknameOpen(true);
                     }}
-                    className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-700 active:scale-95 text-white rounded-xl text-xs font-semibold shadow-md shadow-violet-600/20 transition"
+                    className="px-3.5 py-2 bg-brand-600 hover:bg-brand-700 active:scale-95 text-white rounded-xl text-sm font-semibold shadow-md shadow-brand-600/20 transition"
                   >
-                    Personalizar Perfil
+                    Personalizar
                   </button>
                   <button
                     onClick={() => {
                       setShowGuestPrompt(false);
                       safeSetStorage(sessionStorage, `heeey_guest_prompt_dismissed_${boardId}`, 'true');
                     }}
-                    className="px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium transition"
+                    className="px-3 py-2 rounded-xl text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 font-medium transition"
                   >
                     Agora não
                   </button>
@@ -451,17 +444,12 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
 
         {/* Optimizing image indicator pill */}
         {isOptimizingImage && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-900/90 backdrop-blur-md text-white rounded-full text-xs font-medium shadow-2xl flex items-center space-x-2 z-30 animate-in fade-in duration-200">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-violet-400" />
-            <span>Otimizando e comprimindo imagem...</span>
-          </div>
-        )}
-
-        {/* Floating View Mode Banner for non-owners */}
-        {isViewMode && (
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-900/90 backdrop-blur-md text-white rounded-full text-xs font-medium shadow-xl flex items-center space-x-2 pointer-events-none z-20">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            <span>Modo Somente Leitura ativado pelo proprietário</span>
+          <div
+            role="status"
+            className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-900/90 backdrop-blur-md text-white rounded-full text-sm font-medium shadow-2xl flex items-center gap-2 z-30 animate-fade-in"
+          >
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />
+            <span>Otimizando imagem…</span>
           </div>
         )}
       </main>

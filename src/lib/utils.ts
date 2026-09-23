@@ -55,7 +55,10 @@ export function generateGuestName(): string {
 
 export function getInitials(name: string): string {
   if (!name) return '??';
-  const parts = name.trim().split(/\s+/);
+  const allParts = name.trim().split(/\s+/);
+  // Skip tokens like "#83" in generated guest names so "Leão #83" becomes "LE", not "L#"
+  const wordParts = allParts.filter((part) => /^\p{L}/u.test(part));
+  const parts = wordParts.length > 0 ? wordParts : allParts;
   if (parts.length === 1) {
     return parts[0].substring(0, 2).toUpperCase();
   }

@@ -40,6 +40,7 @@ describe('utils', () => {
     expect(getInitials('Carlos Santos')).toBe('CS');
     expect(getInitials('Lobo')).toBe('LO');
     expect(getInitials('')).toBe('??');
+    expect(getInitials('Leão #83')).toBe('LE');
   });
 
   it('formatDateRelative should format recent dates appropriately', () => {

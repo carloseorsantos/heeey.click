@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AuthProvider } from './hooks/useAuth';
+import { ThemeProvider } from './hooks/useTheme';
 import { DashboardPage } from './pages/DashboardPage';
 import { BoardPage } from './pages/BoardPage';
 
@@ -12,15 +13,6 @@ export function App() {
     };
 
     window.addEventListener('popstate', handlePopState);
-
-    // Initialize dark mode class on root HTML element
-    const savedTheme = localStorage.getItem('heeey_theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
@@ -34,13 +26,15 @@ export function App() {
   const boardId = boardMatch ? boardMatch[1] : null;
 
   return (
-    <AuthProvider>
-      {boardId ? (
-        <BoardPage boardId={boardId} onBackToDashboard={() => navigate('/')} />
-      ) : (
-        <DashboardPage onNavigateToBoard={(id) => navigate(`/b/${id}`)} />
-      )}
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        {boardId ? (
+          <BoardPage boardId={boardId} onBackToDashboard={() => navigate('/')} />
+        ) : (
+          <DashboardPage onNavigateToBoard={(id) => navigate(`/b/${id}`)} />
+        )}
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
