@@ -15,6 +15,7 @@ import { Header } from '../components/Header';
 import { ShareModal } from '../components/ShareModal';
 import { AuthModal } from '../components/AuthModal';
 import { NicknameModal } from '../components/NicknameModal';
+import { VersionHistoryModal } from '../components/VersionHistoryModal';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
 import { isBoardLocallyCreated } from '../lib/storage';
@@ -58,6 +59,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
     updateTitle,
     updateAccessLevel,
     restoreBoard,
+    restoreVersion,
   } = useRealtimeBoard({ boardId });
 
   const { user, effectiveUserName, guestProfile } = useAuth();
@@ -66,6 +68,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
   const [isShareOpen, setIsShareOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
   const [restoreState, setRestoreState] = useState<'idle' | 'restoring' | 'error'>('idle');
@@ -369,6 +372,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
         onOpenNickname={() => setIsNicknameOpen(true)}
         onBackToDashboard={onBackToDashboard}
         onExport={handleExport}
+        onOpenHistory={isViewMode ? undefined : () => setIsHistoryOpen(true)}
       />
 
       {/* Excalidraw Canvas Area */}
@@ -509,6 +513,13 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
       <NicknameModal isOpen={isNicknameOpen} onClose={() => setIsNicknameOpen(false)} />
+
+      <VersionHistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        boardId={board.id}
+        onRestore={restoreVersion}
+      />
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import type { ExcalidrawImperativeAPI, SocketId } from '@excalidraw/excalidraw/types';
 import type { ExcalidrawElement, OrderedExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { AppState, BinaryFiles, Collaborator } from '@excalidraw/excalidraw/types';
-import { reconcileElements } from '@excalidraw/excalidraw';
+import { reconcileElements, CaptureUpdateAction } from '@excalidraw/excalidraw';
 import { supabase } from '../lib/supabase';
 import {
   Board,
@@ -29,6 +29,7 @@ import { useAuth } from './useAuth';
 import { debounce, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { setBoardTrashed } from '../lib/boardTrash';
+import { fetchBoardVersion, snapshotBoard, buildRestoredElements } from '../lib/boardVersions';
 
 interface UseRealtimeBoardOptions {
   boardId: string;
@@ -121,9 +122,13 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         console.warn('Falha ao buscar quadro no Supabase, tentando armazenamento local:', err);
       }
 
+      // Unmounted meanwhile (navigation, StrictMode remount): never fall through to creating
+      // a blank board, which would overwrite a cached board that was not synced yet
+      if (!isMounted) return;
+
       // Check local cache
       const cached = getLocalBoard(boardId);
-      if (cached && isMounted) {
+      if (cached) {
         setBoard(cached);
         setLoading(false);
         return;
@@ -146,12 +151,10 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         updated_at: new Date().toISOString(),
       };
 
-      if (isMounted) {
-        markBoardAsCreated(boardId);
-        setBoard(newBoard);
-        saveLocalBoard(newBoard);
-        setLoading(false);
-      }
+      markBoardAsCreated(boardId);
+      setBoard(newBoard);
+      saveLocalBoard(newBoard);
+      setLoading(false);
 
       // Try creating in Supabase
       (async () => {
@@ -1008,6 +1011,37 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     return true;
   }, [boardId]);
 
+  // 12. Restore a version from the history. The current state is saved first so the
+  // restore can itself be undone; the result goes through the normal save/broadcast path.
+  const restoreVersion = useCallback(
+    async (versionId: string) => {
+      const api = apiRef.current;
+      if (!api || !canEdit) return false;
+
+      const version = await fetchBoardVersion(versionId);
+      if (!version) return false;
+      await debouncedSaveToDb.flush();
+      if (!(await snapshotBoard(boardId))) return false;
+
+      const restored = buildRestoredElements(api.getSceneElementsIncludingDeleted(), version.elements || []);
+      const files = Object.values(version.files || {}).filter(
+        (f: any) => f && typeof f.dataURL === 'string' && f.dataURL.length > 0
+      );
+      if (files.length > 0) api.addFiles(files as any);
+
+      api.updateScene({
+        elements: restored,
+        appState: version.app_state?.viewBackgroundColor
+          ? { viewBackgroundColor: version.app_state.viewBackgroundColor }
+          : undefined,
+        captureUpdate: CaptureUpdateAction.IMMEDIATELY,
+      });
+      handleCanvasChange(api.getSceneElementsIncludingDeleted(), api.getAppState(), api.getFiles());
+      return true;
+    },
+    [boardId, canEdit, debouncedSaveToDb, handleCanvasChange]
+  );
+
   return {
     board,
     loading,
@@ -1024,5 +1058,6 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     updateTitle,
     updateAccessLevel,
     restoreBoard,
+    restoreVersion,
   };
 }

@@ -61,9 +61,9 @@ Para inicializar a tabela `public.boards` no seu projeto Supabase:
 
 1. Acesse o [Supabase Dashboard](https://supabase.com/dashboard).
 2. Abra o **SQL Editor** do projeto.
-3. Cole e execute o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e depois de [`supabase/storage.sql`](supabase/storage.sql).
+3. Cole e execute o conteúdo de [`supabase/schema.sql`](supabase/schema.sql), depois de [`supabase/storage.sql`](supabase/storage.sql) e, por fim, de todos os arquivos de [`supabase/migrations/`](supabase/migrations/) em ordem (eles podem ser executados de novo sem problemas).
 
-**Banco já existente?** Execute, em ordem, os arquivos de [`supabase/migrations/`](supabase/migrations/) que ainda não foram aplicados (ou use `supabase db push` com a Supabase CLI). Aplique as migrations **antes** de publicar o front-end que depende delas.
+**Banco já existente?** Execute, em ordem, os arquivos de `supabase/migrations/` que ainda não foram aplicados (ou use `supabase db push` com a Supabase CLI). Aplique as migrations **antes** de publicar o front-end que depende delas.
 
 O script cria:
 - A tabela `public.boards` com colunas para `elements`, `app_state`, `files`, `access_level` ('edit' ou 'view'), `owner_id` e `deleted_at` (lixeira).
