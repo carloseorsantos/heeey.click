@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { MotionConfig } from 'motion/react';
 import { AuthProvider } from './hooks/useAuth';
+import { SettingsProvider } from './hooks/useSettings';
 import { ThemeProvider } from './hooks/useTheme';
 import { DashboardPage } from './pages/DashboardPage';
 import { HeeeyLogo } from './components/Logo';
@@ -55,6 +56,7 @@ export function App() {
     <I18nProvider>
     <ThemeProvider>
       <AuthProvider>
+      <SettingsProvider onOpenDocs={() => navigate('/docs')}>
         {boardId ? (
           <Suspense fallback={<BoardLoadingScreen />}>
             {/* key: switching boards remounts the editor with the new scene */}
@@ -81,6 +83,7 @@ export function App() {
             onNavigateToDocs={() => navigate('/docs')}
           />
         )}
+      </SettingsProvider>
       </AuthProvider>
     </ThemeProvider>
     </I18nProvider>

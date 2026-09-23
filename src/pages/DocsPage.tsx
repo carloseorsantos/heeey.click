@@ -4,9 +4,6 @@ import {
   ArrowLeft,
   Search,
   X,
-  Sun,
-  Moon,
-  Languages,
   Menu,
   Clock,
   ChevronRight,
@@ -21,6 +18,7 @@ import {
   Check,
   ArrowUp,
   XCircle,
+  Settings,
 } from 'lucide-react';
 import { AnimatePresence, motion, type PanInfo } from 'motion/react';
 import {
@@ -41,7 +39,7 @@ import { HeeeyWordmark } from '../components/Logo';
 import { Button } from '../components/ui/Button';
 import { cn } from '../lib/utils';
 import { project, spring } from '../lib/motion';
-import { useTheme } from '../hooks/useTheme';
+import { useSettings } from '../hooks/useSettings';
 import { useI18n, type MessageKey } from '../i18n';
 
 interface DocsPageProps {
@@ -67,8 +65,8 @@ export function DocsPage({
   onBackToDashboard,
   onNavigateToBoard,
 }: DocsPageProps) {
-  const { isDark, toggleTheme } = useTheme();
-  const { t, locale, setLocale } = useI18n();
+  const { openSettings } = useSettings();
+  const { t } = useI18n();
 
   const [internalSlug, setInternalSlug] = useState(() =>
     normalizeSlug(propSlug || initialSlug)
@@ -464,17 +462,14 @@ export function DocsPage({
           </div>
 
           <div className="flex items-center gap-1 flex-shrink-0">
-            <Button variant="plain" iconOnly onClick={toggleTheme} aria-label={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')} title={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')}>
-              {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
-            </Button>
             <Button
               variant="plain"
               iconOnly
-              onClick={() => setLocale(locale === 'pt-BR' ? 'en' : 'pt-BR')}
-              aria-label={`${t('language.label')}: ${t('language.switchTo')}`}
-              title={t('language.switchTo')}
+              onClick={() => openSettings('appearance')}
+              aria-label={t('settings.title')}
+              title={t('settings.title')}
             >
-              <Languages className="w-[18px] h-[18px]" />
+              <Settings className="w-[18px] h-[18px]" />
             </Button>
             <Button variant="secondary" size="sm" onClick={onBackToDashboard} className="ml-1">
               <ArrowLeft className="w-4 h-4" />

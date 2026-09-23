@@ -131,10 +131,12 @@ export function Menu({ open, side = 'bottom', align = 'end', className, children
 interface MenuItemProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   icon?: LucideIcon;
   destructive?: boolean;
+  /** Keyboard equivalent shown on the trailing edge, e.g. "⌘," */
+  shortcut?: string;
   children: React.ReactNode;
 }
 
-export function MenuItem({ icon: Icon, destructive, className, children, ...props }: MenuItemProps) {
+export function MenuItem({ icon: Icon, destructive, shortcut, className, children, ...props }: MenuItemProps) {
   return (
     <button
       type="button"
@@ -151,6 +153,7 @@ export function MenuItem({ icon: Icon, destructive, className, children, ...prop
     >
       {Icon && <Icon className={cn('w-4 h-4 flex-shrink-0', destructive ? '' : 'text-label-2')} />}
       <span className="flex-1 truncate">{children}</span>
+      {shortcut && <kbd className="font-sans text-xs text-label-3">{shortcut}</kbd>}
     </button>
   );
 }

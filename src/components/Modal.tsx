@@ -1,10 +1,11 @@
-import { useEffect, useId, useRef } from 'react';
+import { useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useDragControls, useReducedMotion, type PanInfo } from 'motion/react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { project, spring } from '../lib/motion';
 import { useIsCompact } from '../hooks/useMediaQuery';
+import { useDialogFocus } from '../hooks/useDialogFocus';
 import { useI18n } from '../i18n';
 
 interface ModalProps {
@@ -16,9 +17,6 @@ interface ModalProps {
   size?: 'sm' | 'md';
   children: React.ReactNode;
 }
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /** Tinted squircle for a sheet's leading symbol */
 export function ModalIcon({ tone = 'accent', children }: { tone?: 'accent' | 'danger'; children: React.ReactNode }) {
@@ -44,8 +42,6 @@ export function Modal({ isOpen, onClose, title, description, icon, size = 'md', 
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
   const isCompact = useIsCompact();
   const reduceMotion = useReducedMotion();
   const dragControls = useDragControls();
@@ -55,49 +51,7 @@ export function Modal({ isOpen, onClose, title, description, icon, size = 'md', 
   if (isOpen) lastContent.current = { title, description, icon, children };
   const content = lastContent.current;
 
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const dialog = dialogRef.current;
-
-    // Focus the autoFocus field if there is one, otherwise the dialog itself (no stray selection)
-    if (dialog && !dialog.contains(document.activeElement)) {
-      const target = dialog.querySelector<HTMLElement>('[autofocus]') || dialog;
-      target.focus({ preventScroll: true });
-    }
-
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onCloseRef.current();
-        return;
-      }
-      if (e.key !== 'Tab' || !dialog) return;
-
-      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE));
-      if (focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-
-      if (document.activeElement === dialog) {
-        e.preventDefault();
-        (e.shiftKey ? last : first).focus();
-      } else if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown, true);
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown, true);
-      previouslyFocused?.focus?.({ preventScroll: true });
-    };
-  }, [isOpen]);
+  useDialogFocus(isOpen, dialogRef, onClose);
 
   function handleDragEnd(_: PointerEvent | MouseEvent | TouchEvent, info: PanInfo) {
     const height = dialogRef.current?.offsetHeight ?? 400;
