@@ -28,6 +28,9 @@ alter table storage.objects enable row level security;
 create role anon; create role authenticated;
 grant usage on schema auth, extensions, public, storage to anon, authenticated;
 grant execute on function auth.uid() to anon, authenticated;
+-- Like Supabase: new tables in public are granted to the API roles when created
+alter default privileges in schema public grant select, insert, update, delete on tables to anon, authenticated;
+grant select, insert, update, delete on storage.objects to anon, authenticated;
 create publication supabase_realtime;
 `;
 
@@ -67,11 +70,7 @@ describe('database schema and migrations', () => {
     for (let round = 0; round < 2; round++) {
       for (const file of migrations) await db.exec(fs.readFileSync(path.join(root, 'migrations', file), 'utf8'));
     }
-    await db.exec(`
-      grant select, insert, update, delete on all tables in schema public to anon, authenticated;
-      grant select, insert, update, delete on storage.objects to anon, authenticated;
-      insert into auth.users values ('${A}'), ('${B}');
-    `);
+    await db.exec(`insert into auth.users values ('${A}'), ('${B}');`);
     const created = await as(A, `insert into public.boards (id, title, owner_id, elements) values ($1, 'Planejamento Q4', $2, $3::jsonb)`, [
       BOARD,
       A,
@@ -159,6 +158,38 @@ describe('database schema and migrations', () => {
       expect((await upsert(B, A, '[]')).error).toBeDefined();
       expect((await as(null, `select count(*)::int as n from public.user_libraries`)).rows[0].n).toBe(0);
       expect((await upsert(A, A, '{"not":"an array"}')).error).toBeDefined();
+    });
+  });
+
+  describe('API keys', () => {
+    it('creates a key once, stores only its hash and hides the hash from clients', async () => {
+      const created = await as(A, `select * from public.create_api_key('Agente', array['read'])`);
+      expect(created.error).toBeUndefined();
+      const { key, prefix } = created.rows[0];
+      expect(key).toMatch(/^hk_[0-9a-f]{8}_[0-9a-f]{40}$/);
+      expect(key.startsWith(prefix)).toBe(true);
+
+      const stored = (await db.query<any>('select key_hash from public.api_keys where prefix = $1', [prefix])).rows[0];
+      expect(stored.key_hash).not.toContain(key.slice(12));
+      expect((await as(A, `select key_hash from public.api_keys`)).error).toMatch(/permission denied/);
+      expect((await as(A, `select name, scopes from public.api_keys`)).rows).toEqual([{ name: 'Agente', scopes: ['read'] }]);
+      expect((await as(B, `select count(*)::int as n from public.api_keys`)).rows[0].n).toBe(0);
+      expect((await as(null, `select * from public.create_api_key('x')`)).error).toBeDefined();
+      expect((await as(A, `insert into public.api_keys (user_id, name, prefix, key_hash) values ($1, 'x', 'p', 'h')`, [A])).error).toBeDefined();
+    });
+
+    it('api_authenticate checks the key, scope and revocation, and becomes the user', async () => {
+      const { key, id } = (await as(A, `select * from public.create_api_key('Leitura', array['read'])`)).rows[0];
+      await sys('select 1');
+      const uid = (await db.query<any>(`select public.api_authenticate($1, 'read') as u, auth.uid() as me`, [key])).rows[0];
+      expect(uid).toEqual({ u: A, me: A });
+      await expect(db.query(`select public.api_authenticate($1, 'write')`, [key])).rejects.toThrow(/escrita/);
+      await expect(db.query(`select public.api_authenticate('hk_nope', 'read')`)).rejects.toThrow(/inválida/);
+      expect((await as(null, `select public.api_authenticate($1, 'read')`, [key])).error).toMatch(/permission denied/);
+
+      expect((await as(B, `select public.revoke_api_key($1) as ok`, [id])).rows[0].ok).toBe(false);
+      expect((await as(A, `select public.revoke_api_key($1) as ok`, [id])).rows[0].ok).toBe(true);
+      await expect(db.query(`select public.api_authenticate($1, 'read')`, [key])).rejects.toThrow(/revogada/);
     });
   });
 

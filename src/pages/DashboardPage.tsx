@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   FolderPlus,
   ChevronRight,
+  KeyRound,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -45,6 +46,7 @@ import { Modal } from '../components/Modal';
 import { FolderCard } from '../components/FolderCard';
 import { FolderNameModal } from '../components/FolderNameModal';
 import { MoveToFolderModal } from '../components/MoveToFolderModal';
+import { ApiKeysModal } from '../components/ApiKeysModal';
 import { useFolders } from '../hooks/useFolders';
 import { Folder, getFolderPath, moveBoardToFolder } from '../lib/folders';
 import { BoardSearchHit, searchBoardsRemote, searchLoadedBoards } from '../lib/search';
@@ -101,6 +103,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
+  const [isApiKeysOpen, setIsApiKeysOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'boards' | 'trash'>('boards');
   const [toast, setToast] = useState<Toast | null>(null);
@@ -554,6 +557,17 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             </span>
           </button>
 
+          {isAuthenticated && (
+            <button
+              onClick={() => setIsApiKeysOpen(true)}
+              className={iconButtonClass}
+              aria-label="Chaves de API e integrações"
+              title="Chaves de API e integrações"
+            >
+              <KeyRound className="w-4 h-4" />
+            </button>
+          )}
+
           {isAuthenticated ? (
             <button
               onClick={() => signOut()}
@@ -912,6 +926,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
           </button>
         </div>
       </Modal>
+
+      <ApiKeysModal isOpen={isApiKeysOpen} onClose={() => setIsApiKeysOpen(false)} />
 
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <NicknameModal isOpen={isNicknameOpen} onClose={() => setIsNicknameOpen(false)} />
