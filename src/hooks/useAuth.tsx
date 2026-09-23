@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getGuestProfile, updateGuestProfile, resetGuestProfile, GuestProfile, claimLocalBoardsForUser } from '../lib/storage';
 import { t } from '../i18n';
+import { trackSignIn, resetAnalytics } from '../lib/analytics';
 
 interface AuthContextType {
   user: User | null;
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Only claim boards on a deliberate SIGNED_IN event for boards created by the active guest session
       if (event === 'SIGNED_IN' && currentUser?.id) {
         claimLocalBoardsForUser(currentUser.id, guestProfile.id);
+        trackSignIn(currentUser);
       }
       if (currentUser) {
         applyUserCustomization(currentUser);
@@ -104,6 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Erro ao sair:', err);
     }
+    resetAnalytics();
     setUser(null);
     setSession(null);
     // Reset guest profile to generate a fresh identity on shared devices
