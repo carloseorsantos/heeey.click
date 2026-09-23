@@ -74,3 +74,22 @@ describe('wrapText', () => {
     expect(wrapText('a\nb', 100, 10)).toBe('a\nb');
   });
 });
+
+describe('describeElements', () => {
+  it('folds labels into shapes, shows arrow endpoints and hides deleted elements', async () => {
+    const { describeElements } = await import('../lib/elementSkeleton');
+    const elements = toExcalidrawElements([
+      { id: 'a', type: 'rectangle', x: 0, y: 0, label: 'Início', backgroundColor: '#a5d8ff' },
+      { id: 'b', type: 'ellipse', x: 300, y: 0 },
+      { id: 'e', type: 'arrow', start: { id: 'a' }, end: { id: 'b' } },
+      { id: 't', type: 'text', text: 'nota' },
+    ]);
+    elements.push({ id: 'gone', type: 'rectangle', isDeleted: true });
+
+    const described = describeElements(elements);
+    expect(described.map((e) => e.id)).toEqual(['a', 'b', 't', 'e']);
+    expect(described[0]).toMatchObject({ type: 'rectangle', label: 'Início', backgroundColor: '#a5d8ff' });
+    expect(described[2]).toMatchObject({ type: 'text', text: 'nota' });
+    expect(described[3]).toMatchObject({ type: 'arrow', start: { id: 'a' }, end: { id: 'b' } });
+  });
+});

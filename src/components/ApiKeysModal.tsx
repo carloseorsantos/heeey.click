@@ -32,6 +32,18 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
+function mcpSnippets(key: string) {
+  const url = `${window.location.origin}/api/mcp`;
+  return {
+    claudeCode: `claude mcp add --transport http heeey ${url} --header "Authorization: Bearer ${key}"`,
+    json: JSON.stringify(
+      { mcpServers: { heeey: { type: 'http', url, headers: { Authorization: `Bearer ${key}` } } } },
+      null,
+      2
+    ),
+  };
+}
+
 export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
   const [keys, setKeys] = useState<ApiKey[] | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -103,6 +115,25 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
               </code>
               <CopyButton value={newKey} label="Copiar chave de API" />
             </div>
+            <details className="text-sm text-amber-900 dark:text-amber-200">
+              <summary className="cursor-pointer font-semibold">Conectar um agente via MCP</summary>
+              <div className="mt-2 space-y-2">
+                <p>Claude Code:</p>
+                <div className="flex items-start gap-2">
+                  <code className="flex-1 min-w-0 break-all px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100">
+                    {mcpSnippets(newKey).claudeCode}
+                  </code>
+                  <CopyButton value={mcpSnippets(newKey).claudeCode} label="Copiar comando do Claude Code" />
+                </div>
+                <p>Outros clientes MCP (HTTP):</p>
+                <div className="flex items-start gap-2">
+                  <pre className="flex-1 min-w-0 overflow-x-auto px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100">
+                    {mcpSnippets(newKey).json}
+                  </pre>
+                  <CopyButton value={mcpSnippets(newKey).json} label="Copiar configuração MCP" />
+                </div>
+              </div>
+            </details>
           </div>
         )}
 

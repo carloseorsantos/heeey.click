@@ -135,3 +135,17 @@ curl https://heeey.click/api/v1/boards -H "Authorization: Bearer hk_..."
 No `PATCH`, elementos com o mesmo `id` são atualizados e os demais são adicionados; quem estiver com o quadro aberto vê a mudança na hora. Erros vêm como `{ "error": { "code", "message" } }` com status 400, 401, 403, 404 ou 409.
 
 A API roda como Vercel Function (`api/v1.ts` → `src/server/apiHandler.ts`) e não precisa de segredos: a autenticação acontece no banco, nas funções `api_*` (migration `public_api`). Opcionalmente defina `APP_URL` para os links dos quadros.
+
+---
+
+## 🤖 MCP (agentes de IA)
+
+O servidor MCP fica em `https://heeey.click/api/mcp` (transporte Streamable HTTP) e usa a mesma chave de API. Ao criar uma chave, o app mostra o comando pronto; no Claude Code:
+
+```bash
+claude mcp add --transport http heeey https://heeey.click/api/mcp --header "Authorization: Bearer hk_..."
+```
+
+Ferramentas: `list_boards`, `search_boards`, `get_board` (visão compacta da cena, ou `detail: "full"`), `create_board`, `add_elements`, `delete_elements`, `rename_board`, `trash_board`, `list_folders`, `create_folder` e `move_board`. Os elementos seguem o mesmo formato curto da API; quem estiver com o quadro aberto vê as mudanças do agente ao vivo.
+
+A implementação (`src/server/mcpHandler.ts`, exposta por `api/mcp.ts`) é sem estado e tem teste de compatibilidade com o cliente oficial do SDK do MCP.

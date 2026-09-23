@@ -10,6 +10,7 @@ import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { handleApiRequest, Rpc } from '../../src/server/apiHandler';
+import { handleMcpRequest } from '../../src/server/mcpHandler';
 
 const root = path.resolve(__dirname, '..');
 const A = '00000000-0000-4000-8000-00000000000a';
@@ -355,6 +356,49 @@ describe('database schema and migrations', () => {
       const other = await api('GET', `boards/${id}`, (await as(A, `select key from public.create_api_key('a2')`)).rows[0].key);
       expect(other.status).toBe(404);
       expect((await api('GET', 'boards', 'hk_invalid')).status).toBe(401);
+    });
+
+    it('MCP tools create, read and edit a board', async () => {
+      const key = (await as(B, `select key from public.create_api_key('mcp')`)).rows[0].key;
+      let nextId = 1;
+      const tool = async (name: string, args: Record<string, unknown>) => {
+        const res = await handleMcpRequest(
+          new Request('https://heeey.click/api/mcp', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: nextId++, method: 'tools/call', params: { name, arguments: args } }),
+          }),
+          rpc,
+          { appOrigin: 'https://heeey.click' }
+        );
+        const { result } = await res.json();
+        expect(result.isError, result.content?.[0]?.text).toBeUndefined();
+        return result.structuredContent;
+      };
+
+      const { board } = await tool('create_board', {
+        title: 'Plano do agente',
+        elements: [
+          { id: 'ideia', type: 'rectangle', x: 0, y: 0, label: 'Ideia' },
+          { id: 'teste', type: 'rectangle', x: 300, y: 0, label: 'Teste' },
+        ],
+      });
+      await tool('add_elements', { board_id: board.id, elements: [{ id: 'fluxo', type: 'arrow', start: { id: 'ideia' }, end: { id: 'teste' } }] });
+
+      let view = await tool('get_board', { board_id: board.id });
+      expect(view.elements).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'ideia', label: 'Ideia' }),
+          expect.objectContaining({ id: 'fluxo', type: 'arrow', start: { id: 'ideia' }, end: { id: 'teste' } }),
+        ])
+      );
+
+      await tool('delete_elements', { board_id: board.id, element_ids: ['teste'] });
+      view = await tool('get_board', { board_id: board.id, detail: 'full' });
+      const ids = view.elements.map((e: any) => e.id);
+      expect(ids).not.toContain('teste');
+      expect(ids).not.toContain('teste-label');
+      expect((await tool('search_boards', { query: 'agente' })).results[0].id).toBe(board.id);
     });
   });
 
