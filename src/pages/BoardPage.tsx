@@ -16,6 +16,7 @@ import { ShareModal } from '../components/ShareModal';
 import { AuthModal } from '../components/AuthModal';
 import { NicknameModal } from '../components/NicknameModal';
 import { VersionHistoryModal } from '../components/VersionHistoryModal';
+import { BoardSearchModal } from '../components/BoardSearchModal';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
 import { isBoardLocallyCreated } from '../lib/storage';
@@ -41,9 +42,10 @@ function safeSetStorage(storage: Storage, key: string, value: string): void {
 interface BoardPageProps {
   boardId: string;
   onBackToDashboard: () => void;
+  onOpenBoard: (boardId: string) => void;
 }
 
-export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
+export function BoardPage({ boardId, onBackToDashboard, onOpenBoard }: BoardPageProps) {
   const {
     board,
     loading,
@@ -69,6 +71,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
   const [restoreState, setRestoreState] = useState<'idle' | 'restoring' | 'error'>('idle');
@@ -373,6 +376,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
         onBackToDashboard={onBackToDashboard}
         onExport={handleExport}
         onOpenHistory={isViewMode ? undefined : () => setIsHistoryOpen(true)}
+        onOpenSearch={() => setIsSearchOpen(true)}
       />
 
       {/* Excalidraw Canvas Area */}
@@ -513,6 +517,13 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
 
       <NicknameModal isOpen={isNicknameOpen} onClose={() => setIsNicknameOpen(false)} />
+
+      <BoardSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        currentBoardId={board.id}
+        onOpenBoard={onOpenBoard}
+      />
 
       <VersionHistoryModal
         isOpen={isHistoryOpen}

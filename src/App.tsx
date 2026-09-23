@@ -44,7 +44,13 @@ export function App() {
       <AuthProvider>
         {boardId ? (
           <Suspense fallback={<BoardLoadingScreen />}>
-            <BoardPage boardId={boardId} onBackToDashboard={() => navigate('/')} />
+            {/* key: switching boards remounts the editor with the new scene */}
+            <BoardPage
+              key={boardId}
+              boardId={boardId}
+              onBackToDashboard={() => navigate('/')}
+              onOpenBoard={(id) => navigate(`/b/${id}`)}
+            />
           </Suspense>
         ) : (
           <DashboardPage onNavigateToBoard={(id) => navigate(`/b/${id}`)} />

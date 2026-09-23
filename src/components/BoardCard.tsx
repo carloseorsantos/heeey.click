@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Copy, Trash2, Edit3, RotateCcw, FolderInput } from 'lucide-react';
 import { Board } from '../lib/types';
+import { BoardSnippet } from '../lib/search';
 import { formatDateRelative } from '../lib/utils';
 import { useDismiss } from '../hooks/useDismiss';
 import { useTheme } from '../hooks/useTheme';
@@ -15,6 +16,8 @@ interface BoardCardProps {
   onThumbnailGenerated?: (boardId: string, thumbnail: string) => void;
   /** Present when folders are available (signed-in owners) */
   onMove?: (board: Board) => void;
+  /** Search result excerpt from the board's canvas text */
+  snippet?: BoardSnippet;
   /** Present when the card is shown in the trash */
   trash?: {
     onRestore: (id: string) => void;
@@ -34,6 +37,7 @@ export function BoardCard({
   onDelete,
   onThumbnailGenerated,
   onMove,
+  snippet,
   trash,
 }: BoardCardProps) {
   const { isDark } = useTheme();
@@ -114,6 +118,15 @@ export function BoardCard({
               ? `Na lixeira desde ${formatDateRelative(board.deleted_at).toLowerCase()}`
               : `Editado ${formatDateRelative(board.updated_at || board.created_at).toLowerCase()}`}
           </p>
+          {snippet && (
+            <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300 line-clamp-2 break-words">
+              {snippet.before}
+              <mark className="rounded px-0.5 bg-amber-100 text-slate-900 dark:bg-amber-400/25 dark:text-amber-100">
+                {snippet.match}
+              </mark>
+              {snippet.after}
+            </p>
+          )}
         </div>
 
         {/* Options menu (sits above the card-wide click target) */}
