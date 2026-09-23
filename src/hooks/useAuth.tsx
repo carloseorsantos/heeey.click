@@ -112,6 +112,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Reset guest profile to generate a fresh identity on shared devices
     const freshGuest = resetGuestProfile();
     setGuestProfileState(freshGuest);
+    // Signed out: back to the public landing page
+    window.location.assign('/');
   }, []);
 
   const setNickname = useCallback((name: string, color?: { background: string; stroke: string }) => {

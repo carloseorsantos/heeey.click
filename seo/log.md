@@ -73,3 +73,9 @@ Append-only. Newest entry at the bottom. Never delete or rewrite past entries.
 - Verified (dev offline): todas as rotas servem o HTML certo; visitante novo fica na landing; convidado com quadro vai para /app; /?home fica; só abrir /app não marca como recorrente; /app?settings=account abre Conta e limpa a URL; 160 testes; build gera dist/index.html, dist/app, dist/mcp
 - Risk: Supabase de produção precisa aceitar redirect do magic link para https://www.heeey.click/app (conferir Redirect URLs)
 - Changed live: não
+
+## 2026-09-23 — fix (passo 3c: sair do /app para a landing)
+- Bug (reportado pelo usuário): após deslogar, `/` continuava mandando para `/app` porque os quadros em cache (`heeey_local_boards`) contavam como "recorrente"; o app não tinha link para a landing
+- Fix: redirect de `/` só com sessão Supabase; convidado com quadros vê a landing com o botão "Abrir meus quadros"; logout leva para `/`; link "Sobre o Heeey" (sidebar) e "heeey.click" (rodapé mobile) → `/?home`
+- Verified (dev offline): convidado com quadros fica em `/` com o botão trocado; sessão → `/app`; `/?home` fica; clique em "Sobre o Heeey" abre `/?home`; 160 testes; build ok
+- Not verified: logout real (precisa de Supabase)
