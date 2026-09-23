@@ -22,12 +22,14 @@ Aplicação web moderna de whiteboard e lousa vetorial baseada no componente ofi
 heeey.click/
 ├── .env                       # Credenciais do Supabase (URL e Publishable Key)
 ├── supabase/
-│   └── schema.sql             # Definição da tabela public.boards, índices e políticas RLS
+│   ├── schema.sql             # Definição da tabela public.boards, índices e políticas RLS (instalação nova)
+│   ├── storage.sql            # Bucket board-media e suas políticas
+│   └── migrations/            # Alterações incrementais para bancos já existentes
 ├── src/
 │   ├── __tests__/             # Testes unitários automatizados (Vitest)
 │   ├── components/
 │   │   ├── AuthModal.tsx      # Modal de login com Magic Link
-│   │   ├── BoardCard.tsx      # Cartão do quadro no Dashboard (abrir, renomear, duplicar, excluir)
+│   │   ├── BoardCard.tsx      # Cartão do quadro no Dashboard (abrir, renomear, duplicar, lixeira)
 │   │   ├── Header.tsx         # Barra superior com título editável, status de sync e avatares
 │   │   ├── NicknameModal.tsx  # Personalização de nome e cor de colaborador
 │   │   └── ShareModal.tsx     # Modal de compartilhamento com controle de permissão (Edição/Leitura)
@@ -59,15 +61,18 @@ Para inicializar a tabela `public.boards` no seu projeto Supabase:
 
 1. Acesse o [Supabase Dashboard](https://supabase.com/dashboard).
 2. Abra o **SQL Editor** do projeto.
-3. Cole e execute o conteúdo do arquivo [`supabase/schema.sql`](file:///Users/carlossantos/Documents/opensource/heeey.click/supabase/schema.sql).
+3. Cole e execute o conteúdo de [`supabase/schema.sql`](supabase/schema.sql) e depois de [`supabase/storage.sql`](supabase/storage.sql).
+
+**Banco já existente?** Execute, em ordem, os arquivos de [`supabase/migrations/`](supabase/migrations/) que ainda não foram aplicados (ou use `supabase db push` com a Supabase CLI). Aplique as migrations **antes** de publicar o front-end que depende delas.
 
 O script cria:
-- A tabela `public.boards` com colunas para `elements`, `app_state`, `files`, `access_level` ('edit' ou 'view') e `owner_id`.
+- A tabela `public.boards` com colunas para `elements`, `app_state`, `files`, `access_level` ('edit' ou 'view'), `owner_id` e `deleted_at` (lixeira).
 - Políticas RLS permitindo:
   - Leitura pública dos quadros por qualquer pessoa com o link.
   - Criação aberta de novos quadros.
   - Atualização por proprietário ou em quadros com permissão "Pode Editar".
-  - Exclusão restrita ao proprietário.
+  - Lixeira (`deleted_at`): somente o proprietário move ou restaura quadros com dono; quadros na lixeira ficam somente leitura.
+  - Exclusão definitiva restrita ao proprietário autenticado (quadros anônimos só vão para a lixeira).
 
 ---
 

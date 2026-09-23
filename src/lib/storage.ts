@@ -240,6 +240,24 @@ export function getLocalBoard(id: string): Board | null {
   return boards.find((b) => b.id === id) || null;
 }
 
+/**
+ * Light summary kept in the boards index (heavy scene data lives in per-board keys).
+ */
+function toIndexEntry(board: Board): Board {
+  return {
+    id: board.id,
+    title: board.title,
+    owner_id: board.owner_id,
+    access_level: board.access_level,
+    created_at: board.created_at,
+    updated_at: board.updated_at,
+    ...(board.deleted_at ? { deleted_at: board.deleted_at } : {}),
+    elements: [],
+    app_state: {},
+    files: {},
+  };
+}
+
 export function saveLocalBoard(board: Board): void {
   const pruned = pruneBoardForQuota(board, false);
 
@@ -260,17 +278,7 @@ export function saveLocalBoard(board: Board): void {
 
   // 2. Update index in STORAGE_BOARDS_KEY with a light summary to protect index size
   let boards: Board[] = [];
-  const indexEntry: Board = {
-    id: board.id,
-    title: board.title,
-    owner_id: board.owner_id,
-    access_level: board.access_level,
-    created_at: board.created_at,
-    updated_at: board.updated_at,
-    elements: [],
-    app_state: {},
-    files: {},
-  };
+  const indexEntry = toIndexEntry(board);
 
   try {
     const raw = localStorage.getItem(STORAGE_BOARDS_KEY);
@@ -284,17 +292,7 @@ export function saveLocalBoard(board: Board): void {
     }
 
     // Clean up any heavy elements/files stored in existing index entries
-    const lightweightBoards = boards.map((b) => ({
-      id: b.id,
-      title: b.title,
-      owner_id: b.owner_id,
-      access_level: b.access_level,
-      created_at: b.created_at,
-      updated_at: b.updated_at,
-      elements: [],
-      app_state: {},
-      files: {},
-    }));
+    const lightweightBoards = boards.map(toIndexEntry);
 
     localStorage.setItem(STORAGE_BOARDS_KEY, JSON.stringify(lightweightBoards));
   } catch (e) {
@@ -307,17 +305,7 @@ export function saveLocalBoard(board: Board): void {
       } else {
         boards.unshift(indexEntry);
       }
-      const trimmed = boards.slice(0, 20).map((b) => ({
-        id: b.id,
-        title: b.title,
-        owner_id: b.owner_id,
-        access_level: b.access_level,
-        created_at: b.created_at,
-        updated_at: b.updated_at,
-        elements: [],
-        app_state: {},
-        files: {},
-      }));
+      const trimmed = boards.slice(0, 20).map(toIndexEntry);
       localStorage.setItem(STORAGE_BOARDS_KEY, JSON.stringify(trimmed));
     } catch (err) {
       console.error('Erro crítico ao salvar índice de boards locais:', err);

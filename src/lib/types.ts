@@ -10,6 +10,8 @@ export interface Board {
   access_level: AccessLevel;
   created_at: string;
   updated_at: string;
+  /** Set when the board is in the trash (soft delete) */
+  deleted_at?: string | null;
 }
 
 export interface CollaboratorUser {
@@ -74,6 +76,8 @@ export interface RealtimeMetaUpdate {
   boardId: string;
   title?: string;
   accessLevel?: AccessLevel;
+  /** null when the board was restored from the trash */
+  deletedAt?: string | null;
   senderId: string;
 }
 

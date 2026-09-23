@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MoreVertical, Copy, Trash2, Edit3 } from 'lucide-react';
+import { MoreVertical, Copy, Trash2, Edit3, RotateCcw } from 'lucide-react';
 import { Board } from '../lib/types';
 import { formatDateRelative } from '../lib/utils';
 import { useDismiss } from '../hooks/useDismiss';
@@ -12,6 +12,12 @@ interface BoardCardProps {
   onRename: (id: string, newTitle: string) => void;
   onDuplicate: (board: Board) => void;
   onDelete: (id: string) => void;
+  /** Present when the card is shown in the trash */
+  trash?: {
+    onRestore: (id: string) => void;
+    /** Only the authenticated owner can delete permanently */
+    onDeletePermanently?: (board: Board) => void;
+  };
 }
 
 const menuItemClass =
@@ -23,6 +29,7 @@ export function BoardCard({
   onRename,
   onDuplicate,
   onDelete,
+  trash,
 }: BoardCardProps) {
   const { isDark } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
@@ -98,7 +105,9 @@ export function BoardCard({
             </h3>
           )}
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Editado {formatDateRelative(board.updated_at || board.created_at).toLowerCase()}
+            {trash && board.deleted_at
+              ? `Na lixeira desde ${formatDateRelative(board.deleted_at).toLowerCase()}`
+              : `Editado ${formatDateRelative(board.updated_at || board.created_at).toLowerCase()}`}
           </p>
         </div>
 
@@ -118,45 +127,80 @@ export function BoardCard({
           {showMenu && (
             <div
               role="menu"
-              className="absolute right-0 bottom-10 sm:bottom-auto sm:top-10 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-pop-in"
+              className="absolute right-0 bottom-10 sm:bottom-auto sm:top-10 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-pop-in"
             >
-              <button
-                role="menuitem"
-                onClick={() => {
-                  setShowMenu(false);
-                  setIsRenaming(true);
-                }}
-                className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
-              >
-                <Edit3 className="w-4 h-4 text-slate-500" />
-                <span>Renomear</span>
-              </button>
+              {trash ? (
+                <>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowMenu(false);
+                      trash.onRestore(board.id);
+                    }}
+                    className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
+                  >
+                    <RotateCcw className="w-4 h-4 text-slate-500" />
+                    <span>Restaurar</span>
+                  </button>
 
-              <button
-                role="menuitem"
-                onClick={() => {
-                  setShowMenu(false);
-                  onDuplicate(board);
-                }}
-                className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
-              >
-                <Copy className="w-4 h-4 text-slate-500" />
-                <span>Duplicar</span>
-              </button>
+                  {trash.onDeletePermanently && (
+                    <>
+                      <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                      <button
+                        role="menuitem"
+                        onClick={() => {
+                          setShowMenu(false);
+                          trash.onDeletePermanently?.(board);
+                        }}
+                        className={`${menuItemClass} text-rose-700 hover:bg-rose-50 focus-visible:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:focus-visible:bg-rose-950/40`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Excluir definitivamente</span>
+                      </button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowMenu(false);
+                      setIsRenaming(true);
+                    }}
+                    className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
+                  >
+                    <Edit3 className="w-4 h-4 text-slate-500" />
+                    <span>Renomear</span>
+                  </button>
 
-              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onDuplicate(board);
+                    }}
+                    className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
+                  >
+                    <Copy className="w-4 h-4 text-slate-500" />
+                    <span>Duplicar</span>
+                  </button>
 
-              <button
-                role="menuitem"
-                onClick={() => {
-                  setShowMenu(false);
-                  onDelete(board.id);
-                }}
-                className={`${menuItemClass} text-rose-700 hover:bg-rose-50 focus-visible:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:focus-visible:bg-rose-950/40`}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span>Excluir</span>
-              </button>
+                  <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
+
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowMenu(false);
+                      onDelete(board.id);
+                    }}
+                    className={`${menuItemClass} text-rose-700 hover:bg-rose-50 focus-visible:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:focus-visible:bg-rose-950/40`}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Mover para a lixeira</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
