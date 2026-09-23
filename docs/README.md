@@ -8,8 +8,6 @@ Bem-vindo à documentação oficial do **Heeey**. Inspirada na arquitetura e doc
 
 ## 🧭 Navegação Rápida
 
-<div class="grid">
-
 ### 🎨 [Recursos & Lousa](features/whiteboard-editor.md)
 Explore o canvas vetorial baseado no `@excalidraw/excalidraw` 0.18, suporte a temas claro/escuro, ferramentas de desenho, formas, texto encadernado, setas inteligentes e atalhos.
 
@@ -39,8 +37,6 @@ Automatize a criação, leitura e manipulação de quadros e pastas. Autenticaç
 
 ### 🤖 [Servidor MCP para IA](mcp/overview.md)
 Conecte Claude Code, Claude Desktop, Cursor e outros agentes inteligentes via Streamable HTTP (`/api/mcp`). Crie diagramas com layout em camadas automático (Dagre / Sugiyama) e organize quadros programaticamente.
-
-</div>
 
 ---
 

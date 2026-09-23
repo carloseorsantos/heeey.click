@@ -9,6 +9,7 @@ import {
   searchDocs,
   getAdjacentDocs,
   extractToc,
+  extractDocFiles,
   calculateReadingTime,
   slugify,
 } from '../lib/docsData';
@@ -229,4 +230,107 @@ describe('docsData', () => {
       href: '/docs/api/rate-limiting',
     });
   });
+
+  it('correctly extracts all 23 document files from llms-full.txt', () => {
+    const doc = getDocBySlug('llms-full');
+    expect(doc).not.toBeNull();
+    const files = extractDocFiles(doc!.content);
+    expect(files.length).toBe(23);
+    expect(files[0].filePath).toBe('docs/README.md');
+    expect(files[0].docSlug).toBe('readme');
+    expect(files[0].id).toBe('file-docsreadmemd');
+
+    expect(files[1].filePath).toBe('docs/getting-started.md');
+    expect(files[1].docSlug).toBe('getting-started');
+
+    const mcpTools = files.find((f) => f.filePath === 'docs/mcp/tools.md');
+    expect(mcpTools).toBeDefined();
+    expect(mcpTools?.docSlug).toBe('mcp/tools');
+    expect(mcpTools?.title).toBe('Catálogo de Ferramentas MCP');
+  });
+
+  it('resolves relative links inside llms-full correctly without 404s', () => {
+    // Links with category path
+    const r1 = resolveDocHref('features/whiteboard-editor.md', 'llms-full');
+    expect(r1).toEqual({
+      type: 'internal',
+      targetSlug: 'features/whiteboard-editor',
+      href: '/docs/features/whiteboard-editor',
+    });
+
+    // Subdocument links without category path (e.g. from api/getting-started or features/)
+    const r2 = resolveDocHref('scene-content-schema.md', 'llms-full');
+    expect(r2).toEqual({
+      type: 'internal',
+      targetSlug: 'api/scene-content-schema',
+      href: '/docs/api/scene-content-schema',
+    });
+
+    const r3 = resolveDocHref('collaboration-realtime.md', 'llms-full');
+    expect(r3).toEqual({
+      type: 'internal',
+      targetSlug: 'features/collaboration-realtime',
+      href: '/docs/features/collaboration-realtime',
+    });
+
+    const r4 = resolveDocHref('tools.md', 'llms-full');
+    expect(r4).toEqual({
+      type: 'internal',
+      targetSlug: 'mcp/tools',
+      href: '/docs/mcp/tools',
+    });
+
+    // Anchor on relative link from llms-full
+    const r5 = resolveDocHref('endpoints.md#post-boards', 'llms-full');
+    expect(r5).toEqual({
+      type: 'internal',
+      targetSlug: 'api/endpoints',
+      href: '/docs/api/endpoints#post-boards',
+    });
+  });
+
+  it('preserves underscores in slugify for heading anchors', () => {
+    expect(slugify('10. layout_board')).toBe('10-layout_board');
+    expect(slugify('list_boards')).toBe('list_boards');
+    expect(slugify('get_board:id')).toBe('get_boardid');
+  });
+
+  it('renders tables with text alignment and clean borders', () => {
+    const m = new Marked();
+    m.use({
+      renderer: {
+        tablecell(token: any) {
+          const alignClass = token.align === 'center' ? ' text-center' : token.align === 'right' ? ' text-right' : ' text-left';
+          if (token.header) {
+            return `<th class="${alignClass}">${token.text}</th>`;
+          }
+          return `<td class="${alignClass}">${token.text}</td>`;
+        },
+      },
+    });
+
+    const markdownTable = '| Left | Center | Right |\n| :--- | :---: | ---: |\n| 1 | 2 | 3 |';
+    const output = m.parse(markdownTable) as string;
+    expect(output).toContain('text-left');
+    expect(output).toContain('text-center');
+    expect(output).toContain('text-right');
+  });
+
+  it('verifies that file banners include no-underline for isolated doc buttons', () => {
+    const rawBanner = `\n\n================================================================================\nFILE: docs/features/whiteboard-editor.md\n================================================================================\n\n`;
+    const preprocessed = rawBanner.replace(
+      /(?:^|\n)={10,}\s*\n\s*FILE:\s*([^\n]+)\s*\n\s*={10,}(?:\n|$)/gi,
+      (_match, filePath) => {
+        const cleanPath = filePath.trim();
+        const docSlug = normalizeSlug(cleanPath.replace(/^docs\//, ''));
+        const fileId = `file-${slugify(cleanPath)}`;
+        return `<div class="doc-file-banner" id="${fileId}"><a href="/docs/${docSlug}" class="doc-internal-link no-underline">Abrir</a></div>`;
+      }
+    );
+
+    expect(preprocessed).toContain('no-underline');
+    expect(preprocessed).toContain('id="file-docsfeatureswhiteboard-editormd"');
+    expect(preprocessed).toContain('href="/docs/features/whiteboard-editor"');
+  });
 });
+

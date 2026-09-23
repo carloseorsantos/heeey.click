@@ -464,7 +464,22 @@ export function resolveDocHref(rawHref: string, currentSlug: string): ResolvedDo
     combinedPath = cleanPath;
   }
 
-  const targetSlug = normalizeSlug(combinedPath);
+  let targetSlug = normalizeSlug(combinedPath);
+
+  // If targetSlug does not match any existing doc, check for basename or partial matches in DOC_ITEMS
+  const exactDoc = DOC_ITEMS.find((d) => d.slug.toLowerCase() === targetSlug.toLowerCase());
+  if (!exactDoc) {
+    const matchedDoc = DOC_ITEMS.find(
+      (d) =>
+        d.slug.toLowerCase().endsWith(`/${targetSlug.toLowerCase()}`) ||
+        d.filePath.toLowerCase().endsWith(`/${targetSlug.toLowerCase()}.md`) ||
+        d.filePath.toLowerCase().endsWith(`/${cleanPath.toLowerCase()}`)
+    );
+    if (matchedDoc) {
+      targetSlug = matchedDoc.slug;
+    }
+  }
+
   return {
     type: 'internal',
     targetSlug,
@@ -478,7 +493,7 @@ export function slugify(text: string): string {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // remove accents
-    .replace(/[^a-z0-9\s-]/g, '') // remove special chars, emojis
+    .replace(/[^a-z0-9\s_-]/g, '') // remove special chars, emojis, preserve hyphens and underscores
     .trim()
     .replace(/\s+/g, '-');
 }
@@ -531,3 +546,32 @@ export function calculateReadingTime(content: string): number {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.ceil(words / 200));
 }
+
+export interface DocFileSection {
+  filePath: string;
+  docSlug: string;
+  title: string;
+  category: DocCategory;
+  id: string;
+}
+
+/** Extract individual file sections from concatenated documentation dumps (e.g. llms-full.txt) */
+export function extractDocFiles(content: string): DocFileSection[] {
+  const fileRegex = /(?:^|\n)={10,}\s*\n\s*FILE:\s*([^\n]+)\s*\n\s*={10,}/gi;
+  const sections: DocFileSection[] = [];
+  let match;
+  while ((match = fileRegex.exec(content)) !== null) {
+    const rawPath = match[1].trim();
+    const cleanSlug = normalizeSlug(rawPath.replace(/^docs\//, ''));
+    const docItem = DOC_ITEMS.find((d) => d.slug.toLowerCase() === cleanSlug.toLowerCase());
+    sections.push({
+      filePath: rawPath,
+      docSlug: cleanSlug,
+      title: docItem ? docItem.title : rawPath,
+      category: docItem ? docItem.category : 'overview',
+      id: `file-${slugify(rawPath)}`,
+    });
+  }
+  return sections;
+}
+

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Marked } from 'marked';
-import { resolveDocHref, slugify, cleanMarkdownHeading } from '../../lib/docsData';
+import { resolveDocHref, slugify, cleanMarkdownHeading, normalizeSlug } from '../../lib/docsData';
 import { useI18n } from '../../i18n';
 
 interface MarkdownRendererProps {
@@ -78,6 +78,42 @@ export function MarkdownRenderer({
   const { t } = useI18n();
 
   const html = useMemo(() => {
+    // Preprocess file separators (commonly found in llms-full dumps)
+    // Turns:
+    // ================================================================================
+    // FILE: docs/foo.md
+    // ================================================================================
+    // into a clean, modern, well-styled file section banner
+    const preprocessed = content.replace(
+      /(?:^|\n)={10,}\s*\n\s*FILE:\s*([^\n]+)\s*\n\s*={10,}(?:\n|$)/gi,
+      (_match, filePath) => {
+        const cleanPath = filePath.trim();
+        const docSlug = normalizeSlug(cleanPath.replace(/^docs\//, ''));
+        const fileId = `file-${slugify(cleanPath)}`;
+        return `\n\n<div class="doc-file-banner my-12 pt-8 border-t-2 border-slate-200 dark:border-slate-800" id="${fileId}">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm">
+    <div class="flex items-center gap-3 min-w-0">
+      <div class="w-9 h-9 rounded-xl bg-brand-100 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+      </div>
+      <div class="min-w-0 truncate">
+        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none mb-1">Arquivo Fonte</span>
+        <span class="font-mono text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate block">${escapeHtml(cleanPath)}</span>
+      </div>
+    </div>
+    <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 border border-slate-200 dark:border-slate-700 transition flex-shrink-0 shadow-2xs">
+      <span>Abrir documento isolado</span>
+      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+    </a>
+  </div>
+</div>\n\n`;
+      }
+    );
+
     const marked = new Marked({
       gfm: true,
       breaks: false,
@@ -94,6 +130,37 @@ export function MarkdownRenderer({
         heading({ tokens, depth }: any) {
           const text = this.parser.parseInline(tokens);
           const plain = extractPlainFromTokens(tokens);
+
+          // Defense-in-depth: if heading contains equal signs banner or starts with FILE:
+          if (/={10,}/.test(plain) || /^FILE:\s+/i.test(plain)) {
+            const cleanPath = plain.replace(/={5,}/g, '').replace(/^FILE:\s*/i, '').trim();
+            const docSlug = normalizeSlug(cleanPath.replace(/^docs\//, ''));
+            const fileId = `file-${slugify(cleanPath)}`;
+            return `
+              <div class="doc-file-banner my-12 pt-8 border-t-2 border-slate-200 dark:border-slate-800" id="${fileId}">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-xl bg-brand-100 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0 truncate">
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none mb-1">Arquivo Fonte</span>
+                      <span class="font-mono text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 truncate block">${escapeHtml(cleanPath)}</span>
+                    </div>
+                  </div>
+                  <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-slate-800 hover:bg-brand-50 dark:hover:bg-brand-950 border border-slate-200 dark:border-slate-700 transition flex-shrink-0 shadow-2xs">
+                    <span>Abrir documento isolado</span>
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            `;
+          }
+
           const id = slugify(plain);
 
           if (depth === 1) {
@@ -147,7 +214,7 @@ export function MarkdownRenderer({
         },
 
         codespan({ text }: any) {
-          return `<code class="px-1.5 py-0.5 rounded font-mono text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200/80 dark:border-slate-700/80">${escapeHtml(text)}</code>`;
+          return `<code class="px-1.5 py-0.5 rounded font-mono text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-slate-200/80 dark:border-slate-700/80 break-words">${escapeHtml(text)}</code>`;
         },
 
         paragraph({ tokens }: any) {
@@ -254,10 +321,11 @@ export function MarkdownRenderer({
 
         tablecell(token: any) {
           const content = this.parser.parseInline(token.tokens);
+          const alignClass = token.align === 'center' ? ' text-center' : token.align === 'right' ? ' text-right' : ' text-left';
           if (token.header) {
-            return `<th class="px-4 py-3 font-semibold text-slate-900 dark:text-white bg-slate-100/90 dark:bg-slate-800/90">${content}</th>`;
+            return `<th class="px-4 py-3 font-semibold text-slate-900 dark:text-white bg-slate-100/90 dark:bg-slate-800/90${alignClass}">${content}</th>`;
           }
-          return `<td class="px-4 py-3 text-slate-700 dark:text-slate-300 align-top">${content}</td>`;
+          return `<td class="px-4 py-3 text-slate-700 dark:text-slate-300 align-top${alignClass}">${content}</td>`;
         },
 
         hr() {
@@ -296,7 +364,7 @@ export function MarkdownRenderer({
       },
     });
 
-    return marked.parse(content) as string;
+    return marked.parse(preprocessed) as string;
   }, [content, currentSlug, t]);
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -325,13 +393,35 @@ export function MarkdownRenderer({
     }
 
     // 2. Handle Heading Anchors & In-Page Anchors
-    const anchorLink = (e.target as HTMLElement).closest<HTMLAnchorElement>('.doc-heading-anchor, .doc-anchor-link');
+    const anchorLink = (e.target as HTMLElement).closest<HTMLAnchorElement>(
+      '.doc-heading-anchor, .doc-anchor-link, a[href^="#"]'
+    );
     if (anchorLink) {
       const href = anchorLink.getAttribute('href');
       if (href && href.startsWith('#')) {
         e.preventDefault();
-        const targetId = href.slice(1);
-        const targetEl = document.getElementById(targetId);
+        const rawTarget = href.slice(1);
+        if (!rawTarget) {
+          const mainScroll = anchorLink.closest('main') || document.querySelector('main');
+          if (mainScroll) mainScroll.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+
+        let targetEl: HTMLElement | null =
+          document.getElementById(rawTarget) ||
+          document.getElementById(slugify(rawTarget)) ||
+          document.getElementById(`file-${slugify(rawTarget)}`) ||
+          document.getElementById(`file-${normalizeSlug(rawTarget).replace(/\//g, '-')}`) ||
+          document.getElementById(rawTarget.replace(/_/g, ''));
+
+        if (!targetEl) {
+          try {
+            targetEl = document.querySelector(`[id^="${CSS.escape(rawTarget)}"]`);
+          } catch {
+            // Ignore CSS selector errors
+          }
+        }
+
         if (targetEl) {
           targetEl.scrollIntoView({ behavior: 'smooth' });
           window.history.pushState(null, '', href);
