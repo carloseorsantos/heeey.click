@@ -2,14 +2,31 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Heeey — Whiteboard Colaborativo</title>
-    <meta name="description" content="Lousa interativa e quadro branco colaborativo em tempo real com Excalidraw e Supabase." />
+    <title>Lousa online colaborativa e grátis — Heeey</title>
+    <meta name="description" content="Lousa online e quadro branco colaborativo, grátis e no navegador. Desenhe, faça diagramas e dê aulas com outras pessoas em tempo real, sem instalar nada." />
+    <link rel="canonical" href="https://www.heeey.click/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.heeey.click/" />
+    <meta property="og:title" content="Lousa online colaborativa e grátis — Heeey" />
+    <meta property="og:description" content="Desenhe, faça diagramas e dê aulas com outras pessoas em tempo real, direto no navegador." />
+    <meta property="og:image" content="https://www.heeey.click/logo.png" />
+    <meta property="og:locale" content="pt_BR" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
     <script>
-      // Apply theme before first paint to avoid a light/dark flash
+      // Returning users (signed in, or guests with boards in this browser) go straight to the app.
+      // Crawlers have neither, so they always get this page. ?home skips the redirect.
+      try {
+        if (!/[?&]home\b/.test(location.search)) {
+          var returning = Object.keys(localStorage).some(function (k) { return /^sb-.+-auth-token$/.test(k); });
+          var guestBoards = JSON.parse(localStorage.getItem('heeey_local_boards') || '[]');
+          if (returning || (Array.isArray(guestBoards) && guestBoards.length > 0)) location.replace('/app');
+        }
+      } catch (e) {}
+    </script>
+    <script>
       try {
         var t = localStorage.getItem('heeey_theme');
         if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
@@ -18,8 +35,187 @@
       } catch (e) {}
     </script>
   </head>
-  <body class="bg-app text-label antialiased h-screen w-screen overflow-hidden">
-    <div id="root" class="h-full w-full flex flex-col overflow-hidden"></div>
-    <script type="module" src="/src/main.tsx"></script>
+  <body class="bg-app text-label antialiased">
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <div class="flex items-center gap-1 text-sm sm:gap-2">
+          <a href="/docs" class="hidden rounded-lg px-3 py-1.5 text-label-2 hover:bg-fill hover:text-label sm:inline-block">Documentação</a>
+          <a href="/app?settings=account" class="rounded-lg px-3 py-1.5 font-medium text-accent-text hover:bg-fill">Entrar</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="mx-auto max-w-5xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20">
+        <div class="max-w-2xl">
+          <h1 class="text-4xl font-bold tracking-tight sm:text-5xl sm:leading-[1.1]">
+            Lousa online colaborativa, grátis e sem instalar nada
+          </h1>
+          <p class="mt-5 text-lg text-label-2">
+            Desenhe, faça diagramas e dê aulas com outras pessoas em tempo real, direto no navegador.
+            Crie sua conta só com o e-mail e seus quadros ficam salvos em qualquer dispositivo.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a href="/app?settings=account" class="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+              Criar conta grátis
+            </a>
+            <a href="/app" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
+              Testar sem conta
+            </a>
+          </div>
+          <p class="mt-3 text-sm text-label-3">Sem senha: você entra com um link enviado para o seu e-mail.</p>
+        </div>
+
+        <figure class="mt-12 overflow-hidden rounded-3xl bg-surface shadow-card" aria-label="Ilustração de uma lousa com duas pessoas desenhando ao mesmo tempo">
+          <svg viewBox="0 0 960 400" class="block h-auto w-full" role="img" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <defs>
+              <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.2" fill="rgb(var(--label-3) / 0.35)" />
+              </pattern>
+            </defs>
+            <rect width="960" height="400" fill="url(#dots)" />
+            <g stroke="rgb(var(--label))" stroke-width="2.5">
+              <path d="M102 128c40-3 138-4 176 1 4 22 3 70-1 94-44 3-133 2-174-1-3-26-4-68-1-94z" fill="rgb(var(--accent) / 0.08)" />
+              <path d="M398 110c24-4 116-5 160 0 5 30 5 100 0 128-38 5-126 4-160-1-4-30-5-99 0-127z" fill="rgb(var(--accent) / 0.14)" />
+              <path d="M700 136c42-2 128-3 160 2 3 22 2 64-2 88-40 3-120 3-158-1-3-24-4-66 0-89z" fill="rgb(var(--accent) / 0.08)" />
+              <path d="M286 176c36-2 70-1 104 0" /><path d="M378 166l14 10-14 10" />
+              <path d="M566 176c40 0 82 1 126 3" /><path d="M680 169l14 10-15 9" />
+            </g>
+            <g fill="rgb(var(--label))" font-size="22" font-weight="600" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+              <text x="190" y="183">Ideia</text>
+              <text x="478" y="183">Rascunho</text>
+              <text x="780" y="187">Aula pronta</text>
+            </g>
+            <path d="M148 300c30-26 64-26 94 0s64 26 94 0 64-26 94 0" stroke="#30b04f" stroke-width="3" />
+            <g>
+              <path d="M612 282l0 34 10-9 7 15 7-3-7-15 13 0z" fill="#30b04f" stroke="rgb(var(--surface))" stroke-width="1.5" />
+              <rect x="636" y="316" width="76" height="26" rx="8" fill="#30b04f" />
+              <text x="674" y="334" font-size="14" font-weight="600" fill="#fff" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">Ingrid</text>
+            </g>
+            <g>
+              <path d="M436 300l0 34 10-9 7 15 7-3-7-15 13 0z" fill="#0a84ff" stroke="rgb(var(--surface))" stroke-width="1.5" />
+              <rect x="460" y="334" width="80" height="26" rx="8" fill="#0a84ff" />
+              <text x="500" y="352" font-size="14" font-weight="600" fill="#fff" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">Carlos</text>
+            </g>
+          </svg>
+        </figure>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">Como usar a lousa online do Heeey?</h2>
+          <p class="mt-3 max-w-2xl text-lg text-label-2">
+            Abra um quadro novo, compartilhe o link e todo mundo desenha na mesma tela, vendo o cursor de cada pessoa ao vivo.
+          </p>
+          <ol class="mt-10 grid gap-6 sm:grid-cols-3">
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">1</span>
+              <h3 class="mt-2 text-lg font-semibold">Crie um quadro</h3>
+              <p class="mt-2 text-label-2">Clique em novo quadro e comece a desenhar. Dá para testar sem conta; o trabalho fica salvo no navegador.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">2</span>
+              <h3 class="mt-2 text-lg font-semibold">Compartilhe o link</h3>
+              <p class="mt-2 text-label-2">Escolha se quem recebe o link pode editar ou só assistir, e envie para a turma ou para a equipe.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">3</span>
+              <h3 class="mt-2 text-lg font-semibold">Desenhem juntos</h3>
+              <p class="mt-2 text-label-2">Cada pessoa aparece com nome e cor no cursor. As mudanças chegam na hora para todos.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">O que dá para fazer na lousa?</h2>
+        <p class="mt-3 max-w-2xl text-lg text-label-2">
+          Tudo o que você faria num quadro branco de verdade, com o traço de desenho à mão do Excalidraw e mais algumas coisas que o papel não faz.
+        </p>
+        <ul class="mt-10 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <li>
+            <h3 class="font-semibold">Formas, setas e texto</h3>
+            <p class="mt-1 text-label-2">Retângulos, círculos, setas que se prendem às formas, texto e desenho livre.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Colaboração em tempo real</h3>
+            <p class="mt-1 text-label-2">Cursores com nome, ponteiro laser e seleção de cada pessoa visíveis para todos.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Imagens</h3>
+            <p class="mt-1 text-label-2">Cole ou arraste imagens para dentro do quadro para anotar por cima.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Pastas e busca</h3>
+            <p class="mt-1 text-label-2">Organize quadros em pastas e encontre qualquer um pelo texto escrito dentro dele.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Histórico de versões</h3>
+            <p class="mt-1 text-label-2">Volte para uma versão anterior do quadro quando alguém apagar o que não devia.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Bibliotecas de elementos</h3>
+            <p class="mt-1 text-label-2">Use bibliotecas prontas de ícones e componentes para montar diagramas mais rápido.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">Perguntas frequentes</h2>
+          <div class="mt-8 divide-y divide-separator">
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">A lousa online do Heeey é grátis?</h3>
+              <p class="mt-2 text-label-2">Sim. Você cria quadros, compartilha e colabora em tempo real sem pagar nada.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Preciso criar conta para usar?</h3>
+              <p class="mt-2 text-label-2">Não para testar: dá para desenhar como convidado, e o quadro fica salvo no seu navegador. Com uma conta, seus quadros ficam na nuvem e você ganha pastas, busca e histórico de versões. Os quadros que você criou como convidado passam para a sua conta quando você entra.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Como eu entro sem senha?</h3>
+              <p class="mt-2 text-label-2">Você digita seu e-mail e recebe um link de acesso (magic link). Clicou, entrou. Não há senha para esquecer.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Serve para dar aula online?</h3>
+              <p class="mt-2 text-label-2">Serve. Compartilhe o link em modo "Apenas leitura" para os alunos acompanharem ao vivo, ou em "Pode editar" para resolverem exercícios junto com você na mesma lousa.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Funciona no celular e no tablet?</h3>
+              <p class="mt-2 text-label-2">Funciona no navegador de qualquer dispositivo, sem instalar aplicativo.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">O que acontece se a internet cair?</h3>
+              <p class="mt-2 text-label-2">Nada se perde. Cada traço é salvo primeiro no seu navegador e sincronizado com a nuvem quando a conexão volta.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">Sua próxima ideia começa num quadro em branco</h2>
+        <p class="mx-auto mt-3 max-w-xl text-lg text-label-2">Crie sua conta em segundos e mantenha todos os seus quadros num lugar só.</p>
+        <a href="/app?settings=account" class="mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+          Criar conta grátis
+        </a>
+      </section>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — lousa colaborativa</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/docs" class="hover:text-label">Documentação</a>
+          <a href="/mcp" class="hover:text-label" hreflang="en">Para devs: MCP para agentes de IA</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/landing/main.ts"></script>
   </body>
 </html>

@@ -402,9 +402,9 @@ export function resolveDocHref(rawHref: string, currentSlug: string): ResolvedDo
     return { type: 'anchor', href: cleanHref };
   }
 
-  // App home / dashboard
-  if (cleanHref === '/' || cleanHref === '') {
-    return { type: 'dashboard', href: '/' };
+  // App home / dashboard (heeey.click itself is the landing page, which sends users on to /app)
+  if (cleanHref === '/' || cleanHref === '' || /^\/app\/?$/.test(cleanHref)) {
+    return { type: 'dashboard', href: '/app' };
   }
 
   // Board navigation /b/:id

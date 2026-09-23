@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heeey — Whiteboard Colaborativo</title>
+    <meta name="description" content="Lousa interativa e quadro branco colaborativo em tempo real com Excalidraw e Supabase." />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      // Apply theme before first paint to avoid a light/dark flash
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased h-screen w-screen overflow-hidden">
+    <div id="root" class="h-full w-full flex flex-col overflow-hidden"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

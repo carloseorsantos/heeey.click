@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Whiteboard MCP server for AI agents — Heeey</title>
+    <meta name="description" content="A hosted, multiplayer whiteboard MCP server. Let Claude, Cursor or any MCP client draw diagrams on a shared Excalidraw canvas your team watches live. Free, no install." />
+    <link rel="canonical" href="https://www.heeey.click/mcp" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.heeey.click/mcp" />
+    <meta property="og:title" content="Whiteboard MCP server for AI agents — Heeey" />
+    <meta property="og:description" content="Let your AI agent draw diagrams on a shared canvas your team watches live. Hosted, free, no install." />
+    <meta property="og:image" content="https://www.heeey.click/logo.png" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased">
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <div class="flex items-center gap-1 text-sm sm:gap-2">
+          <a href="/docs/mcp/overview" class="hidden rounded-lg px-3 py-1.5 text-label-2 hover:bg-fill hover:text-label sm:inline-block">MCP docs</a>
+          <a href="/app?settings=account" class="rounded-lg px-3 py-1.5 font-medium text-accent-text hover:bg-fill">Sign in</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="mx-auto max-w-5xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20">
+        <div class="max-w-2xl">
+          <h1 class="text-4xl font-bold tracking-tight sm:text-5xl sm:leading-[1.1]">
+            A whiteboard your AI agent can draw on, live with your team
+          </h1>
+          <p class="mt-5 text-lg text-label-2">
+            Heeey is a hosted MCP server on top of a multiplayer Excalidraw canvas. Ask Claude, Cursor or any MCP client
+            for an architecture diagram and watch it appear on a board everyone can open, edit and keep.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a href="/app?settings=account" class="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+              Get your free API key
+            </a>
+            <a href="/docs/mcp/getting-started" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
+              Read the setup guide
+            </a>
+          </div>
+          <p class="mt-3 text-sm text-label-3">Sign in with a magic link, then create a key under Settings → Integrations.</p>
+        </div>
+
+        <div class="mt-12 overflow-hidden rounded-3xl bg-surface shadow-card">
+          <div class="flex items-center gap-2 border-b border-separator px-5 py-3 text-sm text-label-3">
+            <span class="h-2.5 w-2.5 rounded-full bg-fill-2"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-fill-2"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-fill-2"></span>
+            <span class="ml-2">Terminal</span>
+          </div>
+          <pre class="overflow-x-auto px-5 py-5 font-mono text-sm leading-relaxed"><code><span class="text-label-3"># Claude Code: one command, nothing to install or run locally</span>
+claude mcp add --transport http heeey https://www.heeey.click/api/mcp \
+  --header "Authorization: Bearer hk_YOUR_KEY"
+
+<span class="text-label-3"># then just ask</span>
+<span class="text-accent-text">&gt;</span> Draw our checkout flow as a diagram on heeey</code></pre>
+        </div>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">How does the Heeey MCP server work?</h2>
+          <p class="mt-3 max-w-2xl text-lg text-label-2">
+            Your agent calls tools over Streamable HTTP; Heeey writes to the board and broadcasts every change to whoever has it open.
+          </p>
+          <ol class="mt-10 grid gap-6 sm:grid-cols-3">
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">1</span>
+              <h3 class="mt-2 text-lg font-semibold">Connect once</h3>
+              <p class="mt-2 text-label-2">Add the remote server URL and your API key to any MCP client. No Node process, no local canvas server.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">2</span>
+              <h3 class="mt-2 text-lg font-semibold">Describe, don't position</h3>
+              <p class="mt-2 text-label-2"><code class="font-mono text-callout">create_diagram</code> takes nodes and edges. Heeey sizes boxes, lays them out in layers and routes arrows around shapes.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">3</span>
+              <h3 class="mt-2 text-lg font-semibold">Share the link</h3>
+              <p class="mt-2 text-label-2">Every result includes the board URL. Teammates see shapes appear in real time and can keep editing by hand.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">Which tools does the agent get?</h2>
+        <p class="mt-3 max-w-2xl text-lg text-label-2">
+          Thirteen tools to read, draw and organize boards. Reads return a compact scene (labels, connections, rounded coordinates) to save context.
+        </p>
+        <dl class="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div>
+            <dt class="font-mono text-callout font-semibold">create_diagram · layout_board</dt>
+            <dd class="mt-1 text-label-2">Flowcharts, architectures, org charts and mind maps with automatic layout, or tidy up a messy board.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">add_elements · delete_elements</dt>
+            <dd class="mt-1 text-label-2">Draw shapes, text and bound arrows from short specs with stable ids, then update them later.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">get_board · list_boards · search_boards</dt>
+            <dd class="mt-1 text-label-2">Read what's on a board, or find one by any text written on its canvas.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">create_board · rename_board · trash_board</dt>
+            <dd class="mt-1 text-label-2">Manage boards; trashed boards can be restored from the app.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">list_folders · create_folder · move_board</dt>
+            <dd class="mt-1 text-label-2">Keep agent-made diagrams organized next to your own.</dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Plus a REST API</dt>
+            <dd class="mt-1 text-label-2">The same key works with <a href="/docs/api/overview" class="text-accent-text hover:underline">/api/v1</a> for scripts and CI.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">FAQ</h2>
+          <div class="mt-8 divide-y divide-separator">
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Is the Heeey MCP server free?</h3>
+              <p class="mt-2 text-label-2">Yes. Create an account with your email, generate an API key and connect your agent at no cost.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Which MCP clients does it work with?</h3>
+              <p class="mt-2 text-label-2">Any client that supports remote MCP servers over Streamable HTTP with a custom header, including Claude Code and Cursor. The <a href="/docs/mcp/getting-started" class="text-accent-text hover:underline">setup guide</a> has copy-paste configs.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">How is this different from a local Excalidraw MCP server?</h3>
+              <p class="mt-2 text-label-2">Local servers draw on a canvas that lives on your machine. Heeey is hosted: boards persist in your account, have a shareable URL, and several people (and agents) can work on the same one at once.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Can I control what the agent is allowed to do?</h3>
+              <p class="mt-2 text-label-2">Yes. API keys are scoped to read or read and write, and can be revoked at any time. See <a href="/docs/mcp/auth-and-permissions" class="text-accent-text hover:underline">auth and permissions</a>.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Do people need an account to see the diagram?</h3>
+              <p class="mt-2 text-label-2">No. Anyone with the board link can open it, set to either "can edit" or "view only".</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">Give your agent a whiteboard</h2>
+        <p class="mx-auto mt-3 max-w-xl text-lg text-label-2">Sign in, create a key and your next diagram is one prompt away.</p>
+        <a href="/app?settings=account" class="mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+          Get your free API key
+        </a>
+      </section>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — collaborative whiteboard</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/docs/mcp/overview" class="hover:text-label">MCP docs</a>
+          <a href="/" class="hover:text-label" hreflang="pt-BR">Lousa online (PT-BR)</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

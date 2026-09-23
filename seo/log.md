@@ -51,3 +51,25 @@ Append-only. Newest entry at the bottom. Never delete or rewrite past entries.
 - Note: apex heeey.click → 308 → www funciona; falha só no DNS do provedor local (8.8.8.8 e 1.1.1.1 resolvem)
 - Pending (usuário): propriedade de Domínio no Search Console via TXT no Vercel DNS; enviar sitemap após deploy
 - Changed live: não
+
+## 2026-09-23 — ship (passo 3: landing pages)
+- Verified live: robots.txt 200 text/plain, sitemap.xml 200 application/xml em https://www.heeey.click
+- Intent check (WebSearch 2026-09-23):
+  - "lousa online colaborativa grátis" → páginas de produto (miro.com/whiteboard, lucid.co/pt/lucidspark, lousa.digital) + listas (capterra.com.br). Página de produto em PT se encaixa.
+  - "whiteboard MCP server Claude draw diagrams" → repos GitHub de servidores locais (kamiazya/whiteboard, convict-git/excalidraw-whiteboard-mcp) + whiteboard-mcp.com (local, US$29). Diferencial do heeey: hospedado, multiplayer, persistente, grátis.
+- Competitors read in full: lousa.digital (grátis, sem anúncios, sem coleta de dados, código de acesso); whiteboard-mcp.com (local, npx, auto-layout, licença paga)
+- Change drafted: /lousa-online (PT) e /whiteboard-mcp (EN) como HTML estático (Vite multi-page) com title/description/canonical próprios, H2 em forma de pergunta com resposta na primeira linha, FAQ; CTA → /?settings=account (deep link novo que abre Configurações → Conta); pageview via PostHog; sitemap atualizado
+- Claims checados contra docs/código: colaboração/permissões (docs/features/collaboration-realtime.md), convidado + herança de quadros (docs/getting-started.md), 13 ferramentas MCP (src/server), broadcast de mudanças da API (supabase/migrations/20260923190000_public_api.sql + teste), escopos e revogação de chaves (docs/mcp/auth-and-permissions.md, ApiKeysPanel)
+- Schema: não adicionado (sem rich result aplicável; não é atalho de AEO)
+- Verified: dev offline — desktop/mobile/light/dark, sem scroll horizontal, deep link abre Conta e limpa a URL, $pageview enviado; 160 testes; build gera dist/lousa-online e dist/whiteboard-mcp com o conteúdo no HTML (2,8 KB de JS)
+- Approved? pendente — revisão de copy pelo usuário
+- Changed live: não
+
+## 2026-09-23 — ship (passo 3b: nova estrutura de URLs, decisão do usuário)
+- `/` = landing PT-BR (antes /lousa-online), `/mcp` = landing EN (antes /whiteboard-mcp), app movido para `/app`; `/b/:id` e `/docs/*` mantidos (links compartilhados e URLs devolvidas pela API)
+- Redirects 308: /lousa-online → /, /whiteboard-mcp → /mcp
+- Visitante recorrente (sessão Supabase `sb-*-auth-token` ou quadros em `heeey_local_boards`) é enviado de `/` para `/app` antes do primeiro paint; `/?home` ignora o redirect; crawlers sempre veem a landing
+- robots: Disallow /app; sitemap: /, /mcp, docs
+- Verified (dev offline): todas as rotas servem o HTML certo; visitante novo fica na landing; convidado com quadro vai para /app; /?home fica; só abrir /app não marca como recorrente; /app?settings=account abre Conta e limpa a URL; 160 testes; build gera dist/index.html, dist/app, dist/mcp
+- Risk: Supabase de produção precisa aceitar redirect do magic link para https://www.heeey.click/app (conferir Redirect URLs)
+- Changed live: não

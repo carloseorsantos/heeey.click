@@ -7,6 +7,8 @@ export default {
   future: { hoverOnlyWhenSupported: true },
   content: [
     "./index.html",
+    "./app/index.html",
+    "./mcp/index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {

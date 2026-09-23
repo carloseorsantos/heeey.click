@@ -113,7 +113,7 @@ describe('docsData', () => {
     const r10 = resolveDocHref('https://heeey.click', 'readme');
     expect(r10).toEqual({
       type: 'dashboard',
-      href: '/',
+      href: '/app',
     });
   });
 

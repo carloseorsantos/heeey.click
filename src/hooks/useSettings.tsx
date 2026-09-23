@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { SettingsModal, type SettingsSection } from '../components/settings/SettingsModal';
+import { SettingsModal, isSettingsSection, type SettingsSection } from '../components/settings/SettingsModal';
 
 interface SettingsContextValue {
   openSettings: (section?: SettingsSection) => void;
@@ -15,6 +15,18 @@ export function SettingsProvider({ children, onOpenDocs }: { children: React.Rea
   const openSettings = useCallback((next?: SettingsSection) => {
     if (next) setSection(next);
     setIsOpen(true);
+  }, []);
+
+  // Deep link (?settings=account) so landing pages can send visitors straight to sign up
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const requested = url.searchParams.get('settings');
+    if (!requested || !isSettingsSection(requested)) return;
+    setSection(requested);
+    setIsOpen(true);
+    // Drop the param so the magic link redirect (current URL) and reloads stay clean
+    url.searchParams.delete('settings');
+    window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
   }, []);
 
   // ⌘, / Ctrl+, like every desktop app
