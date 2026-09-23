@@ -28,6 +28,7 @@ export const ptBR = {
     loadingBoard: "Carregando a lousa…",
   },
   auth: {
+    checkEmail: "Confira seu e-mail",
     continueAsGuest: "Continuar como convidado",
     description: "Sem senha: enviamos um link de acesso por e-mail.",
     done: "Concluído",
@@ -83,6 +84,10 @@ export const ptBR = {
     tryAgainError: "Não foi possível concluir. Tente novamente.",
   },
   dashboard: {
+    blankBoard: "Quadro em branco",
+    blankBoardDescription: "Comece do zero",
+    boardsSection: "Quadros",
+    newFrom: "Novo quadro",
     apiKeys: "Chaves de API e integrações",
     back: "Voltar",
     backToBoards: "Voltar para meus quadros",
@@ -161,6 +166,17 @@ export const ptBR = {
     recently: "recentemente",
   },
   docs: {
+    aiActions: "Ações para IA e leitura",
+    backToTop: "Voltar ao topo",
+    copyFullDump: "Copiar conteúdo completo",
+    copyFullDumpTitle: "Copiar todo o conteúdo para a área de transferência",
+    filesCount: "{count, plural, one {# arquivo} other {# arquivos}}",
+    integratedDocs: "{count, plural, one {# documento integrado} other {# documentos integrados}}",
+    jumpToDoc: "Pular para um documento",
+    llmsIndex: "Índice llms.txt",
+    sourceDocs: "Documentos fonte",
+    top: "Topo",
+    viewPlainText: "Ver texto puro (.txt)",
     backToDashboard: "Voltar ao início",
     backToEditor: "Voltar para a lousa",
     categories: {
@@ -194,6 +210,7 @@ export const ptBR = {
     warning: "Atenção",
   },
   folders: {
+    title: "Pastas",
     create: "Criar pasta",
     current: "Pasta atual",
     delete: "Excluir pasta",

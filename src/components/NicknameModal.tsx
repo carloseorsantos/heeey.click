@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Modal } from './Modal';
+import { Button } from './ui/Button';
 import { Avatar } from './Avatar';
 import { useI18n, type MessageKey } from '../i18n';
 
@@ -56,11 +57,11 @@ export function NicknameModal({ isOpen, onClose }: NicknameModalProps) {
       size="sm"
       title={t('profile.title')}
       description={t('profile.description')}
-      icon={<Avatar name={name || '?'} color={selectedColor} className="w-11 h-11 text-sm" />}
+      icon={<Avatar name={name || '?'} color={selectedColor} className="w-10 h-10 text-sm" />}
     >
       <form onSubmit={handleSave} className="space-y-5">
         <div>
-          <label htmlFor="nickname" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+          <label htmlFor="nickname" className="block text-callout font-medium text-label mb-1.5">
             {t('profile.name')}
           </label>
           <input
@@ -70,17 +71,15 @@ export function NicknameModal({ isOpen, onClose }: NicknameModalProps) {
             maxLength={25}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder:text-slate-400 transition"
+            className="field h-11"
             placeholder={t('profile.namePlaceholder')}
             autoFocus
           />
         </div>
 
         <fieldset>
-          <legend className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
-            {t('profile.color')}
-          </legend>
-          <div className="grid grid-cols-5 gap-2.5">
+          <legend className="block text-callout font-medium text-label mb-2.5">{t('profile.color')}</legend>
+          <div className="grid grid-cols-5 gap-3 justify-items-center">
             {COLOR_OPTIONS.map((c) => {
               const isSelected = selectedColor.stroke === c.stroke;
               return (
@@ -88,15 +87,15 @@ export function NicknameModal({ isOpen, onClose }: NicknameModalProps) {
                   key={c.stroke}
                   type="button"
                   onClick={() => setSelectedColor({ background: c.background, stroke: c.stroke })}
-                  className={`h-10 rounded-xl flex items-center justify-center transition-[transform,box-shadow] ring-offset-2 ring-offset-white dark:ring-offset-slate-900 ${
-                    isSelected ? 'ring-2 ring-slate-900 dark:ring-white scale-105' : 'hover:scale-105'
+                  className={`pressable w-10 h-10 rounded-full flex items-center justify-center ring-offset-2 ring-offset-surface-raised ${
+                    isSelected ? 'ring-2' : ''
                   }`}
-                  style={{ backgroundColor: c.stroke }}
+                  style={{ backgroundColor: c.stroke, ['--tw-ring-color' as string]: c.stroke }}
                   aria-label={t(c.label)}
                   aria-pressed={isSelected}
                   title={t(c.label)}
                 >
-                  {isSelected && <Check className="w-4 h-4 text-white drop-shadow" />}
+                  {isSelected && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
                 </button>
               );
             })}
@@ -104,19 +103,12 @@ export function NicknameModal({ isOpen, onClose }: NicknameModalProps) {
         </fieldset>
 
         <div className="pt-1 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-          >
+          <Button onClick={onClose} className="flex-1">
             {t('common.cancel')}
-          </button>
-          <button
-            type="submit"
-            className="flex-1 py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-brand-600/20 transition"
-          >
+          </Button>
+          <Button type="submit" variant="primary" className="flex-1">
             {t('common.save')}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

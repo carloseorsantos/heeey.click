@@ -2,8 +2,91 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------
+   Design tokens
+   Neutral, Apple-like system colors. Violet stays as the accent only.
+   RGB triplets so Tailwind opacity modifiers work (bg-accent/10).
+   ------------------------------------------------------------------ */
 :root {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --bg: 245 245 247;
+  --surface: 255 255 255;
+  --surface-2: 242 242 245;
+  --surface-raised: 255 255 255;
+
+  --label: 29 29 31;
+  --label-2: 106 106 112;
+  --label-3: 142 142 147;
+
+  --accent: 124 58 237;
+  --accent-hover: 109 40 217;
+  --accent-text: 109 40 217;
+
+  --danger: 215 0 21;
+  --danger-text: 200 0 20;
+  --success: 36 138 61;
+  --warning: 178 80 0;
+
+  --separator: rgba(60, 60, 67, 0.14);
+  --fill: rgba(120, 120, 128, 0.1);
+  --fill-2: rgba(120, 120, 128, 0.18);
+
+  --shadow-card: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.03);
+  --shadow-card-hover: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.06), 0 16px 32px rgba(0, 0, 0, 0.08);
+  --shadow-popover: 0 0 0 0.5px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.1), 0 24px 56px rgba(0, 0, 0, 0.12);
+  --shadow-sheet: 0 0 0 0.5px rgba(0, 0, 0, 0.08), 0 16px 40px rgba(0, 0, 0, 0.14), 0 40px 100px rgba(0, 0, 0, 0.18);
+
+  --material-chrome: rgba(250, 250, 252, 0.72);
+  --material-regular: rgba(252, 252, 253, 0.78);
+  --material-thick: rgba(255, 255, 255, 0.9);
+  --material-sidebar: rgba(236, 236, 240, 0.7);
+  --material-edge: rgba(255, 255, 255, 0.6);
+  --scrim: rgba(0, 0, 0, 0.28);
+
+  color-scheme: light;
+  font-family: theme('fontFamily.sans');
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dark {
+  --bg: 14 14 16;
+  --surface: 28 28 30;
+  --surface-2: 38 38 41;
+  --surface-raised: 44 44 46;
+
+  --label: 245 245 247;
+  --label-2: 160 160 166;
+  --label-3: 110 110 115;
+
+  --accent: 124 58 237;
+  --accent-hover: 139 92 246;
+  --accent-text: 182 160 255;
+
+  --danger: 220 38 38;
+  --danger-text: 255 118 110;
+  --success: 48 209 88;
+  --warning: 255 179 64;
+
+  --separator: rgba(84, 84, 88, 0.55);
+  --fill: rgba(118, 118, 128, 0.2);
+  --fill-2: rgba(118, 118, 128, 0.3);
+
+  --shadow-card: 0 0 0 0.5px rgba(255, 255, 255, 0.08), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 0 0 0.5px rgba(255, 255, 255, 0.12), 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 0 0 0.5px rgba(255, 255, 255, 0.12), 0 12px 32px rgba(0, 0, 0, 0.5), 0 24px 64px rgba(0, 0, 0, 0.4);
+  --shadow-sheet: 0 0 0 0.5px rgba(255, 255, 255, 0.1), 0 24px 64px rgba(0, 0, 0, 0.6);
+
+  --material-chrome: rgba(22, 22, 24, 0.72);
+  --material-regular: rgba(44, 44, 46, 0.78);
+  --material-thick: rgba(30, 30, 32, 0.92);
+  --material-sidebar: rgba(24, 24, 27, 0.72);
+  --material-edge: rgba(255, 255, 255, 0.08);
+  --scrim: rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
 }
 
 html, body, #root {
@@ -14,10 +97,25 @@ html, body, #root {
   overflow: hidden;
 }
 
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--label));
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.22);
+}
+
+/* Focus ring: visible for keyboard only, drawn in the accent color */
+:focus-visible {
+  outline: 2px solid rgb(var(--accent));
+  outline-offset: 2px;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
@@ -25,12 +123,73 @@ html, body, #root {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--fill-2);
+  border: 3px solid transparent;
+  background-clip: padding-box;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgb(var(--label-3));
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+@layer components {
+  /* ----------------------------------------------------------------
+     Materials: translucent layers that let content read through.
+     Heavier material = structural (sidebar), lighter = interactive.
+     ---------------------------------------------------------------- */
+  .material-chrome {
+    background: var(--material-chrome);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+  }
+  .material-regular {
+    background: var(--material-regular);
+    -webkit-backdrop-filter: blur(30px) saturate(190%);
+    backdrop-filter: blur(30px) saturate(190%);
+  }
+  .material-thick {
+    background: var(--material-thick);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(40px) saturate(180%);
+  }
+  .material-sidebar {
+    background: var(--material-sidebar);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    backdrop-filter: blur(30px) saturate(160%);
+  }
+  /* Bright top edge: light catching the material */
+  .material-edge {
+    box-shadow: inset 0 0.5px 0 var(--material-edge);
+  }
+
+  /* Press feedback lives on pointer-down and is instant */
+  .pressable {
+    transition-property: transform, background-color, color, box-shadow, opacity;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  .pressable:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 80ms;
+  }
+
+  /* Text fields */
+  .field {
+    @apply w-full h-10 px-3 rounded-[10px] bg-fill text-sm text-label placeholder:text-label-3
+      border border-transparent outline-none transition-[background-color,box-shadow,border-color] duration-150;
+  }
+  .field:focus {
+    @apply bg-surface border-accent/60;
+    box-shadow: 0 0 0 3.5px rgb(var(--accent) / 0.22);
+  }
+
+  /* Section header in lists, like grouped table view headers */
+  .section-label {
+    @apply text-xs font-semibold text-label-2;
+  }
 }
 
 /* Documentation helpers */
@@ -54,6 +213,27 @@ html, body, #root {
   background-color: transparent;
 }
 
+/* Theme switches ease instead of flashing (no abrupt brightness jump) */
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition: background-color 240ms ease, border-color 240ms ease, color 240ms ease, fill 240ms ease !important;
+}
+
+/* Excalidraw: harmonize its accent with the app */
+.excalidraw {
+  --color-primary: #7c3aed;
+  --color-primary-darker: #6d28d9;
+  --color-primary-darkest: #5b21b6;
+  --color-primary-light: #ede9fe;
+}
+.excalidraw.theme--dark {
+  --color-primary: #a78bfa;
+  --color-primary-darker: #8b5cf6;
+  --color-primary-darkest: #7c3aed;
+  --color-primary-light: #2e1065;
+}
 
 /* Reduced motion: fewer and gentler animations, not zero.
    Keep fades and spinners; drop movement and scale. */
@@ -64,11 +244,49 @@ html, body, #root {
 
   [class*='hover:scale-'],
   [class*='active:scale-'],
+  .pressable:active,
   .motion-fade-only {
     transform: none !important;
   }
 
   .motion-slide {
     transition: none !important;
+  }
+}
+
+/* Reduced transparency: frostier, solid surfaces */
+@media (prefers-reduced-transparency: reduce) {
+  .material-chrome,
+  .material-regular,
+  .material-thick,
+  .material-sidebar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .material-chrome,
+  .material-sidebar { background: rgb(var(--bg)); }
+  .material-regular,
+  .material-thick { background: rgb(var(--surface-raised)); }
+}
+
+/* Increased contrast: near-solid backgrounds with defined borders */
+@media (prefers-contrast: more) {
+  :root {
+    --label-2: 72 72 78;
+    --separator: rgba(60, 60, 67, 0.45);
+    --fill: rgba(120, 120, 128, 0.2);
+  }
+  .dark {
+    --label-2: 200 200 206;
+    --separator: rgba(160, 160, 168, 0.6);
+  }
+  .material-chrome,
+  .material-regular,
+  .material-thick,
+  .material-sidebar {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgb(var(--surface-raised));
+    outline: 1px solid var(--separator);
   }
 }

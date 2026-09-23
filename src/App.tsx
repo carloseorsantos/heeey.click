@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { MotionConfig } from 'motion/react';
 import { AuthProvider } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
 import { DashboardPage } from './pages/DashboardPage';
@@ -17,8 +18,8 @@ const DocsPage = lazy(() =>
 function BoardLoadingScreen() {
   const { t } = useI18n();
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950" role="status">
-      <HeeeyLogo className="w-14 h-14 shadow-xl shadow-brand-600/30 animate-pulse" />
+    <div className="h-screen w-screen flex items-center justify-center bg-app" role="status">
+      <HeeeyLogo className="w-12 h-12 animate-pulse" />
       <span className="sr-only">{t('app.loadingBoard')}</span>
     </div>
   );
@@ -50,6 +51,7 @@ export function App() {
   const docsSlug = docsMatch ? docsMatch[1] || '' : null;
 
   return (
+    <MotionConfig reducedMotion="user">
     <I18nProvider>
     <ThemeProvider>
       <AuthProvider>
@@ -82,6 +84,7 @@ export function App() {
       </AuthProvider>
     </ThemeProvider>
     </I18nProvider>
+    </MotionConfig>
   );
 }
 

@@ -15,7 +15,7 @@ export function Avatar({ name, color, className, title }: AvatarProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center rounded-full text-[11px] font-bold text-slate-900 ring-2 flex-shrink-0 select-none',
+        'inline-flex items-center justify-center rounded-full text-[11px] font-semibold tracking-normal text-[#1d1d1f] ring-[1.5px] ring-inset flex-shrink-0 select-none',
         className
       )}
       style={{ backgroundColor: color.background, ['--tw-ring-color' as string]: color.stroke }}

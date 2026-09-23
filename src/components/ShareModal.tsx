@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Copy, Check, Users, Lock, Globe } from 'lucide-react';
-import confetti from 'canvas-confetti';
 import { AccessLevel } from '../lib/types';
 import { cn } from '../lib/utils';
-import { Modal } from './Modal';
+import { Modal, ModalIcon } from './Modal';
+import { Button } from './ui/Button';
 import { useI18n, type MessageKey } from '../i18n';
 
 interface ShareModalProps {
@@ -14,9 +15,6 @@ interface ShareModalProps {
   isOwner: boolean;
   onUpdateAccessLevel: (newLevel: AccessLevel) => Promise<void>;
 }
-
-// Celebrate only the first copy of the session; repeated confetti gets noisy
-let hasCelebratedCopy = false;
 
 const ACCESS_OPTIONS: {
   level: AccessLevel;
@@ -69,16 +67,10 @@ export function ShareModal({
     }
 
     if (success) {
+      // Completion feedback on the control that caused it
       setCopied(true);
-      if (!hasCelebratedCopy && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
-        hasCelebratedCopy = true;
-        confetti({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.6 },
-        });
-      }
-      setTimeout(() => setCopied(false), 2500);
+      navigator.vibrate?.(10);
+      setTimeout(() => setCopied(false), 2000);
     }
   }
 
@@ -99,52 +91,59 @@ export function ShareModal({
       title={t('share.title')}
       description={t('share.description')}
       icon={
-        <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
-          <Users className="w-5 h-5" />
-        </div>
+        <ModalIcon>
+          <Users />
+        </ModalIcon>
       }
     >
-      {/* Link input + Copy */}
-      <div className="space-y-2 mb-6">
-        <label htmlFor="share-url" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-          {t('share.link')}
-        </label>
-        <div className="flex items-center gap-2">
-          <input
-            id="share-url"
-            type="text"
-            readOnly
-            value={shareUrl}
-            onFocus={(e) => e.currentTarget.select()}
-            className="flex-1 min-w-0 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
-          />
-          <button
-            onClick={handleCopy}
-            className={cn(
-              'flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-semibold text-sm text-white transition shadow-sm flex-shrink-0',
-              copied ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-brand-600 hover:bg-brand-700 active:scale-[0.97]'
-            )}
-          >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            <span aria-live="polite">{copied ? t('share.copied') : t('common.copy')}</span>
-          </button>
-        </div>
+      {/* Link + copy */}
+      <label htmlFor="share-url" className="block text-callout font-medium text-label mb-1.5">
+        {t('share.link')}
+      </label>
+      <div className="flex items-center gap-2">
+        <input
+          id="share-url"
+          type="text"
+          readOnly
+          value={shareUrl}
+          onFocus={(e) => e.currentTarget.select()}
+          className="field flex-1 min-w-0 font-mono text-xs text-label-2"
+        />
+        <Button
+          variant={copied ? 'tinted' : 'primary'}
+          onClick={handleCopy}
+          className={cn('min-w-[6.5rem]', copied && 'bg-success/15 text-success hover:bg-success/15')}
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={copied ? 'copied' : 'copy'}
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.6 }}
+              transition={{ type: 'spring', bounce: 0, duration: 0.25 }}
+              className="flex items-center gap-1.5"
+            >
+              {copied ? <Check className="w-4 h-4" strokeWidth={2.75} /> : <Copy className="w-4 h-4" />}
+              <span aria-live="polite">{copied ? t('share.copied') : t('common.copy')}</span>
+            </motion.span>
+          </AnimatePresence>
+        </Button>
       </div>
 
-      {/* Permission Switcher */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <span id="share-permission-label" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+      {/* Permission: an inset grouped list with a checkmark on the choice */}
+      <div className="mt-6">
+        <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
+          <span id="share-permission-label" className="section-label">
             {t('share.whoHasLink')}
           </span>
-          {!isOwner && (
-            <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full dark:bg-slate-800 dark:text-slate-300">
-              {t('share.onlyOwner')}
-            </span>
-          )}
+          {!isOwner && <span className="text-xs text-label-2">{t('share.onlyOwner')}</span>}
         </div>
 
-        <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-labelledby="share-permission-label">
+        <div
+          className="rounded-xl bg-fill overflow-hidden divide-y divide-separator"
+          role="radiogroup"
+          aria-labelledby="share-permission-label"
+        >
           {ACCESS_OPTIONS.map(({ level, label, description, Icon }) => {
             const isSelected = accessLevel === level;
             return (
@@ -156,35 +155,36 @@ export function ShareModal({
                 disabled={!isOwner || updating}
                 onClick={() => handleToggleLevel(level)}
                 className={cn(
-                  'p-3 rounded-xl border text-left transition flex flex-col justify-between',
-                  isSelected
-                    ? 'border-brand-600 bg-brand-50/60 ring-2 ring-brand-600/20 dark:bg-brand-950/30 dark:border-brand-500'
-                    : 'border-slate-200 bg-white dark:bg-slate-800/60 dark:border-slate-700',
-                  isOwner && !isSelected && 'hover:bg-slate-50 dark:hover:bg-slate-800',
+                  'w-full flex items-center gap-3 px-3.5 py-3 text-left transition-colors',
+                  isOwner && !isSelected && 'hover:bg-fill',
                   !isOwner && !isSelected && 'opacity-50 cursor-not-allowed',
                   !isOwner && isSelected && 'cursor-default'
                 )}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <Icon
-                    className={cn(
-                      'w-4 h-4',
-                      isSelected ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
-                    )}
-                  />
-                  {isSelected && <Check className="w-4 h-4 text-brand-600 dark:text-brand-400" />}
-                </div>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{t(label)}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">{t(description)}</p>
+                <span
+                  className={cn(
+                    'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0',
+                    isSelected ? 'bg-accent text-white' : 'bg-fill-2 text-label-2'
+                  )}
+                >
+                  <Icon className="w-4 h-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-label">{t(label)}</span>
+                  <span className="block text-xs text-label-2">{t(description)}</span>
+                </span>
+                <Check
+                  className={cn('w-4 h-4 text-accent-text flex-shrink-0 transition-opacity', isSelected ? 'opacity-100' : 'opacity-0')}
+                  strokeWidth={2.75}
+                  aria-hidden="true"
+                />
               </button>
             );
           })}
         </div>
       </div>
 
-      <p className="mt-5 text-xs text-slate-500 dark:text-slate-400">
-        {t('share.autosave')}
-      </p>
+      <p className="mt-4 px-1 text-xs text-label-2">{t('share.autosave')}</p>
     </Modal>
   );
 }

@@ -34,6 +34,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
+    // Ease colors between themes instead of an abrupt brightness jump
+    const root = document.documentElement;
+    root.classList.add('theme-transition');
+    window.setTimeout(() => root.classList.remove('theme-transition'), 300);
     setTheme((prev) => {
       const next = prev === 'dark' ? 'light' : 'dark';
       try {

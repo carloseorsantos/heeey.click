@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { History, Loader2, RotateCcw, Palette } from 'lucide-react';
-import { Modal } from './Modal';
+import { Modal, ModalIcon } from './Modal';
+import { Button } from './ui/Button';
 import { useTheme } from '../hooks/useTheme';
 import { listBoardVersions, BoardVersionSummary } from '../lib/boardVersions';
 import { formatDateRelative } from '../lib/utils';
@@ -67,38 +68,38 @@ export function VersionHistoryModal({ isOpen, onClose, boardId, onRestore }: Ver
       title={t('history.title')}
       description={t('history.description')}
       icon={
-        <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
-          <History className="w-5 h-5" />
-        </div>
+        <ModalIcon>
+          <History />
+        </ModalIcon>
       }
     >
       {status === 'loading' ? (
-        <div className="py-10 flex items-center justify-center gap-2 text-sm text-slate-500 dark:text-slate-400" role="status">
+        <div className="py-10 flex items-center justify-center gap-2 text-sm text-label-2" role="status">
           <Loader2 className="w-4 h-4 animate-spin" />
           <span>{t('history.loading')}</span>
         </div>
       ) : status === 'error' ? (
-        <p className="py-8 text-center text-sm text-slate-600 dark:text-slate-400">
+        <p className="py-8 text-center text-sm text-label-2">
           {t('history.loadError')}
         </p>
       ) : versions && versions.length === 0 ? (
-        <p className="py-8 text-center text-sm text-slate-600 dark:text-slate-400">
+        <p className="py-8 text-center text-sm text-label-2">
           {t('history.empty')}
         </p>
       ) : (
         <div className="space-y-3">
           {restoreError && (
-            <p className="text-sm text-rose-700 dark:text-rose-400" role="alert">
+            <p className="text-sm text-danger-text" role="alert">
               {t('history.restoreError')}
             </p>
           )}
-          <ul className="space-y-2 max-h-[60vh] overflow-y-auto -mx-1 px-1">
+          <ul className="max-h-[60vh] overflow-y-auto rounded-xl bg-fill divide-y divide-separator">
             {versions?.map((version) => (
               <li
                 key={version.id}
-                className="flex items-center gap-3 p-2 rounded-xl border border-slate-200 dark:border-slate-800"
+                className="flex items-center gap-3 p-2 pr-2.5"
               >
-                <div className="w-20 h-14 flex-shrink-0 rounded-lg bg-slate-50 dark:bg-slate-800/60 overflow-hidden flex items-center justify-center">
+                <div className="w-20 h-14 flex-shrink-0 rounded-lg bg-surface shadow-card overflow-hidden flex items-center justify-center">
                   {version.thumbnail ? (
                     <img
                       src={version.thumbnail}
@@ -107,15 +108,15 @@ export function VersionHistoryModal({ isOpen, onClose, boardId, onRestore }: Ver
                       style={{ filter: isDark ? 'invert(93%) hue-rotate(180deg)' : undefined }}
                     />
                   ) : (
-                    <Palette className="w-5 h-5 text-slate-400" aria-hidden="true" />
+                    <Palette className="w-5 h-5 text-label-3" aria-hidden="true" />
                   )}
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-800 dark:text-white">
+                  <p className="text-sm font-medium text-label">
                     {formatVersionDate(version.created_at)}
                   </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-label-2">
                     {version.reason === 'before_restore' ? t('history.beforeRestore') : ''}
                     {t('history.elements', { count: version.element_count })} ·{' '}
                     {formatDateRelative(version.created_at)}
@@ -124,37 +125,30 @@ export function VersionHistoryModal({ isOpen, onClose, boardId, onRestore }: Ver
 
                 {confirmId === version.id ? (
                   <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => setConfirmId(null)}
-                      disabled={!!restoringId}
-                      className="px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition disabled:opacity-50"
-                    >
+                    <Button size="sm" variant="plain" onClick={() => setConfirmId(null)} disabled={!!restoringId}>
                       {t('common.cancel')}
-                    </button>
-                    <button
-                      onClick={() => handleRestore(version.id)}
-                      disabled={!!restoringId}
-                      className="flex items-center gap-1 px-2.5 py-2 rounded-lg text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white transition disabled:opacity-60"
-                    >
+                    </Button>
+                    <Button size="sm" variant="primary" onClick={() => handleRestore(version.id)} disabled={!!restoringId}>
                       {restoringId === version.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                       <span>{t('common.confirm')}</span>
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <button
+                  <Button
+                    size="sm"
+                    variant="tinted"
                     onClick={() => setConfirmId(version.id)}
                     disabled={!!restoringId}
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 border border-slate-200 hover:bg-slate-100 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-800 transition flex-shrink-0 disabled:opacity-50"
                     aria-label={t('history.restoreVersion', { date: formatVersionDate(version.created_at) })}
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>{t('common.restore')}</span>
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
           </ul>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="px-1 text-xs text-label-2">
             {t('history.note')}
           </p>
         </div>

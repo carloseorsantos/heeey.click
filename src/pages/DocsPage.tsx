@@ -20,7 +20,9 @@ import {
   Copy,
   Check,
   ArrowUp,
+  XCircle,
 } from 'lucide-react';
+import { AnimatePresence, motion, type PanInfo } from 'motion/react';
 import {
   DOC_CATEGORIES,
   DocCategory,
@@ -35,7 +37,10 @@ import {
   slugify,
 } from '../lib/docsData';
 import { MarkdownRenderer } from '../components/docs/MarkdownRenderer';
-import { HeeeyLogo } from '../components/Logo';
+import { HeeeyWordmark } from '../components/Logo';
+import { Button } from '../components/ui/Button';
+import { cn } from '../lib/utils';
+import { project, spring } from '../lib/motion';
 import { useTheme } from '../hooks/useTheme';
 import { useI18n, type MessageKey } from '../i18n';
 
@@ -74,6 +79,7 @@ export function DocsPage({
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   // Sync internal slug if propSlug or initialSlug changes
   useEffect(() => {
@@ -260,320 +266,279 @@ export function DocsPage({
     return DOC_CATEGORIES.find((c) => c.id === currentDoc.category);
   }, [currentDoc]);
 
-  return (
-    <div className="h-screen w-screen flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
-      {/* Top Navigation Bar */}
-      <header className="h-16 border-b border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <button
-            onClick={() => setIsMobileMenuOpen((v) => !v)}
-            className="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition"
-            aria-label={t('docs.menuToggle')}
-            aria-expanded={isMobileMenuOpen}
-          >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
+  const hasToc = currentSlug === 'llms-full' ? fileSections.length > 0 : toc.length > 0;
 
-          <button
-            onClick={onBackToDashboard}
-            className="flex items-center gap-2.5 hover:opacity-85 transition group"
-            title={t('docs.backToDashboard')}
-          >
-            <HeeeyLogo className="w-8 h-8 shadow-sm shadow-brand-500/20" />
-            <div className="text-left">
-              <span className="text-base font-black tracking-tight text-slate-900 dark:text-white leading-none block">
-                heeey<span className="text-brand-600 dark:text-brand-400">.click</span>
-              </span>
-              <span className="text-[11px] font-semibold tracking-wide text-brand-600 dark:text-brand-400 uppercase">
-                {t('docs.title')}
-              </span>
-            </div>
-          </button>
+  function jumpTo(id: string) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth' });
+    window.history.pushState(null, '', `#${id}`);
+    setActiveId(id);
+  }
 
-          {/* Breadcrumbs for desktop */}
-          {currentDoc && (
-            <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 ml-4 pl-4 border-l border-slate-200 dark:border-slate-800 truncate">
-              <span>{t('docs.title')}</span>
-              <ChevronRight className="w-3.5 h-3.5 opacity-60 flex-shrink-0" />
-              <span>{currentCategoryMeta ? t(currentCategoryMeta.labelKey as MessageKey) : currentDoc.category}</span>
-              <ChevronRight className="w-3.5 h-3.5 opacity-60 flex-shrink-0" />
-              <span className="font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[200px] lg:max-w-xs">
-                {currentDoc.title}
-              </span>
-            </div>
+  function handleDrawerDragEnd(_: unknown, info: PanInfo) {
+    const width = drawerRef.current?.offsetWidth ?? 300;
+    // Close when the flick is heading far enough to the left
+    if (info.velocity.x <= 0 && info.offset.x + project(info.velocity.x) < -width * 0.4) {
+      setIsMobileMenuOpen(false);
+    }
+  }
+
+  const navigation = (
+    <>
+      {/* Quick search inside docs */}
+      <div className="p-3">
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-label-2 pointer-events-none" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t('docs.searchPlaceholder')}
+            className="field h-9 pl-8 pr-8 [&::-webkit-search-cancel-button]:hidden"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-label-3 hover:text-label-2"
+              aria-label={t('docs.clearSearch')}
+            >
+              <XCircle className="w-4 h-4" fill="currentColor" stroke="rgb(var(--surface))" />
+            </button>
           )}
         </div>
+      </div>
 
-        {/* Right Action Icons */}
-        <div className="flex items-center gap-2">
-          {/* Back to App button */}
-          <button
-            onClick={onBackToDashboard}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-200 dark:hover:text-white dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">{t('docs.backToDashboard')}</span>
-          </button>
+      <nav className="flex-1 overflow-y-auto px-3 pb-3 space-y-5">
+        {searchResults ? (
+          <div>
+            <p className="px-2 section-label mb-1.5">
+              {searchResults.length === 0
+                ? t('docs.noResults', { query: searchQuery })
+                : t('docs.searchResultsCount', { count: searchResults.length })}
+            </p>
+            {searchResults.length === 0 ? (
+              <p className="px-2 py-4 text-xs text-label-2 text-center">{t('docs.docNotFoundDesc')}</p>
+            ) : (
+              <div className="space-y-0.5">
+                {searchResults.map(({ doc, matches }) => {
+                  const isActive = doc.slug.toLowerCase() === currentSlug.toLowerCase();
+                  return (
+                    <button
+                      key={doc.slug}
+                      onClick={() => handleNavigateDoc(doc.slug)}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={cn(
+                        'w-full text-left px-2.5 py-2 rounded-lg transition-colors duration-100 flex flex-col gap-0.5',
+                        isActive ? 'bg-fill-2' : 'hover:bg-fill'
+                      )}
+                    >
+                      <span className="text-sm font-medium text-label line-clamp-1">{doc.title}</span>
+                      {matches.snippet && <span className="text-xs text-label-2 line-clamp-2">{matches.snippet}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          groupedDocs.map(({ category, docs }) => {
+            const IconComponent = CATEGORY_ICONS[category.id] || Compass;
+            return (
+              <div key={category.id}>
+                <div className="flex items-center gap-1.5 px-2 mb-1 section-label">
+                  <IconComponent className="w-3.5 h-3.5" />
+                  <span>{t(category.labelKey as MessageKey)}</span>
+                </div>
+                <div className="space-y-0.5">
+                  {docs.map((doc) => {
+                    const isActive = doc.slug.toLowerCase() === currentSlug.toLowerCase();
+                    return (
+                      <button
+                        key={doc.slug}
+                        onClick={() => handleNavigateDoc(doc.slug)}
+                        aria-current={isActive ? 'page' : undefined}
+                        className={cn(
+                          'w-full h-8 text-left px-2.5 rounded-lg text-sm transition-colors duration-100 flex items-center',
+                          isActive ? 'bg-fill-2 text-label font-medium' : 'text-label-2 hover:text-label hover:bg-fill'
+                        )}
+                      >
+                        <span className="truncate">{doc.title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </nav>
 
-          {/* Theme switch */}
-          <button
-            onClick={toggleTheme}
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition"
-            aria-label={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')}
-            title={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')}
-          >
-            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
-          </button>
+      <div className="px-4 py-3 border-t border-separator flex items-center justify-between text-xs text-label-2">
+        <span className="font-mono">heeey v0.1.0</span>
+        <a
+          href="https://github.com/carloseorsantos/heeey.click"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 hover:text-label transition-colors"
+        >
+          <span>GitHub</span>
+          <ExternalLink className="w-3 h-3" />
+        </a>
+      </div>
+    </>
+  );
 
-          {/* Language switch */}
-          <button
-            onClick={() => setLocale(locale === 'pt-BR' ? 'en' : 'pt-BR')}
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition"
-            aria-label={`${t('language.label')}: ${t('language.switchTo')}`}
-            title={t('language.switchTo')}
-          >
-            <Languages className="w-4 h-4" />
+  return (
+    <div className="h-screen w-screen flex bg-app text-label overflow-hidden">
+      {/* Sidebar (wide screens) */}
+      <aside className="hidden lg:flex w-72 flex-shrink-0 flex-col material-sidebar border-r border-separator">
+        <div className="h-14 flex items-center px-4 flex-shrink-0">
+          <button onClick={onBackToDashboard} className="pressable flex items-center gap-2 rounded-lg -mx-1 px-1 py-1" title={t('docs.backToDashboard')}>
+            <HeeeyWordmark />
+            <span className="text-[0.9375rem] font-semibold text-label-2">{t('docs.title')}</span>
           </button>
         </div>
-      </header>
+        {navigation}
+      </aside>
 
-      {/* Main Layout (Sidebar + Content + TOC) */}
-      <div className="flex-1 flex overflow-hidden relative">
-        {/* Mobile Sidebar Backdrop */}
+      {/* Drawer (narrow screens): drag it back to the edge it came from */}
+      <AnimatePresence>
         {isMobileMenuOpen && (
-          <div
-            onClick={() => setIsMobileMenuOpen(false)}
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden"
-            aria-hidden="true"
-          />
-        )}
-
-        {/* Left Sidebar */}
-        <aside
-          className={`
-            fixed lg:static top-16 bottom-0 left-0 z-30 w-72 sm:w-80 bg-slate-50 dark:bg-slate-900/70 border-r border-slate-200/80 dark:border-slate-800 flex flex-col flex-shrink-0 motion-slide transition-transform duration-300 ease-drawer
-            ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-          `}
-        >
-          {/* Quick Search inside Docs */}
-          <div className="p-3.5 border-b border-slate-200/70 dark:border-slate-800/80">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('docs.searchPlaceholder')}
-                className="w-full pl-9 pr-8 py-2 rounded-xl text-xs sm:text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                  aria-label={t('docs.clearSearch')}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation Items */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-6">
-            {searchResults ? (
-              <div>
-                <p className="px-2 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">
-                  {searchResults.length === 0
-                    ? t('docs.noResults', { query: searchQuery })
-                    : t('docs.searchResultsCount', { count: searchResults.length })}
-                </p>
-                {searchResults.length === 0 ? (
-                  <p className="px-2 py-4 text-xs text-slate-500 dark:text-slate-400 text-center">
-                    {t('docs.docNotFoundDesc')}
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {searchResults.map(({ doc, matches }) => {
-                      const isActive = doc.slug.toLowerCase() === currentSlug.toLowerCase();
-                      return (
-                        <button
-                          key={doc.slug}
-                          onClick={() => handleNavigateDoc(doc.slug)}
-                          className={`
-                            w-full text-left p-2.5 rounded-xl transition text-xs sm:text-sm flex flex-col gap-0.5
-                            ${
-                              isActive
-                                ? 'bg-brand-600 text-white font-semibold shadow-sm'
-                                : 'hover:bg-slate-200/60 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
-                            }
-                          `}
-                        >
-                          <span className="font-medium line-clamp-1">{doc.title}</span>
-                          {matches.snippet && (
-                            <span
-                              className={`text-[11px] line-clamp-2 ${
-                                isActive ? 'text-brand-100' : 'text-slate-500 dark:text-slate-400'
-                              }`}
-                            >
-                              {matches.snippet}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+          <motion.div key="drawer" className="lg:hidden fixed inset-0 z-40">
+            <motion.div
+              aria-hidden="true"
+              className="absolute inset-0 bg-[var(--scrim)]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.aside
+              ref={drawerRef}
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={spring.momentum}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={{ left: 1, right: 0.04 }}
+              onDragEnd={handleDrawerDragEnd}
+              className="absolute inset-y-0 left-0 w-[min(20rem,85vw)] flex flex-col material-thick shadow-sheet pt-[env(safe-area-inset-top)]"
+            >
+              <div className="h-14 flex items-center justify-between px-4 flex-shrink-0">
+                <HeeeyWordmark />
+                <Button variant="plain" iconOnly size="sm" onClick={() => setIsMobileMenuOpen(false)} aria-label={t('common.close')}>
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
-            ) : (
-              groupedDocs.map(({ category, docs }) => {
-                const IconComponent = CATEGORY_ICONS[category.id] || Compass;
-                return (
-                  <div key={category.id} className="space-y-1">
-                    <div className="flex items-center gap-2 px-2 py-1 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      <IconComponent className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-                      <span>{t(category.labelKey as MessageKey)}</span>
-                    </div>
+              {navigation}
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-                    <div className="space-y-0.5">
-                      {docs.map((doc) => {
-                        const isActive = doc.slug.toLowerCase() === currentSlug.toLowerCase();
-                        return (
-                          <button
-                            key={doc.slug}
-                            onClick={() => handleNavigateDoc(doc.slug)}
-                            className={`
-                              w-full text-left px-2.5 py-1.5 rounded-xl text-xs sm:text-sm transition flex items-center justify-between group
-                              ${
-                                isActive
-                                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 font-bold border-l-2 border-brand-600 dark:border-brand-400 pl-2'
-                                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-slate-800/60'
-                              }
-                            `}
-                          >
-                            <span className="truncate">{doc.title}</span>
-                            {isActive && (
-                              <ChevronRight className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400 flex-shrink-0" />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Toolbar */}
+        <header className="h-14 flex-shrink-0 material-chrome shadow-[0_0.5px_0_var(--separator)] px-3 sm:px-6 flex items-center justify-between gap-3 z-30">
+          <div className="flex items-center gap-2 min-w-0">
+            <Button
+              variant="plain"
+              iconOnly
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden"
+              aria-label={t('docs.menuToggle')}
+              aria-expanded={isMobileMenuOpen}
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            {currentDoc && (
+              <div className="flex items-center gap-1.5 text-callout text-label-2 min-w-0">
+                <span className="hidden sm:inline truncate">
+                  {currentCategoryMeta ? t(currentCategoryMeta.labelKey as MessageKey) : currentDoc.category}
+                </span>
+                <ChevronRight className="hidden sm:block w-3.5 h-3.5 text-label-3 flex-shrink-0" />
+                <span className="font-medium text-label truncate">{currentDoc.title}</span>
+              </div>
             )}
           </div>
 
-          {/* Sidebar Footer */}
-          <div className="p-3 border-t border-slate-200/70 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-mono">heeey v0.1.0</span>
-            <a
-              href="https://github.com/carloseorsantos/heeey.click"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 hover:text-slate-900 dark:hover:text-white transition"
-              title="GitHub"
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button variant="plain" iconOnly onClick={toggleTheme} aria-label={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')} title={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')}>
+              {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
+            </Button>
+            <Button
+              variant="plain"
+              iconOnly
+              onClick={() => setLocale(locale === 'pt-BR' ? 'en' : 'pt-BR')}
+              aria-label={`${t('language.label')}: ${t('language.switchTo')}`}
+              title={t('language.switchTo')}
             >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>GitHub</span>
-            </a>
+              <Languages className="w-[18px] h-[18px]" />
+            </Button>
+            <Button variant="secondary" size="sm" onClick={onBackToDashboard} className="ml-1">
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">{t('docs.backToDashboard')}</span>
+            </Button>
           </div>
-        </aside>
+        </header>
 
-        {/* Central Article Container & Right TOC */}
-        <main
-          ref={mainContentRef}
-          onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 sm:px-8 lg:px-12 py-8 flex justify-center"
-        >
-          <div className={`w-full flex gap-8 xl:gap-10 ${(currentSlug === 'llms-full' ? fileSections.length > 0 : toc.length > 0) ? 'max-w-6xl xl:max-w-7xl' : 'max-w-4xl'}`}>
-            {/* Article Content */}
-            <article className="flex-1 min-w-0">
+        <main ref={mainContentRef} onScroll={handleScroll} className="flex-1 overflow-y-auto px-4 sm:px-8 lg:px-12 py-10 flex justify-center">
+          <div className={cn('w-full flex gap-10 xl:gap-12', hasToc ? 'max-w-6xl' : 'max-w-3xl')}>
+            <article className="flex-1 min-w-0 max-w-3xl">
               {currentDoc ? (
                 <>
-                  {/* Article Header */}
-                  <div className="mb-8">
-                    <div className="flex flex-wrap items-center gap-2 mb-3">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/60">
+                  <div className="mb-10">
+                    <div className="flex flex-wrap items-center gap-2 mb-3 text-xs text-label-2">
+                      <span className="font-semibold text-accent-text">
                         {currentCategoryMeta ? t(currentCategoryMeta.labelKey as MessageKey) : currentDoc.category}
                       </span>
-                      <span className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500">
+                      <span aria-hidden="true">·</span>
+                      <span className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
                         <span>{t('docs.readingTime', { minutes: readingTime })}</span>
                       </span>
                       {currentSlug === 'llms-full' && (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                          <FileText className="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" />
-                          <span>23 documentos integrados</span>
-                        </span>
+                        <>
+                          <span aria-hidden="true">·</span>
+                          <span>{t('docs.integratedDocs', { count: fileSections.length })}</span>
+                        </>
                       )}
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-3">
-                      {currentDoc.title}
-                    </h1>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-label mb-3 text-balance">{currentDoc.title}</h1>
 
                     {currentDoc.description && (
-                      <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
-                        {currentDoc.description}
-                      </p>
+                      <p className="text-lg text-label-2 text-pretty">{currentDoc.description}</p>
                     )}
 
-                    {/* Dedicated Control Panel for llms-full */}
                     {currentSlug === 'llms-full' && (
-                      <div className="my-6 p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-slate-50 to-brand-50/20 dark:from-slate-900/80 dark:to-brand-950/20 border border-slate-200 dark:border-slate-800 space-y-4 shadow-xs">
+                      <div className="mt-6 p-4 rounded-2xl bg-surface shadow-card space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                              Ações para IA & Leitor
-                            </span>
-                          </div>
+                          <span className="section-label">{t('docs.aiActions')}</span>
                           <div className="flex flex-wrap items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={handleCopyFull}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-brand-600 hover:bg-brand-700 text-white shadow-xs transition cursor-pointer"
-                              title="Copiar dump completo para a área de transferência"
-                            >
-                              {copiedFull ? (
-                                <>
-                                  <Check className="w-3.5 h-3.5 text-emerald-300" />
-                                  <span>Copiado!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3.5 h-3.5" />
-                                  <span>Copiar Dump Completo</span>
-                                </>
-                              )}
-                            </button>
+                            <Button variant="primary" size="sm" onClick={handleCopyFull} title={t('docs.copyFullDumpTitle')}>
+                              {copiedFull ? <Check className="w-3.5 h-3.5" strokeWidth={2.75} /> : <Copy className="w-3.5 h-3.5" />}
+                              <span>{copiedFull ? t('docs.copied') : t('docs.copyFullDump')}</span>
+                            </Button>
                             <a
                               href="/llms-full.txt"
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 transition"
-                              title="Abrir arquivo de texto puro"
+                              className="pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-callout font-semibold bg-fill text-label hover:bg-fill-2"
                             >
-                              <span>Ver Texto Puro (.txt)</span>
-                              <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                              <span>{t('docs.viewPlainText')}</span>
+                              <ExternalLink className="w-3.5 h-3.5 text-label-2" />
                             </a>
-                            <button
-                              type="button"
-                              onClick={() => handleNavigateDoc('llms')}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-950/60 border border-brand-200/80 dark:border-brand-800/80 transition"
-                              title="Ir para o índice estruturado"
-                            >
-                              <span>Índice llms.txt</span>
-                            </button>
+                            <Button variant="tinted" size="sm" onClick={() => handleNavigateDoc('llms')}>
+                              {t('docs.llmsIndex')}
+                            </Button>
                           </div>
                         </div>
 
-                        {/* Quick Jump Bar */}
                         {fileSections.length > 0 && (
-                          <div className="pt-3 border-t border-slate-200/70 dark:border-slate-800/80 space-y-2">
-                            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                              Pular diretamente para um documento:
-                            </p>
+                          <div className="pt-3 border-t border-separator space-y-2">
+                            <p className="section-label">{t('docs.jumpToDoc')}</p>
                             <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto pr-1">
                               {fileSections.map((sec) => (
                                 <a
@@ -581,21 +546,15 @@ export function DocsPage({
                                   href={`#${sec.id}`}
                                   onClick={(e) => {
                                     e.preventDefault();
-                                    const el = document.getElementById(sec.id);
-                                    if (el) {
-                                      el.scrollIntoView({ behavior: 'smooth' });
-                                      window.history.pushState(null, '', `#${sec.id}`);
-                                      setActiveId(sec.id);
-                                    }
+                                    jumpTo(sec.id);
                                   }}
-                                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition shadow-2xs truncate max-w-[240px] ${
-                                    activeId === sec.id
-                                      ? 'bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border-brand-300 dark:border-brand-700 font-semibold'
-                                      : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-700 border-slate-200 dark:border-slate-700'
-                                  }`}
+                                  className={cn(
+                                    'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full text-xs transition-colors truncate max-w-[240px]',
+                                    activeId === sec.id ? 'bg-accent text-white' : 'bg-fill text-label hover:bg-fill-2'
+                                  )}
                                   title={sec.title}
                                 >
-                                  <FileText className={`w-3 h-3 flex-shrink-0 ${activeId === sec.id ? 'text-brand-600 dark:text-brand-400' : 'opacity-60'}`} />
+                                  <FileText className="w-3 h-3 flex-shrink-0 opacity-70" />
                                   <span className="truncate">{sec.title}</span>
                                 </a>
                               ))}
@@ -606,7 +565,6 @@ export function DocsPage({
                     )}
                   </div>
 
-                  {/* Rendered Markdown Body */}
                   <MarkdownRenderer
                     content={currentDoc.content}
                     currentSlug={currentSlug}
@@ -615,75 +573,65 @@ export function DocsPage({
                     onBackToDashboard={onBackToDashboard}
                   />
 
-                  {/* Next / Previous Navigation Footer */}
-                  <div className="mt-16 pt-8 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Previous / next */}
+                  <div className="mt-16 pt-8 border-t border-separator grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {adjacent.prev ? (
                       <button
                         onClick={() => handleNavigateDoc(adjacent.prev!.slug)}
-                        className="text-left p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-600 bg-white dark:bg-slate-900/40 hover:bg-brand-50/30 dark:hover:bg-brand-950/20 transition group"
+                        className="pressable text-left p-4 rounded-2xl bg-surface shadow-card hover:shadow-card-hover"
                       >
-                        <span className="flex items-center gap-1 text-xs font-semibold text-slate-400 dark:text-slate-500 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+                        <span className="flex items-center gap-1 text-xs text-label-2">
                           <ChevronLeft className="w-3.5 h-3.5" />
                           <span>{t('docs.previousDoc')}</span>
                         </span>
-                        <span className="block text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition truncate">
-                          {adjacent.prev.title}
-                        </span>
+                        <span className="block text-sm font-semibold text-accent-text mt-1 truncate">{adjacent.prev.title}</span>
                       </button>
-                    ) : <div />}
-
+                    ) : (
+                      <div />
+                    )}
                     {adjacent.next ? (
                       <button
                         onClick={() => handleNavigateDoc(adjacent.next!.slug)}
-                        className="text-right p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-brand-400 dark:hover:border-brand-600 bg-white dark:bg-slate-900/40 hover:bg-brand-50/30 dark:hover:bg-brand-950/20 transition group"
+                        className="pressable text-right p-4 rounded-2xl bg-surface shadow-card hover:shadow-card-hover"
                       >
-                        <span className="flex items-center justify-end gap-1 text-xs font-semibold text-slate-400 dark:text-slate-500 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+                        <span className="flex items-center justify-end gap-1 text-xs text-label-2">
                           <span>{t('docs.nextDoc')}</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </span>
-                        <span className="block text-sm font-bold text-slate-800 dark:text-slate-200 mt-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition truncate">
-                          {adjacent.next.title}
-                        </span>
+                        <span className="block text-sm font-semibold text-accent-text mt-1 truncate">{adjacent.next.title}</span>
                       </button>
-                    ) : <div />}
+                    ) : (
+                      <div />
+                    )}
                   </div>
                 </>
               ) : (
                 <div className="py-16 text-center max-w-md mx-auto">
-                  <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4">
-                    <BookOpen className="w-8 h-8" />
+                  <div className="w-14 h-14 rounded-2xl bg-fill text-label-2 flex items-center justify-center mx-auto mb-4">
+                    <BookOpen className="w-7 h-7" strokeWidth={1.75} />
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                    {t('docs.docNotFound')}
-                  </h2>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm mb-6">
-                    {t('docs.docNotFoundDesc')}
-                  </p>
-                  <button
-                    onClick={() => handleNavigateDoc('getting-started')}
-                    className="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-md transition"
-                  >
+                  <h2 className="text-xl font-semibold text-label mb-1">{t('docs.docNotFound')}</h2>
+                  <p className="text-sm text-label-2 mb-6">{t('docs.docNotFoundDesc')}</p>
+                  <Button variant="primary" onClick={() => handleNavigateDoc('getting-started')}>
                     {t('docs.goToHome')}
-                  </button>
+                  </Button>
                 </div>
               )}
             </article>
 
-            {/* Right Table of Contents (Desktop Only) */}
-            {(currentSlug === 'llms-full' ? fileSections.length > 0 : toc.length > 0) && (
-              <aside className="hidden xl:block w-64 flex-shrink-0">
-                <div className="sticky top-8 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                      {currentSlug === 'llms-full' ? 'Documentos Fonte' : t('docs.onThisPage')}
+            {/* On this page (wide screens) */}
+            {hasToc && (
+              <aside className="hidden xl:block w-60 flex-shrink-0">
+                <div className="sticky top-0 space-y-2">
+                  <div className="flex items-center justify-between px-2">
+                    <p className="section-label">
+                      {currentSlug === 'llms-full' ? t('docs.sourceDocs') : t('docs.onThisPage')}
                     </p>
                     {currentSlug === 'llms-full' && (
-                      <span className="text-[10px] font-mono font-semibold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/80 px-1.5 py-0.5 rounded border border-brand-200/60 dark:border-brand-800/60">
-                        {fileSections.length} arquivos
-                      </span>
+                      <span className="text-2xs text-label-2 tabular-nums">{t('docs.filesCount', { count: fileSections.length })}</span>
                     )}
                   </div>
-                  <nav className="space-y-1 max-h-[calc(100vh-10rem)] overflow-y-auto text-xs pr-2">
+                  <nav className="max-h-[calc(100vh-10rem)] overflow-y-auto border-l border-separator ml-2">
                     {currentSlug === 'llms-full'
                       ? fileSections.map((sec) => {
                           const isSectionActive = activeId === sec.id;
@@ -693,24 +641,16 @@ export function DocsPage({
                               href={`#${sec.id}`}
                               onClick={(e) => {
                                 e.preventDefault();
-                                const el = document.getElementById(sec.id);
-                                if (el) {
-                                  el.scrollIntoView({ behavior: 'smooth' });
-                                  window.history.pushState(null, '', `#${sec.id}`);
-                                  setActiveId(sec.id);
-                                }
+                                jumpTo(sec.id);
                               }}
-                              className={`block py-1.5 px-2.5 rounded-xl transition ${
-                                isSectionActive
-                                  ? 'bg-brand-50 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 font-bold border-l-2 border-brand-500 shadow-2xs'
-                                  : 'text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-slate-100 dark:hover:bg-slate-800/80'
-                              }`}
+                              className={cn(
+                                'block -ml-px py-1.5 pl-3 pr-2 border-l text-xs transition-colors',
+                                isSectionActive ? 'border-accent text-label' : 'border-transparent text-label-2 hover:text-label'
+                              )}
                               title={sec.title}
                             >
-                              <span className="font-semibold block truncate leading-tight">{sec.title}</span>
-                              <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 block truncate mt-0.5">
-                                {sec.filePath}
-                              </span>
+                              <span className={cn('block truncate', isSectionActive && 'font-medium')}>{sec.title}</span>
+                              <span className="text-2xs font-mono text-label-3 block truncate mt-0.5">{sec.filePath}</span>
                             </a>
                           );
                         })
@@ -722,20 +662,13 @@ export function DocsPage({
                               href={`#${item.id}`}
                               onClick={(e) => {
                                 e.preventDefault();
-                                const el = document.getElementById(item.id);
-                                if (el) {
-                                  el.scrollIntoView({ behavior: 'smooth' });
-                                  window.history.pushState(null, '', `#${item.id}`);
-                                  setActiveId(item.id);
-                                }
+                                jumpTo(item.id);
                               }}
-                              className={`block py-1 px-2 rounded-lg transition truncate ${
-                                isHeadingActive
-                                  ? 'bg-brand-50 dark:bg-brand-950/80 text-brand-600 dark:text-brand-400 font-bold border-l-2 border-brand-500'
-                                  : item.level === 3
-                                  ? 'pl-3 text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400'
-                                  : 'text-slate-700 dark:text-slate-300 font-medium hover:text-brand-600 dark:hover:text-brand-400'
-                              }`}
+                              className={cn(
+                                'block -ml-px py-1 pr-2 border-l text-xs transition-colors truncate',
+                                item.level === 3 ? 'pl-6' : 'pl-3',
+                                isHeadingActive ? 'border-accent text-label font-medium' : 'border-transparent text-label-2 hover:text-label'
+                              )}
                               title={item.text}
                             >
                               {item.text}
@@ -749,19 +682,25 @@ export function DocsPage({
           </div>
         </main>
 
-        {/* Floating Back to Top Button */}
-        {showScrollTop && (
-          <button
-            type="button"
-            onClick={() => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
-            className="fixed bottom-6 right-6 z-30 px-3.5 py-2 rounded-full bg-white/95 dark:bg-slate-800/95 text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl transition-all flex items-center gap-1.5 text-xs font-semibold backdrop-blur-sm cursor-pointer"
-            aria-label="Voltar ao topo"
-            title="Voltar ao topo"
-          >
-            <ArrowUp className="w-4 h-4 text-brand-600 dark:text-brand-400" />
-            <span>Topo</span>
-          </button>
-        )}
+        {/* Back to top */}
+        <AnimatePresence>
+          {showScrollTop && (
+            <motion.button
+              key="top"
+              type="button"
+              initial={{ opacity: 0, y: 12, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.9 }}
+              transition={spring.snappy}
+              onClick={() => mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="fixed bottom-6 right-6 z-30 h-9 px-3.5 rounded-full material-regular shadow-popover text-label flex items-center gap-1.5 text-callout font-medium"
+              aria-label={t('docs.backToTop')}
+            >
+              <ArrowUp className="w-4 h-4" />
+              <span>{t('docs.top')}</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

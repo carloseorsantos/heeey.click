@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FolderPlus, Edit3, Loader2 } from 'lucide-react';
-import { Modal } from './Modal';
+import { Modal, ModalIcon } from './Modal';
+import { Button } from './ui/Button';
 import { useI18n } from '../i18n';
 
 interface FolderNameModalProps {
@@ -45,14 +46,14 @@ export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSub
       title={mode === 'create' ? t('folders.new') : t('folders.renameTitle')}
       size="sm"
       icon={
-        <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
-          <Icon className="w-5 h-5" />
-        </div>
+        <ModalIcon>
+          <Icon />
+        </ModalIcon>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="folder-name" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
+          <label htmlFor="folder-name" className="block text-callout font-medium text-label mb-1.5">
             {t('folders.name')}
           </label>
           <input
@@ -62,31 +63,22 @@ export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSub
             onChange={(e) => setName(e.target.value)}
             maxLength={100}
             autoFocus
-            className="w-full h-11 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            className="field h-11"
           />
           {error && (
-            <p className="mt-2 text-sm text-rose-700 dark:text-rose-400" role="alert">
+            <p className="mt-2 text-sm text-danger-text" role="alert">
               {t('folders.saveError')}
             </p>
           )}
         </div>
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={saving}
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
-          >
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <Button onClick={onClose} disabled={saving}>
             {t('common.cancel')}
-          </button>
-          <button
-            type="submit"
-            disabled={saving || !name.trim()}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-600/20 transition disabled:opacity-60"
-          >
+          </Button>
+          <Button type="submit" variant="primary" disabled={saving || !name.trim()}>
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             <span>{mode === 'create' ? t('folders.create') : t('common.save')}</span>
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>
