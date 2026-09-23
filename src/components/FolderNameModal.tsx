@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { FolderPlus, Edit3, Loader2 } from 'lucide-react';
 import { Modal } from './Modal';
+import { useI18n } from '../i18n';
 
 interface FolderNameModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface FolderNameModalProps {
 }
 
 export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSubmit }: FolderNameModalProps) {
+  const { t } = useI18n();
   const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
@@ -40,7 +42,7 @@ export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSub
     <Modal
       isOpen={isOpen}
       onClose={() => !saving && onClose()}
-      title={mode === 'create' ? 'Nova pasta' : 'Renomear pasta'}
+      title={mode === 'create' ? t('folders.new') : t('folders.renameTitle')}
       size="sm"
       icon={
         <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
@@ -51,7 +53,7 @@ export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSub
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="folder-name" className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-1.5">
-            Nome da pasta
+            {t('folders.name')}
           </label>
           <input
             id="folder-name"
@@ -64,7 +66,7 @@ export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSub
           />
           {error && (
             <p className="mt-2 text-sm text-rose-700 dark:text-rose-400" role="alert">
-              Não foi possível salvar a pasta. Tente novamente.
+              {t('folders.saveError')}
             </p>
           )}
         </div>
@@ -75,7 +77,7 @@ export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSub
             disabled={saving}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
           >
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button
             type="submit"
@@ -83,7 +85,7 @@ export function FolderNameModal({ isOpen, mode, initialName = '', onClose, onSub
             className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-md shadow-brand-600/20 transition disabled:opacity-60"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            <span>{mode === 'create' ? 'Criar pasta' : 'Salvar'}</span>
+            <span>{mode === 'create' ? t('folders.create') : t('common.save')}</span>
           </button>
         </div>
       </form>

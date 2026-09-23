@@ -151,3 +151,11 @@ Ferramentas: `list_boards`, `search_boards`, `get_board` (visão compacta da cen
 Para diagramas de nós e setas (fluxogramas, arquiteturas, organogramas, mapas mentais), o agente usa **`create_diagram`**: informa só os nós (`id`, `label`, `shape`, `color`) e as ligações (`from`, `to`, `label`), e o servidor dimensiona as formas pelo texto, distribui tudo em camadas (`direction`: `TB`, `LR`, `BT`, `RL`) e desenha setas conectadas que contornam as formas. **`layout_board`** reorganiza um quadro existente do mesmo jeito. Os elementos seguem o mesmo formato curto da API; quem estiver com o quadro aberto vê as mudanças do agente ao vivo.
 
 A implementação (`src/server/mcpHandler.ts`, exposta por `api/mcp.ts`) é sem estado e tem teste de compatibilidade com o cliente oficial do SDK do MCP.
+
+---
+
+## 🌐 Idiomas
+
+A interface está em **português** e **inglês**. O idioma vem do navegador na primeira visita e pode ser trocado pelo botão de idioma no dashboard ou pelo menu do perfil dentro do quadro; o editor do Excalidraw acompanha.
+
+Os textos ficam em `src/i18n/locales/` (`pt-BR.ts` é a fonte; `en.ts` precisa ter as mesmas chaves, o que o TypeScript e os testes verificam). Use `const { t } = useI18n()` nos componentes, com parâmetros (`t('dashboard.movedTo', { name })`) e plurais no formato `{count, plural, one {# item} other {# itens}}`.

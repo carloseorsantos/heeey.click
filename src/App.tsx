@@ -3,6 +3,7 @@ import { AuthProvider } from './hooks/useAuth';
 import { ThemeProvider } from './hooks/useTheme';
 import { DashboardPage } from './pages/DashboardPage';
 import { HeeeyLogo } from './components/Logo';
+import { I18nProvider, useI18n } from './i18n';
 
 // The editor (Excalidraw) is only downloaded when a board is opened
 const BoardPage = lazy(() =>
@@ -10,10 +11,11 @@ const BoardPage = lazy(() =>
 );
 
 function BoardLoadingScreen() {
+  const { t } = useI18n();
   return (
     <div className="h-screen w-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950" role="status">
       <HeeeyLogo className="w-14 h-14 shadow-xl shadow-brand-600/30 animate-pulse" />
-      <span className="sr-only">Carregando a lousa…</span>
+      <span className="sr-only">{t('app.loadingBoard')}</span>
     </div>
   );
 }
@@ -40,6 +42,7 @@ export function App() {
   const boardId = boardMatch ? boardMatch[1] : null;
 
   return (
+    <I18nProvider>
     <ThemeProvider>
       <AuthProvider>
         {boardId ? (
@@ -57,6 +60,7 @@ export function App() {
         )}
       </AuthProvider>
     </ThemeProvider>
+    </I18nProvider>
   );
 }
 

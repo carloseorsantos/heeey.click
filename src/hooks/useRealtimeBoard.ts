@@ -30,6 +30,7 @@ import { debounce, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { setBoardTrashed } from '../lib/boardTrash';
 import { fetchBoardVersion, snapshotBoard, buildRestoredElements } from '../lib/boardVersions';
+import { t } from '../i18n';
 
 interface UseRealtimeBoardOptions {
   boardId: string;
@@ -137,7 +138,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       // If brand new board not found anywhere, initialize new board
       const newBoard: Board = {
         id: boardId,
-        title: 'Quadro sem título',
+        title: t('board.untitled'),
         owner_id: user?.id || null,
         elements: [],
         app_state: {
@@ -388,7 +389,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             if (!usersMap.has(p.id)) {
               usersMap.set(p.id, {
                 id: p.id,
-                name: p.name || 'Convidado',
+                name: p.name || t('header.guest'),
                 color: p.color || { background: '#f3e8ff', stroke: '#a855f7' },
                 cursor: p.cursor || null,
                 isCurrentUser: p.id === effectiveUserId,
@@ -507,7 +508,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
 
         // Extract collaborator info from payload or presence map
         const knownCollab = onlineCollaboratorsRef.current.get(payload.senderId);
-        const name = payload.username || knownCollab?.name || 'Colaborador';
+        const name = payload.username || knownCollab?.name || t('common.collaborator');
         const color = payload.color || knownCollab?.color || { background: '#e0e7ff', stroke: '#6366f1' };
 
         const newCollaborator: Collaborator = {
@@ -877,7 +878,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   const updateTitle = useCallback(
     async (newTitle: string) => {
       if (!canEdit) return; // Viewers in read-only mode cannot rename board
-      const trimmed = newTitle.trim() || 'Quadro sem título';
+      const trimmed = newTitle.trim() || t('board.untitled');
       if (!boardRef.current) return;
 
       const updated: Board = {

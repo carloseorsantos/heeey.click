@@ -3,6 +3,7 @@ import { Palette } from 'lucide-react';
 import { Board } from '../lib/types';
 import { fetchBoardContent } from '../lib/boardQueries';
 import { renderBoardThumbnail } from '../lib/thumbnail';
+import { useI18n } from '../i18n';
 
 interface BoardThumbnailProps {
   board: Board;
@@ -24,6 +25,7 @@ type Preview =
  * only when the dashboard fetched a summary.
  */
 export function BoardThumbnail({ board, isDark, onThumbnailGenerated }: BoardThumbnailProps) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -137,10 +139,10 @@ export function BoardThumbnail({ board, isDark, onThumbnailGenerated }: BoardThu
           <Palette className="w-8 h-8 group-hover:text-brand-500 transition-colors" />
           <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
             {preview.kind === 'empty'
-              ? 'Quadro vazio'
+              ? t('thumbnail.empty')
               : preview.kind === 'failed'
-                ? 'Prévia indisponível'
-                : 'Gerando prévia…'}
+                ? t('thumbnail.unavailable')
+                : t('thumbnail.generating')}
           </span>
         </div>
       )}

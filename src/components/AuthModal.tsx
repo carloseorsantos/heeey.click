@@ -3,6 +3,7 @@ import { Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { HeeeyLogo } from './Logo';
 import { Modal } from './Modal';
+import { useI18n } from '../i18n';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ function isRateLimitError(message: string) {
 
 export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const { signInWithMagicLink } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -34,7 +36,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !email.includes('@')) {
-      setError('Por favor, digite um e-mail válido.');
+      setError(t('auth.invalidEmail'));
       return;
     }
 
@@ -45,7 +47,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
 
     setLoading(false);
     if (err) {
-      setError(err.message || 'Erro ao enviar o link de acesso. Tente novamente.');
+      setError(err.message || t('auth.sendError'));
     } else {
       setSuccess(true);
     }
@@ -62,8 +64,8 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={handleResetAndClose}
-      title="Entrar na sua conta"
-      description="Sem senha: enviamos um link de acesso por e-mail."
+      title={t('auth.title')}
+      description={t('auth.description')}
       icon={<HeeeyLogo className="w-11 h-11 shadow-lg shadow-brand-500/30" />}
     >
       {success ? (
@@ -74,28 +76,27 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Confira seu e-mail</h3>
             <p className="text-sm text-slate-600 dark:text-slate-300 mt-2">
-              Enviamos um link de acesso para{' '}
-              <strong className="text-brand-700 dark:text-brand-300">{email}</strong>. Abra-o neste
-              navegador para entrar.
+              {t('auth.sentBefore')}{' '}
+              <strong className="text-brand-700 dark:text-brand-300">{email}</strong>
+              {t('auth.sentAfter')}
             </p>
           </div>
           <button
             onClick={handleResetAndClose}
             className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
           >
-            Concluído
+            {t('auth.done')}
           </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            O login é opcional. Ele serve para guardar seus quadros na conta e abri-los em qualquer
-            dispositivo.
+            {t('auth.optional')}
           </p>
 
           <div>
             <label htmlFor="email" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-              E-mail
+              {t('auth.email')}
             </label>
             <div className="relative">
               <Mail className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
@@ -104,7 +105,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                 type="email"
                 required
                 autoComplete="email"
-                placeholder="voce@exemplo.com"
+                placeholder={t('auth.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 aria-invalid={!!error}
@@ -124,11 +125,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                   <div>
                     <p className="font-semibold text-amber-900 dark:text-amber-200">
-                      Limite temporário de envio de e-mails
+                      {t('auth.rateLimitTitle')}
                     </p>
                     <p className="mt-1 text-amber-800 dark:text-amber-300/90 leading-relaxed">
-                      Tente novamente em alguns minutos. Enquanto isso, você pode continuar desenhando
-                      como convidado.
+                      {t('auth.rateLimitBody')}
                     </p>
                   </div>
                 </div>
@@ -151,10 +151,10 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Enviando link…</span>
+                <span>{t('auth.sending')}</span>
               </>
             ) : (
-              <span>Enviar link de acesso</span>
+              <span>{t('auth.send')}</span>
             )}
           </button>
 
@@ -163,7 +163,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
             onClick={handleResetAndClose}
             className="w-full py-2.5 px-4 text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800"
           >
-            Continuar como convidado
+            {t('auth.continueAsGuest')}
           </button>
         </form>
       )}

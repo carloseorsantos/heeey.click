@@ -3,6 +3,7 @@ import { KeyRound, Copy, Check, Loader2, Trash2, AlertTriangle } from 'lucide-re
 import { Modal } from './Modal';
 import { ApiKey, createApiKey, listApiKeys, revokeApiKey } from '../lib/apiKeys';
 import { formatDateRelative } from '../lib/utils';
+import { useI18n } from '../i18n';
 
 interface ApiKeysModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface ApiKeysModalProps {
 }
 
 function CopyButton({ value, label }: { value: string; label: string }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -27,7 +29,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
       aria-label={label}
     >
       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-      <span>{copied ? 'Copiada' : 'Copiar'}</span>
+      <span>{copied ? t('common.copied') : t('common.copy')}</span>
     </button>
   );
 }
@@ -45,6 +47,7 @@ function mcpSnippets(key: string) {
 }
 
 export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
+  const { t } = useI18n();
   const [keys, setKeys] = useState<ApiKey[] | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [name, setName] = useState('');
@@ -94,8 +97,8 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Chaves de API"
-      description="Conecte agentes e integrações à sua conta. Cada chave tem as mesmas permissões que você."
+      title={t('apiKeys.title')}
+      description={t('apiKeys.description')}
       icon={
         <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
           <KeyRound className="w-5 h-5" />
@@ -107,30 +110,30 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
           <div className="p-3 rounded-xl border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 space-y-2" role="status">
             <p className="flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-200">
               <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              Copie a chave agora. Ela não será mostrada de novo.
+              {t('apiKeys.copyNow')}
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 min-w-0 truncate px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100 select-all">
                 {newKey}
               </code>
-              <CopyButton value={newKey} label="Copiar chave de API" />
+              <CopyButton value={newKey} label={t('apiKeys.copyKey')} />
             </div>
             <details className="text-sm text-amber-900 dark:text-amber-200">
-              <summary className="cursor-pointer font-semibold">Conectar um agente via MCP</summary>
+              <summary className="cursor-pointer font-semibold">{t('apiKeys.connectMcp')}</summary>
               <div className="mt-2 space-y-2">
                 <p>Claude Code:</p>
                 <div className="flex items-start gap-2">
                   <code className="flex-1 min-w-0 break-all px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100">
                     {mcpSnippets(newKey).claudeCode}
                   </code>
-                  <CopyButton value={mcpSnippets(newKey).claudeCode} label="Copiar comando do Claude Code" />
+                  <CopyButton value={mcpSnippets(newKey).claudeCode} label={t('apiKeys.copyClaudeCode')} />
                 </div>
-                <p>Outros clientes MCP (HTTP):</p>
+                <p>{t('apiKeys.otherClients')}</p>
                 <div className="flex items-start gap-2">
                   <pre className="flex-1 min-w-0 overflow-x-auto px-2 py-1.5 rounded-lg bg-white dark:bg-slate-900 text-xs text-slate-800 dark:text-slate-100">
                     {mcpSnippets(newKey).json}
                   </pre>
-                  <CopyButton value={mcpSnippets(newKey).json} label="Copiar configuração MCP" />
+                  <CopyButton value={mcpSnippets(newKey).json} label={t('apiKeys.copyMcpConfig')} />
                 </div>
               </div>
             </details>
@@ -139,7 +142,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
 
         <form onSubmit={handleCreate} className="space-y-3">
           <label htmlFor="api-key-name" className="block text-sm font-semibold text-slate-700 dark:text-slate-200">
-            Nova chave
+            {t('apiKeys.newKey')}
           </label>
           <div className="flex gap-2">
             <input
@@ -148,7 +151,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={60}
-              placeholder="Ex.: Claude, automação de relatórios"
+              placeholder={t('apiKeys.namePlaceholder')}
               className="flex-1 min-w-0 h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <button
@@ -157,7 +160,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
               className="flex items-center gap-1.5 h-10 px-4 rounded-xl text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white transition disabled:opacity-60 flex-shrink-0"
             >
               {creating && <Loader2 className="w-4 h-4 animate-spin" />}
-              <span>Criar</span>
+              <span>{t('apiKeys.create')}</span>
             </button>
           </div>
           <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
@@ -167,7 +170,7 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
               onChange={(e) => setReadOnly(e.target.checked)}
               className="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
-            Somente leitura (a chave não cria nem altera quadros)
+            {t('apiKeys.readOnly')}
           </label>
           {createError && (
             <p className="text-sm text-rose-700 dark:text-rose-400" role="alert">
@@ -177,15 +180,15 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
         </form>
 
         <div>
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Chaves ativas</p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">{t('apiKeys.active')}</p>
           {status === 'loading' ? (
             <p className="py-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400" role="status">
-              <Loader2 className="w-4 h-4 animate-spin" /> Carregando…
+              <Loader2 className="w-4 h-4 animate-spin" /> {t('common.loading')}
             </p>
           ) : status === 'error' ? (
-            <p className="py-4 text-sm text-slate-600 dark:text-slate-400">Não foi possível carregar as chaves agora.</p>
+            <p className="py-4 text-sm text-slate-600 dark:text-slate-400">{t('apiKeys.loadError')}</p>
           ) : keys && keys.length === 0 ? (
-            <p className="py-4 text-sm text-slate-600 dark:text-slate-400">Nenhuma chave criada ainda.</p>
+            <p className="py-4 text-sm text-slate-600 dark:text-slate-400">{t('apiKeys.none')}</p>
           ) : (
             <ul className="space-y-2 max-h-64 overflow-y-auto">
               {keys?.map((key) => (
@@ -193,8 +196,8 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold text-slate-800 dark:text-white truncate">{key.name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                      <code>{key.prefix}…</code> · {key.scopes.includes('write') ? 'leitura e escrita' : 'somente leitura'} ·{' '}
-                      {key.last_used_at ? `usada ${formatDateRelative(key.last_used_at).toLowerCase()}` : 'nunca usada'}
+                      <code>{key.prefix}…</code> · {key.scopes.includes('write') ? t('apiKeys.readWrite') : t('apiKeys.readOnlyShort')} ·{' '}
+                      {key.last_used_at ? t('apiKeys.usedAt', { time: formatDateRelative(key.last_used_at) }) : t('apiKeys.neverUsed')}
                     </p>
                   </div>
                   {confirmRevokeId === key.id ? (
@@ -203,21 +206,21 @@ export function ApiKeysModal({ isOpen, onClose }: ApiKeysModalProps) {
                         onClick={() => setConfirmRevokeId(null)}
                         className="px-2.5 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition"
                       >
-                        Cancelar
+                        {t('common.cancel')}
                       </button>
                       <button
                         onClick={() => handleRevoke(key.id)}
                         className="px-2.5 py-2 rounded-lg text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white transition"
                       >
-                        Revogar
+                        {t('apiKeys.revoke')}
                       </button>
                     </div>
                   ) : (
                     <button
                       onClick={() => setConfirmRevokeId(key.id)}
                       className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-rose-700 hover:bg-rose-50 dark:text-slate-400 dark:hover:text-rose-400 dark:hover:bg-rose-950/40 transition flex-shrink-0"
-                      aria-label={`Revogar a chave ${key.name}`}
-                      title="Revogar"
+                      aria-label={t('apiKeys.revokeKey', { name: key.name })}
+                      title={t('apiKeys.revoke')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
