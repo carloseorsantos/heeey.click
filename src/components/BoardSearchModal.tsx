@@ -151,7 +151,7 @@ export function BoardSearchModal({ isOpen, onClose, currentBoardId, onOpenBoard 
         </p>
       ) : (
         <ul id="board-search-results" ref={listRef} className="max-h-[50vh] overflow-y-auto -mx-2 space-y-0.5">
-          {hits.map(({ board, snippet }, index) => (
+          {hits.map(({ board, snippet, related }, index) => (
             <li key={board.id}>
               <button
                 data-index={index}
@@ -176,6 +176,7 @@ export function BoardSearchModal({ isOpen, onClose, currentBoardId, onOpenBoard 
                     </span>
                   ) : (
                     <span className="block text-xs text-slate-500 dark:text-slate-400">
+                      {related && <span className="font-medium text-brand-600 dark:text-brand-400">{t('search.related')} · </span>}
                       {t('boardCard.edited', { time: formatDateRelative(board.updated_at || board.created_at) })}
                     </span>
                   )}

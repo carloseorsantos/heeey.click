@@ -10,7 +10,12 @@ export interface BoardSnippet {
 export interface BoardSearchHit {
   board: Board;
   snippet?: BoardSnippet;
+  /** Found by meaning (Jev), not by the words typed */
+  related?: boolean;
 }
+
+/** Below this many keyword hits, semantic search looks for related boards */
+export const SEMANTIC_SEARCH_MIN_HITS = 3;
 
 /** Lowercase and strip accents so "Reunião" matches "reuniao" */
 export function normalizeForSearch(text: string): string {
@@ -103,8 +108,36 @@ export async function searchBoardsRemote(query: string, limit = 20): Promise<Boa
     console.warn('Busca no conteúdo indisponível:', error.message);
     return null;
   }
-  return ((data || []) as any[]).map(({ content, rank: _rank, ...row }) => ({
+  const hits: BoardSearchHit[] = ((data || []) as any[]).map(({ content, rank: _rank, ...row }) => ({
     board: { ...row, elements: [], app_state: {}, files: {}, contentLoaded: false } as Board,
     snippet: buildSnippet(content || '', terms),
   }));
+  if (hits.length >= SEMANTIC_SEARCH_MIN_HITS) return hits;
+  const related = await searchBoardsSemantic(query, hits.map((hit) => hit.board.id));
+  return [...hits, ...related];
+}
+
+/**
+ * Boards related to the query by meaning, ranked by Jev on the server (/api/ai-search).
+ * Returns [] when unavailable (signed out, not configured, `vite dev` without functions).
+ */
+export async function searchBoardsSemantic(query: string, exclude: readonly string[] = []): Promise<BoardSearchHit[]> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return [];
+    const res = await fetch('/api/ai-search', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, exclude }),
+    });
+    if (!res.ok || !res.headers.get('Content-Type')?.includes('application/json')) return [];
+    const { results } = await res.json();
+    return ((results || []) as any[]).map(({ content: _content, relevance: _relevance, ...row }) => ({
+      board: { ...row, elements: [], app_state: {}, files: {}, contentLoaded: false } as Board,
+      related: true,
+    }));
+  } catch {
+    return [];
+  }
 }

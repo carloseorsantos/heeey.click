@@ -277,6 +277,7 @@ export const ptBR = {
     noResults: "Nenhum quadro encontrado.",
     placeholder: "Buscar quadros",
     recent: "Recentes",
+    related: "Relacionado",
     results: "Resultados",
     searching: "Buscando…",
   },

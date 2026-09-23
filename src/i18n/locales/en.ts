@@ -278,6 +278,7 @@ export const en: Messages = {
     noResults: "No boards found.",
     placeholder: "Search boards",
     recent: "Recent",
+    related: "Related",
     results: "Results",
     searching: "Searching…",
   },

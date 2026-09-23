@@ -6,11 +6,15 @@ import type { Rpc } from './apiHandler';
 const DEFAULT_SUPABASE_URL = 'https://nsczplggnyuljosvvlml.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_DcFYEb25HZ7S7qym6K8TxA_ismhm5Sv';
 
-export function createRpc(env: Record<string, string | undefined>): Rpc {
+/** accessToken: a user's Supabase session JWT, so RLS and auth.uid() apply to that user */
+export function createRpc(env: Record<string, string | undefined>, accessToken?: string): Rpc {
   const client = createClient(
     env.SUPABASE_URL || env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL,
     env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
+    {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined,
+    }
   );
   return (fn, args) => client.rpc(fn, args);
 }

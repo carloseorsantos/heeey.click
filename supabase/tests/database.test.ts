@@ -446,5 +446,18 @@ describe('database schema and migrations', () => {
       expect((await search(A, 'reuniao')).rows).toHaveLength(0);
       await as(A, `update public.boards set deleted_at = null where id = $1`, [BOARD]);
     });
+
+    it('search_candidates lists only the signed-in owner’s active boards with a text excerpt', async () => {
+      const candidates = (user: string | null) => as(user, `select id, content from public.search_candidates()`);
+
+      const own = await candidates(A);
+      expect(own.rows.find((r) => r.id === BOARD)?.content).toContain('Orçamento anual');
+      expect((await candidates(B)).rows.map((r) => r.id)).not.toContain(BOARD);
+      expect((await candidates(null)).error).toMatch(/permission denied/);
+
+      await as(A, `update public.boards set deleted_at = now() where id = $1`, [BOARD]);
+      expect((await candidates(A)).rows.map((r) => r.id)).not.toContain(BOARD);
+      await as(A, `update public.boards set deleted_at = null where id = $1`, [BOARD]);
+    });
   });
 });
