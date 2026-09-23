@@ -17,6 +17,7 @@ import {
   ChevronRight,
   KeyRound,
   Languages,
+  BookOpen,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -55,6 +56,7 @@ import { BoardSearchHit, searchBoardsRemote, searchLoadedBoards } from '../lib/s
 
 interface DashboardPageProps {
   onNavigateToBoard: (boardId: string) => void;
+  onNavigateToDocs?: () => void;
 }
 
 const TOAST_MS = 5000;
@@ -107,7 +109,7 @@ interface Toast {
   onUndo?: () => void;
 }
 
-export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
+export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: DashboardPageProps) {
   const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const { t, locale, setLocale } = useI18n();
@@ -553,6 +555,17 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {onNavigateToDocs && (
+            <button
+              onClick={onNavigateToDocs}
+              className={iconButtonClass}
+              aria-label={t('dashboard.documentation')}
+              title={t('dashboard.documentation')}
+            >
+              <BookOpen className="w-4 h-4" />
+            </button>
+          )}
+
           <button
             onClick={toggleTheme}
             className={iconButtonClass}
@@ -628,13 +641,24 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 <p className="text-brand-50 text-base mt-3 max-w-lg">
                   {t('dashboard.heroBody')}
                 </p>
-                <button
-                  onClick={() => handleCreateBoard()}
-                  className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-brand-700 font-bold text-sm shadow-lg hover:bg-brand-50 active:scale-95 transition"
-                >
-                  <Plus className="w-5 h-5 stroke-[2.5]" />
-                  <span>{t('dashboard.createFirst')}</span>
-                </button>
+                <div className="flex flex-wrap items-center gap-3 mt-6">
+                  <button
+                    onClick={() => handleCreateBoard()}
+                    className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-brand-700 font-bold text-sm shadow-lg hover:bg-brand-50 active:scale-95 transition"
+                  >
+                    <Plus className="w-5 h-5 stroke-[2.5]" />
+                    <span>{t('dashboard.createFirst')}</span>
+                  </button>
+                  {onNavigateToDocs && (
+                    <button
+                      onClick={onNavigateToDocs}
+                      className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-semibold text-sm border border-white/25 backdrop-blur-sm transition"
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>{t('dashboard.documentation')}</span>
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
               <div className="absolute right-32 top-0 w-48 h-48 rounded-full bg-brand-400/20 blur-xl pointer-events-none" />
@@ -853,6 +877,32 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
           </section>
         )}
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200/60 dark:border-slate-800 py-6 px-4 sm:px-8 mt-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex items-center gap-2">
+          <HeeeyLogo className="w-4 h-4 opacity-75" />
+          <span>heeey<span className="text-brand-600 dark:text-brand-400 font-bold">.click</span></span>
+        </div>
+        <div className="flex items-center gap-4">
+          {onNavigateToDocs && (
+            <button
+              onClick={onNavigateToDocs}
+              className="hover:text-brand-600 dark:hover:text-brand-400 font-medium transition"
+            >
+              {t('dashboard.documentation')}
+            </button>
+          )}
+          <a
+            href="https://github.com/carloseorsantos/heeey.click"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-slate-900 dark:hover:text-slate-200 transition"
+          >
+            GitHub
+          </a>
+        </div>
+      </footer>
 
       {/* Toast (with optional undo) */}
       <div aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm">

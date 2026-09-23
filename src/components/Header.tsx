@@ -18,6 +18,7 @@ import {
   History,
   Search,
   Languages,
+  BookOpen,
 } from 'lucide-react';
 import { CollaboratorUser, SyncStatus, AccessLevel } from '../lib/types';
 import { cn } from '../lib/utils';
@@ -40,6 +41,7 @@ interface HeaderProps {
   onOpenAuth: () => void;
   onOpenNickname: () => void;
   onBackToDashboard: () => void;
+  onOpenDocs?: () => void;
   onExport?: (format: 'png' | 'svg') => void;
   /** Only passed to people who can edit the board */
   onOpenHistory?: () => void;
@@ -107,6 +109,7 @@ export function Header({
   onOpenAuth,
   onOpenNickname,
   onBackToDashboard,
+  onOpenDocs,
   onExport,
   onOpenHistory,
   onOpenSearch,
@@ -346,6 +349,16 @@ export function Header({
                   <Languages className="w-4 h-4 text-slate-500" />
                   <span>{t('language.switchTo')}</span>
                 </button>
+                {onOpenDocs && (
+                  <button
+                    role="menuitem"
+                    className={menuItemClass}
+                    onClick={() => runMenuAction(onOpenDocs)}
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-500" />
+                    <span>{t('header.documentation')}</span>
+                  </button>
+                )}
               </div>
 
               {onExport && (

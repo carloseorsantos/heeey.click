@@ -10,6 +10,10 @@ const BoardPage = lazy(() =>
   import('./pages/BoardPage').then((module) => ({ default: module.BoardPage }))
 );
 
+const DocsPage = lazy(() =>
+  import('./pages/DocsPage').then((module) => ({ default: module.DocsPage }))
+);
+
 function BoardLoadingScreen() {
   const { t } = useI18n();
   return (
@@ -37,9 +41,13 @@ export function App() {
     setCurrentPath(path);
   }, []);
 
-  // Parse path: /b/:boardId or /
+  // Parse path: /b/:boardId, /docs (with optional slug), or /
   const boardMatch = currentPath.match(/^\/b\/([^/]+)/);
   const boardId = boardMatch ? boardMatch[1] : null;
+
+  const docsMatch = currentPath.match(/^\/docs(?:\/(.*))?$/);
+  const isDocs = Boolean(docsMatch);
+  const docsSlug = docsMatch ? docsMatch[1] || '' : null;
 
   return (
     <I18nProvider>
@@ -53,10 +61,23 @@ export function App() {
               boardId={boardId}
               onBackToDashboard={() => navigate('/')}
               onOpenBoard={(id) => navigate(`/b/${id}`)}
+              onNavigateToDocs={() => navigate('/docs')}
+            />
+          </Suspense>
+        ) : isDocs ? (
+          <Suspense fallback={<BoardLoadingScreen />}>
+            <DocsPage
+              slug={docsSlug || 'getting-started'}
+              onNavigateDoc={(slug) => navigate(`/docs/${slug}`)}
+              onBackToDashboard={() => navigate('/')}
+              onNavigateToBoard={(id) => navigate(`/b/${id}`)}
             />
           </Suspense>
         ) : (
-          <DashboardPage onNavigateToBoard={(id) => navigate(`/b/${id}`)} />
+          <DashboardPage
+            onNavigateToBoard={(id) => navigate(`/b/${id}`)}
+            onNavigateToDocs={() => navigate('/docs')}
+          />
         )}
       </AuthProvider>
     </ThemeProvider>

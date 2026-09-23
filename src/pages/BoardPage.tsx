@@ -46,9 +46,10 @@ interface BoardPageProps {
   boardId: string;
   onBackToDashboard: () => void;
   onOpenBoard: (boardId: string) => void;
+  onNavigateToDocs?: () => void;
 }
 
-export function BoardPage({ boardId, onBackToDashboard, onOpenBoard }: BoardPageProps) {
+export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateToDocs }: BoardPageProps) {
   const {
     board,
     loading,
@@ -387,6 +388,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard }: BoardPage
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenNickname={() => setIsNicknameOpen(true)}
         onBackToDashboard={onBackToDashboard}
+        onOpenDocs={onNavigateToDocs}
         onExport={handleExport}
         onOpenHistory={isViewMode ? undefined : () => setIsHistoryOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
