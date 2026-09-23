@@ -2,6 +2,8 @@
 
 Aplicação web moderna de whiteboard e lousa vetorial baseada no componente oficial `@excalidraw/excalidraw`, com persistência na nuvem, colaboração multiplayer em tempo real via Supabase (Broadcast e Presence), acesso híbrido para convidados e login via Magic Link, além de um dashboard para gerenciamento de múltiplos quadros.
 
+> 📚 **Documentação Oficial**: Consulte a pasta [`docs/`](docs/README.md) para a documentação técnica detalhada, referências da API REST v1 e guia do servidor MCP para agentes de IA.
+
 ---
 
 ## 🚀 Tecnologias

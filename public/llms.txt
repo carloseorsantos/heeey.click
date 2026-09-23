@@ -1,0 +1,70 @@
+# Heeey (heeey.click)
+
+Heeey is a collaborative whiteboard and diagramming web application built on top of the official Excalidraw open-source editor core (`@excalidraw/excalidraw` 0.18.x), featuring cloud persistence, real-time multiplayer via Supabase (Broadcast and Presence), hybrid guest/magic-link authentication, multi-board dashboard with folders, soft-delete trash, version history, full-text canvas search, personal libraries, public REST API, and a Model Context Protocol (MCP) server for AI agents.
+
+## What We Are
+
+- Web application: https://heeey.click
+- Open-source repository: https://github.com/carloseorsantos/heeey.click
+- Documentation: https://heeey.click/docs
+- Core Whiteboard engine: `@excalidraw/excalidraw` 0.18.x
+
+## What We Do
+
+- Real-time collaborative whiteboarding and diagramming with hand-drawn vector aesthetics.
+- Multiplayer synchronization with live cursors, participant colors, and laser pointer via Supabase Realtime (`heeey:room:{boardId}`).
+- Multi-board dashboard with hierarchical folders, breadcrumbs, search, and soft-delete trash.
+- Automated point-in-time version history (snapshots every 10 min and pre-restore snapshots) with conflict-free restore bumping and 30-day snapshot retention.
+- Complete internationalization (i18n) supporting Portuguese (`pt-BR`) and English (`en`), browser language detection, and Excalidraw locale synchronization.
+- Personal component libraries with cloud sync for authenticated users and local migration for guests.
+- Automated client-side image compression (WebP, max 1600px, <150KB) and Supabase Storage integration (`board-media`).
+- Full-text search across board titles and canvas text (labels and shapes) with unaccent and contextual snippet preview.
+- Public REST API (`/api/v1`) with personal API keys (`hk_...`), read/write scopes, and shorthand element specs.
+- Model Context Protocol (MCP) server (`/api/mcp`) via Streamable HTTP for AI agents (Claude Code, Claude Desktop, Cursor).
+- Automated diagram layout engine using Dagre/Sugiyama algorithm (`create_diagram`, `layout_board`) with automatic node sizing, smart arrow routing, and flow directions (`TB`, `LR`, `BT`, `RL`).
+
+## Integration Facts
+
+- Public REST API base URL: https://heeey.click/api/v1
+- MCP endpoint: https://heeey.click/api/mcp (Streamable HTTP, JSON-RPC 2.0)
+- MCP Protocol versions: 2025-06-18, 2025-03-26, 2024-11-05
+- Authentication header: `Authorization: Bearer hk_...` or `X-API-Key: hk_...`
+- API and MCP are currently in active production beta.
+
+## Primary Resources
+
+- [Documentation Home](https://heeey.click/docs): Start here for the docs overview and navigation.
+- [Getting Started](https://heeey.click/docs/getting-started): Quick start guide for users, developers, and AI agents.
+- [API Overview](https://heeey.click/docs/api/overview): REST API concepts, base URL, and conventions.
+- [API Getting Started](https://heeey.click/docs/api/getting-started): Create your first board in 3 minutes via API.
+- [Scene Content Schema](https://heeey.click/docs/api/scene-content-schema): Human-readable reference for the shared ElementSpec format.
+- [MCP Overview](https://heeey.click/docs/mcp/overview): How AI agents connect to Heeey through MCP.
+- [MCP Tools Catalog](https://heeey.click/docs/mcp/tools): Specification of all 13 MCP tools.
+- [Full LLM Documentation Dump](https://heeey.click/llms-full.txt): Complete processed-text export of the docs corpus.
+
+## Documentation Index
+
+- [Heeey Documentation](https://heeey.click/docs)
+- [Getting Started](https://heeey.click/docs/getting-started): Create your first board in 3 minutes
+- [Whiteboard Editor](https://heeey.click/docs/features/whiteboard-editor): Canvas tools, bound text, and shortcuts
+- [Realtime Collaboration](https://heeey.click/docs/features/collaboration-realtime): Multiplayer, broadcast, and cursors
+- [Folders and Organization](https://heeey.click/docs/features/folders-and-organization): Hierarchical folders, breadcrumbs, templates, and trash
+- [Version History](https://heeey.click/docs/features/version-history): Automated snapshots, retention, and conflict-free restoration
+- [Internationalization](https://heeey.click/docs/features/i18n): Native pt-BR and en support, detection, and Excalidraw sync
+- [Component Libraries](https://heeey.click/docs/features/libraries): Cloud-synced user libraries and guest migration
+- [Media and Images](https://heeey.click/docs/features/media-and-images): Client-side WebP compression and Supabase storage
+- [Canvas Search](https://heeey.click/docs/features/search): Full-text unaccent search and snippet preview
+- [API Overview](https://heeey.click/docs/api/overview): REST API concepts, base URL, and conventions
+- [API Getting Started](https://heeey.click/docs/api/getting-started): Create your first board in 3 minutes via API
+- [API Authentication](https://heeey.click/docs/api/authentication): API keys, SHA-256 storage, and scopes
+- [API Pagination](https://heeey.click/docs/api/pagination): Working with paginated results
+- [API Rate Limiting](https://heeey.click/docs/api/rate-limiting): Operational limits and constraints
+- [API Error Handling](https://heeey.click/docs/api/error-handling): HTTP status codes and debugging
+- [Scene Content Schema](https://heeey.click/docs/api/scene-content-schema): Human-readable reference for ElementSpec format
+- [API Endpoints](https://heeey.click/docs/api/endpoints): Complete reference of all REST API endpoints
+- [MCP Overview](https://heeey.click/docs/mcp/overview): How AI agents connect to Heeey through MCP
+- [MCP Getting Started](https://heeey.click/docs/mcp/getting-started): Connect Claude Code, Claude Desktop, and Cursor
+- [MCP Auth and Permissions](https://heeey.click/docs/mcp/auth-and-permissions): MCP authorization and tool safety annotations
+- [MCP Tools Catalog](https://heeey.click/docs/mcp/tools): Detailed catalog of all 13 MCP tools
+- [Diagram Layout Engine](https://heeey.click/docs/mcp/diagram-layout): Automated Dagre/Sugiyama layered diagram layout
+
