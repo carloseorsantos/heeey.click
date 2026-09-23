@@ -6,6 +6,7 @@
  */
 import { ApiContext, ApiError, Rpc, caller, withUrl } from './apiHandler';
 import { toExcalidrawElements, describeElements, ElementSpec } from '../lib/elementSkeleton';
+import { layoutDiagram, relayoutElements, DiagramError, DiagramInput, NODE_COLORS } from '../lib/diagramLayout';
 
 const SUPPORTED_PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
 const SERVER_INFO = { name: 'heeey.click', title: 'heeey.click', version: '1.0.0' };
@@ -17,6 +18,9 @@ Boards contain Excalidraw elements. When writing elements you can use short spec
 - arrows: {"type":"arrow","start":{"id":"a"},"end":{"id":"b"},"label":"optional"}
 Give shapes stable ids so arrows can connect to them and later edits can update them.
 Coordinates are in pixels (x to the right, y down); leave ~80px between shapes.
+For flowcharts, architectures, org charts, mind maps and other node-and-arrow diagrams,
+prefer create_diagram: describe nodes and edges and the server computes spacing and
+routes the arrows. Use layout_board to tidy up an existing board.
 Every board result includes a url the user can open.`;
 
 type Json = Record<string, unknown>;
@@ -46,6 +50,38 @@ const ELEMENT_SPEC_SCHEMA = {
 };
 
 const uuid = { type: 'string', format: 'uuid' };
+
+const DIRECTION_SCHEMA = {
+  type: 'string',
+  enum: ['TB', 'LR', 'BT', 'RL'],
+  description: 'Flow direction: TB top→bottom (default), LR left→right, BT, RL',
+};
+
+/** Where to put a new diagram on a board that already has content: to its right */
+function originBeside(elements: readonly any[]): { x: number; y: number } {
+  const live = elements.filter((e) => !e.isDeleted);
+  if (live.length === 0) return { x: 0, y: 0 };
+  return {
+    x: Math.max(...live.map((e) => e.x + (e.width || 0))) + 160,
+    y: Math.min(...live.map((e) => e.y)),
+  };
+}
+
+function diagramArgs(args: Json): DiagramInput {
+  const { nodes, edges, direction } = args as any;
+  if (!Array.isArray(nodes)) throw new ApiError(400, 'invalid_request', 'nodes deve ser uma lista.');
+  if (edges !== undefined && !Array.isArray(edges)) throw new ApiError(400, 'invalid_request', 'edges deve ser uma lista.');
+  return { nodes, edges: edges ?? [], direction };
+}
+
+function layoutOrThrow(input: DiagramInput): ElementSpec[] {
+  try {
+    return layoutDiagram(input);
+  } catch (e) {
+    if (e instanceof DiagramError) throw new ApiError(400, 'invalid_request', e.message);
+    throw e;
+  }
+}
 
 interface ToolDefinition {
   name: string;
@@ -215,6 +251,91 @@ export const MCP_TOOLS: ToolDefinition[] = [
     }),
   },
   {
+    name: 'create_diagram',
+    title: 'Create a laid-out diagram',
+    description:
+      'Draw a node-and-arrow diagram (flowchart, architecture, process, org chart, mind map) with automatic layout: shapes are sized to their labels, evenly spaced, and arrows are routed around shapes and bound to them. Creates a new board, or adds the diagram next to the existing content of board_id. Re-using node ids on the same board updates those shapes.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Title of the new board (when board_id is not given)' },
+        board_id: { ...uuid, description: 'Add the diagram to this existing board instead' },
+        folder_id: { ...uuid, description: 'Folder for the new board' },
+        direction: DIRECTION_SCHEMA,
+        nodes: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 300,
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              label: { type: 'string' },
+              shape: { type: 'string', enum: ['rectangle', 'ellipse', 'diamond'], description: 'diamond for decisions, ellipse for start/end' },
+              color: { type: 'string', enum: Object.keys(NODE_COLORS) },
+            },
+            required: ['id', 'label'],
+          },
+        },
+        edges: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: { from: { type: 'string' }, to: { type: 'string' }, label: { type: 'string' } },
+            required: ['from', 'to'],
+          },
+        },
+      },
+      required: ['nodes'],
+    },
+    run: async (args, call, ctx) => {
+      const input = diagramArgs(args);
+      const boardId = typeof args.board_id === 'string' && args.board_id ? args.board_id : null;
+
+      if (!boardId) {
+        const specs = layoutOrThrow(input);
+        const board = await call('api_create_board', {
+          p_title: requireString(args, 'title'),
+          p_elements: toExcalidrawElements(specs),
+          p_folder_id: (args.folder_id as string) || null,
+        });
+        return { board: withUrl(board, ctx) };
+      }
+
+      const current = await call('api_get_board', { p_board_id: boardId });
+      const nodeIds = new Set(input.nodes.map((n) => n.id));
+      // Nodes that already exist are redrawn in place of the old diagram; new diagrams go beside the content
+      const others = (current.elements as any[]).filter((e) => !nodeIds.has(e.id) && !nodeIds.has(e.containerId));
+      const specs = layoutOrThrow({ ...input, origin: originBeside(others) });
+      const board = await call('api_update_board', {
+        p_board_id: boardId,
+        p_elements: toExcalidrawElements(specs, current.elements),
+      });
+      return { board: withUrl(board, ctx) };
+    },
+  },
+  {
+    name: 'layout_board',
+    title: 'Tidy up a board',
+    description:
+      'Automatically re-arrange the shapes of a board and the arrows connecting them into a clean layered layout (no overlaps, arrows routed around shapes). Other elements stay where they are.',
+    inputSchema: {
+      type: 'object',
+      properties: { board_id: uuid, direction: DIRECTION_SCHEMA },
+      required: ['board_id'],
+    },
+    annotations: { idempotentHint: true },
+    run: async (args, call, ctx) => {
+      const boardId = requireString(args, 'board_id');
+      const current = await call('api_get_board', { p_board_id: boardId });
+      const changed = relayoutElements(current.elements, { direction: (args.direction as DiagramInput['direction']) ?? 'TB' });
+      if (changed.length === 0) return { board: withUrl(current, ctx), moved: 0 };
+      const { elements: _e, files: _f, app_state: _a, ...summary } = current;
+      const board = await call('api_update_board', { p_board_id: boardId, p_elements: changed });
+      return { board: withUrl({ ...summary, ...board }, ctx), moved: changed.length };
+    },
+  },
+  {
     name: 'list_folders',
     title: 'List folders',
     description: "List the user's folders (parent_id null = top level).",
@@ -250,11 +371,6 @@ export const MCP_TOOLS: ToolDefinition[] = [
   },
 ];
 
-/** Extra tools registered by other modules (e.g. diagram layout) */
-export function registerMcpTool(tool: ToolDefinition) {
-  if (!MCP_TOOLS.some((t) => t.name === tool.name)) MCP_TOOLS.push(tool);
-}
-export type { ToolDefinition };
 
 type JsonRpcRequest = { jsonrpc: '2.0'; id?: string | number | null; method: string; params?: Json };
 

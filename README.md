@@ -146,6 +146,8 @@ O servidor MCP fica em `https://heeey.click/api/mcp` (transporte Streamable HTTP
 claude mcp add --transport http heeey https://heeey.click/api/mcp --header "Authorization: Bearer hk_..."
 ```
 
-Ferramentas: `list_boards`, `search_boards`, `get_board` (visão compacta da cena, ou `detail: "full"`), `create_board`, `add_elements`, `delete_elements`, `rename_board`, `trash_board`, `list_folders`, `create_folder` e `move_board`. Os elementos seguem o mesmo formato curto da API; quem estiver com o quadro aberto vê as mudanças do agente ao vivo.
+Ferramentas: `list_boards`, `search_boards`, `get_board` (visão compacta da cena, ou `detail: "full"`), `create_board`, `add_elements`, `delete_elements`, `rename_board`, `trash_board`, `list_folders`, `create_folder` e `move_board`.
+
+Para diagramas de nós e setas (fluxogramas, arquiteturas, organogramas, mapas mentais), o agente usa **`create_diagram`**: informa só os nós (`id`, `label`, `shape`, `color`) e as ligações (`from`, `to`, `label`), e o servidor dimensiona as formas pelo texto, distribui tudo em camadas (`direction`: `TB`, `LR`, `BT`, `RL`) e desenha setas conectadas que contornam as formas. **`layout_board`** reorganiza um quadro existente do mesmo jeito. Os elementos seguem o mesmo formato curto da API; quem estiver com o quadro aberto vê as mudanças do agente ao vivo.
 
 A implementação (`src/server/mcpHandler.ts`, exposta por `api/mcp.ts`) é sem estado e tem teste de compatibilidade com o cliente oficial do SDK do MCP.

@@ -378,6 +378,54 @@ describe('database schema and migrations', () => {
       expect(ids).not.toContain('teste-label');
       expect((await tool('search_boards', { query: 'agente' })).results[0].id).toBe(board.id);
     });
+
+    it('MCP create_diagram lays out a diagram and layout_board tidies a board', async () => {
+      const key = (await as(B, `select key from public.create_api_key('diagram')`)).rows[0].key;
+      let nextId = 100;
+      const tool = async (name: string, args: Record<string, unknown>) => {
+        const res = await handleMcpRequest(
+          new Request('https://heeey.click/api/mcp', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: nextId++, method: 'tools/call', params: { name, arguments: args } }),
+          }),
+          rpc,
+          { appOrigin: 'https://heeey.click' }
+        );
+        const { result } = await res.json();
+        expect(result.isError, result.content?.[0]?.text).toBeUndefined();
+        return result.structuredContent;
+      };
+
+      const { board } = await tool('create_diagram', {
+        title: 'Pedido',
+        direction: 'LR',
+        nodes: [
+          { id: 'cart', label: 'Carrinho' },
+          { id: 'pay', label: 'Pagamento aprovado?', shape: 'diamond' },
+          { id: 'ship', label: 'Enviar', color: 'green' },
+        ],
+        edges: [
+          { from: 'cart', to: 'pay' },
+          { from: 'pay', to: 'ship', label: 'sim' },
+        ],
+      });
+      let view = (await tool('get_board', { board_id: board.id })).elements;
+      const byId = Object.fromEntries(view.map((e: any) => [e.id, e]));
+      expect(byId.cart.x).toBeLessThan(byId.pay.x);
+      expect(byId.pay).toMatchObject({ type: 'diamond', label: 'Pagamento aprovado?' });
+      expect(view.filter((e: any) => e.type === 'arrow')).toHaveLength(2);
+
+      // A second diagram goes beside the first one
+      await tool('create_diagram', { board_id: board.id, nodes: [{ id: 'extra', label: 'Extra' }] });
+      view = (await tool('get_board', { board_id: board.id })).elements;
+      const extra = view.find((e: any) => e.id === 'extra');
+      expect(extra.x).toBeGreaterThan(Math.max(...view.filter((e: any) => e.id !== 'extra').map((e: any) => e.x + e.width)));
+
+      const tidy = await tool('layout_board', { board_id: board.id });
+      expect(tidy.moved).toBeGreaterThan(0);
+      expect(tidy.board.url).toContain(board.id);
+    });
   });
 
   describe('search', () => {
