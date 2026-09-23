@@ -301,3 +301,38 @@ export function toExcalidrawElements(specs: readonly ElementSpec[], existing: re
 
   return Array.from(output.values());
 }
+
+/**
+ * Compact, model-friendly view of a scene (the inverse of toExcalidrawElements):
+ * shape labels are folded into their shape and arrows show what they connect.
+ */
+export function describeElements(elements: readonly any[]): Record<string, unknown>[] {
+  const live = elements.filter((e) => e && !e.isDeleted);
+  const labels = new Map<string, string>();
+  for (const e of live) {
+    if (e.type === 'text' && e.containerId) labels.set(e.containerId, e.originalText ?? e.text);
+  }
+  const round = (n: unknown) => (typeof n === 'number' ? Math.round(n) : n);
+
+  return live
+    .filter((e) => !(e.type === 'text' && e.containerId && live.some((c) => c.id === e.containerId)))
+    .map((e) => {
+      const item: Record<string, unknown> = {
+        id: e.id,
+        type: e.type,
+        x: round(e.x),
+        y: round(e.y),
+        width: round(e.width),
+        height: round(e.height),
+      };
+      if (e.type === 'text') item.text = e.originalText ?? e.text;
+      if (labels.has(e.id)) item.label = labels.get(e.id);
+      if (e.type === 'frame' && e.name) item.label = e.name;
+      if (e.startBinding?.elementId) item.start = { id: e.startBinding.elementId };
+      if (e.endBinding?.elementId) item.end = { id: e.endBinding.elementId };
+      if (e.strokeColor && e.strokeColor !== '#1e1e1e') item.strokeColor = e.strokeColor;
+      if (e.backgroundColor && e.backgroundColor !== 'transparent') item.backgroundColor = e.backgroundColor;
+      if (e.link) item.link = e.link;
+      return item;
+    });
+}

@@ -99,7 +99,7 @@ function elementsParam(value: unknown, existing: readonly any[] = []): any[] | u
 }
 
 /** Wraps an RPC so database errors become ApiErrors */
-function caller(rpc: Rpc, key: string) {
+export function caller(rpc: Rpc, key: string) {
   return async (fn: string, args: Record<string, unknown> = {}) => {
     const { data, error } = await rpc(fn, { p_key: key, ...args });
     if (error) throw toApiError(error);
@@ -112,7 +112,7 @@ export interface ApiContext {
   appOrigin: string;
 }
 
-const withUrl = (board: any, ctx: ApiContext) => (board?.id ? { ...board, url: `${ctx.appOrigin}/b/${board.id}` } : board);
+export const withUrl = (board: any, ctx: ApiContext) => (board?.id ? { ...board, url: `${ctx.appOrigin}/b/${board.id}` } : board);
 
 const API_INDEX = {
   name: 'heeey.click API',
