@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
-import { MoreVertical, Copy, Trash2, Edit3, ArrowUpRight, Palette } from 'lucide-react';
+import { MoreVertical, Copy, Trash2, Edit3 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { formatDateRelative } from '../lib/utils';
+import { useDismiss } from '../hooks/useDismiss';
+import { useTheme } from '../hooks/useTheme';
+import { BoardThumbnail } from './BoardThumbnail';
 
 interface BoardCardProps {
   board: Board;
@@ -11,6 +14,9 @@ interface BoardCardProps {
   onDelete: (id: string) => void;
 }
 
+const menuItemClass =
+  'w-full text-left px-3 py-2 text-sm flex items-center gap-2 focus:outline-none';
+
 export function BoardCard({
   board,
   onOpen,
@@ -18,11 +24,12 @@ export function BoardCard({
   onDuplicate,
   onDelete,
 }: BoardCardProps) {
+  const { isDark } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [title, setTitle] = useState(board.title);
-  const menuRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useDismiss<HTMLDivElement>(showMenu, () => setShowMenu(false));
 
   useEffect(() => {
     setTitle(board.title);
@@ -34,16 +41,6 @@ export function BoardCard({
       inputRef.current?.select();
     }
   }, [isRenaming]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setShowMenu(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   function handleRenameSubmit() {
     setIsRenaming(false);
@@ -63,108 +60,107 @@ export function BoardCard({
     }
   }
 
-  const elementsCount = Array.isArray(board.elements) ? board.elements.filter((el: any) => !el.isDeleted).length : 0;
+  const displayTitle = board.title || 'Quadro sem título';
 
   return (
-    <div className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:border-violet-300 dark:hover:border-violet-700/50 transition-all duration-200 flex flex-col justify-between">
-      {/* Visual Canvas Thumbnail / Header */}
-      <div 
-        onClick={() => onOpen(board.id)}
-        className="cursor-pointer h-32 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 flex flex-col items-center justify-center p-3 relative overflow-hidden group-hover:bg-violet-50/30 transition-colors"
+    <article className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 shadow-sm hover:shadow-lg hover:border-brand-300 dark:hover:border-brand-700/50 focus-within:border-brand-400 transition-all duration-200 flex flex-col">
+      {/* Canvas preview */}
+      <div
+        aria-hidden="true"
+        className="h-36 w-full rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 overflow-hidden group-hover:bg-brand-50/40 dark:group-hover:bg-slate-800 transition-colors"
       >
-        <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-7 h-7 rounded-lg bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center text-slate-600 dark:text-slate-300 hover:text-violet-600">
-            <ArrowUpRight className="w-4 h-4" />
-          </div>
-        </div>
-
-        <Palette className="w-8 h-8 text-slate-300 dark:text-slate-600 group-hover:text-violet-500 transition-colors mb-2" />
-        <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
-          {elementsCount === 0
-            ? 'Quadro vazio'
-            : `${elementsCount} ${elementsCount === 1 ? 'elemento' : 'elementos'}`}
-        </span>
+        <BoardThumbnail board={board} isDark={isDark} />
       </div>
 
-      {/* Info & Title */}
-      <div className="mt-3">
-        <div className="flex items-start justify-between">
-          <div className="min-w-0 flex-1 mr-2">
-            {isRenaming ? (
-              <input
-                ref={inputRef}
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onBlur={handleRenameSubmit}
-                onKeyDown={handleKeyDown}
-                className="w-full text-sm font-semibold px-2 py-0.5 rounded bg-violet-50 border border-violet-300 text-slate-900 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:outline-none"
-              />
-            ) : (
-              <h3
+      {/* Title + meta */}
+      <div className="mt-3 flex items-start justify-between gap-1">
+        <div className="min-w-0 flex-1 px-1">
+          {isRenaming ? (
+            <input
+              ref={inputRef}
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={handleRenameSubmit}
+              onKeyDown={handleKeyDown}
+              aria-label="Novo nome do quadro"
+              className="w-full text-sm font-semibold px-2 py-1 -mx-2 rounded-lg bg-brand-50 border border-brand-300 text-slate-900 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+            />
+          ) : (
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-white truncate" title={displayTitle}>
+              <button
+                type="button"
                 onClick={() => onOpen(board.id)}
-                className="text-sm font-semibold text-slate-800 dark:text-white truncate cursor-pointer hover:text-violet-600 transition"
-                title={board.title}
+                className="max-w-full truncate text-left hover:text-brand-700 dark:hover:text-brand-300 transition focus:outline-none focus-visible:after:ring-2 focus-visible:after:ring-brand-500 after:absolute after:inset-0 after:rounded-2xl after:content-['']"
               >
-                {board.title || 'Quadro sem título'}
-              </h3>
-            )}
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-              {formatDateRelative(board.updated_at || board.created_at)}
-            </p>
-          </div>
+                {displayTitle}
+              </button>
+            </h3>
+          )}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Editado {formatDateRelative(board.updated_at || board.created_at).toLowerCase()}
+          </p>
+        </div>
 
-          {/* Menu Button */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-500 transition"
-              title="Opções"
+        {/* Options menu (sits above the card-wide click target) */}
+        <div className="relative z-10" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setShowMenu((v) => !v)}
+            className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition"
+            aria-haspopup="menu"
+            aria-expanded={showMenu}
+            aria-label={`Opções de ${displayTitle}`}
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+
+          {showMenu && (
+            <div
+              role="menu"
+              className="absolute right-0 bottom-10 sm:bottom-auto sm:top-10 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-pop-in"
             >
-              <MoreVertical className="w-4 h-4" />
-            </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setShowMenu(false);
+                  setIsRenaming(true);
+                }}
+                className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
+              >
+                <Edit3 className="w-4 h-4 text-slate-500" />
+                <span>Renomear</span>
+              </button>
 
-            {showMenu && (
-              <div className="absolute right-0 bottom-8 sm:bottom-auto sm:top-8 w-36 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-1.5 z-20 animate-in fade-in zoom-in-95">
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    setIsRenaming(true);
-                  }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 flex items-center space-x-2"
-                >
-                  <Edit3 className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Renomear</span>
-                </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setShowMenu(false);
+                  onDuplicate(board);
+                }}
+                className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
+              >
+                <Copy className="w-4 h-4 text-slate-500" />
+                <span>Duplicar</span>
+              </button>
 
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    onDuplicate(board);
-                  }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 flex items-center space-x-2"
-                >
-                  <Copy className="w-3.5 h-3.5 text-slate-400" />
-                  <span>Duplicar</span>
-                </button>
+              <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 
-                <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
-
-                <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    onDelete(board.id);
-                  }}
-                  className="w-full text-left px-3 py-1.5 text-xs text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 flex items-center space-x-2"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Excluir</span>
-                </button>
-              </div>
-            )}
-          </div>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  setShowMenu(false);
+                  onDelete(board.id);
+                }}
+                className={`${menuItemClass} text-rose-700 hover:bg-rose-50 focus-visible:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:focus-visible:bg-rose-950/40`}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Excluir</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
