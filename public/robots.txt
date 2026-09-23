@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+# Boards are user content, reachable only by shared link
+Disallow: /b/
+Disallow: /api/
+
+Sitemap: https://www.heeey.click/sitemap.xml

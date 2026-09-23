@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://www.heeey.click/</loc></url>
+  <url><loc>https://www.heeey.click/docs/getting-started</loc></url>
+  <url><loc>https://www.heeey.click/docs/readme</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/whiteboard-editor</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/collaboration-realtime</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/folders-and-organization</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/version-history</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/i18n</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/libraries</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/media-and-images</loc></url>
+  <url><loc>https://www.heeey.click/docs/features/search</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/overview</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/getting-started</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/authentication</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/endpoints</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/scene-content-schema</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/pagination</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/rate-limiting</loc></url>
+  <url><loc>https://www.heeey.click/docs/api/error-handling</loc></url>
+  <url><loc>https://www.heeey.click/docs/mcp/overview</loc></url>
+  <url><loc>https://www.heeey.click/docs/mcp/getting-started</loc></url>
+  <url><loc>https://www.heeey.click/docs/mcp/tools</loc></url>
+  <url><loc>https://www.heeey.click/docs/mcp/diagram-layout</loc></url>
+  <url><loc>https://www.heeey.click/docs/mcp/auth-and-permissions</loc></url>
+  <url><loc>https://www.heeey.click/docs/llms</loc></url>
+  <url><loc>https://www.heeey.click/docs/llms-full</loc></url>
+</urlset>

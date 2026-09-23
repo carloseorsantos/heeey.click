@@ -43,3 +43,11 @@ Append-only. Newest entry at the bottom. Never delete or rewrite past entries.
 - Not verified: `signup_completed` — exige magic link real no Supabase de produção
 - Note: alguns $pageview de localhost:5176 foram para o projeto PostHog (filtrar por $host)
 - Changed live: não
+
+## 2026-09-23 — setup (passo 2: rastreabilidade + Search Console)
+- Found: https://www.heeey.click/robots.txt e /sitemap.xml devolviam o index.html (200 text/html) por causa do rewrite da SPA em vercel.json
+- Change drafted: public/robots.txt (Disallow /b/ e /api/, aponta sitemap) + public/sitemap.xml (home + 25 páginas de docs, host canônico www) + teste que impede o sitemap de divergir de DOC_ITEMS
+- Verified: dev server serve text/plain e text/xml; sitemap válido (xmllint)
+- Note: apex heeey.click → 308 → www funciona; falha só no DNS do provedor local (8.8.8.8 e 1.1.1.1 resolvem)
+- Pending (usuário): propriedade de Domínio no Search Console via TXT no Vercel DNS; enviar sitemap após deploy
+- Changed live: não
