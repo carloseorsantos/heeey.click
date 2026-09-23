@@ -290,10 +290,12 @@ export async function uploadBoardImage(
       .from('board-media')
       .upload(filePath, blobOrFile, {
         contentType: mimeType,
-        upsert: true,
+        // Each image gets its own file id, so an existing object is a retry of the same image.
+        // Upserting would need read access to the bucket, which only board owners have.
+        upsert: false,
       });
 
-    if (error) {
+    if (error && !isAlreadyUploaded(error)) {
       console.warn('Upload para storage board-media falhou (fallback dataURL ativo):', error.message);
       return null;
     }
@@ -307,6 +309,10 @@ export async function uploadBoardImage(
     console.warn('Erro ao acessar storage do Supabase (fallback dataURL ativo):', err);
     return null;
   }
+}
+
+function isAlreadyUploaded(error: { message?: string; statusCode?: string }): boolean {
+  return error.statusCode === '409' || /already exists|duplicate/i.test(error.message ?? '');
 }
 
 /**

@@ -49,8 +49,10 @@ create policy "Permitir leitura pública de imagens no board-media" on storage.o
 
 let db: PGlite;
 
-async function as(user: string | null, sql: string, params: unknown[] = []) {
-  await db.exec(`reset role; select set_config('request.jwt.claim.sub', '${user ?? ''}', false); set role ${user ? 'authenticated' : 'anon'};`);
+// `link` is the board opened by link (the x-board-id request header the app sends)
+async function as(user: string | null, sql: string, params: unknown[] = [], link: string | null = BOARD) {
+  const headers = link ? JSON.stringify({ 'x-board-id': link }) : '{}';
+  await db.exec(`reset role; select set_config('request.jwt.claim.sub', '${user ?? ''}', false); select set_config('request.headers', '${headers}', false); set role ${user ? 'authenticated' : 'anon'};`);
   try {
     return { rows: (await db.query<any>(sql, params)).rows, error: undefined as string | undefined };
   } catch (e: any) {

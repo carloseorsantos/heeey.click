@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { BOARD_ID_HEADER, supabase } from './supabase';
 import { Board } from './types';
 
 /** Everything the dashboard needs, without the heavy scene columns */
@@ -38,6 +38,7 @@ export async function fetchBoardContent(
     .from('boards')
     .select('elements,app_state,files')
     .eq('id', id)
+    .setHeader(BOARD_ID_HEADER, id)
     .single();
   if (error || !data) return null;
   return data as Pick<Board, 'elements' | 'app_state' | 'files'>;
@@ -46,7 +47,7 @@ export async function fetchBoardContent(
 /** Stores a generated preview; failures are harmless (it is regenerated later) */
 export async function saveBoardThumbnail(id: string, thumbnail: string): Promise<void> {
   try {
-    await supabase.from('boards').update({ thumbnail }).eq('id', id);
+    await supabase.from('boards').update({ thumbnail }).eq('id', id).setHeader(BOARD_ID_HEADER, id);
   } catch {
     // Ignore: thumbnails are a cache
   }
