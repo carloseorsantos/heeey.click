@@ -6,7 +6,7 @@ import {
   exportToBlob,
   exportToSvg,
 } from '@excalidraw/excalidraw';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Trash2, RotateCcw } from 'lucide-react';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -48,6 +48,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
     syncStatus,
     onlineCollaborators,
     isViewMode,
+    isTrashed,
     isOwner,
     excalidrawAPI,
     setExcalidrawAPI,
@@ -55,6 +56,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
     handlePointerUpdate,
     updateTitle,
     updateAccessLevel,
+    restoreBoard,
   } = useRealtimeBoard({ boardId });
 
   const { user, effectiveUserName, guestProfile } = useAuth();
@@ -65,6 +67,13 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+  const [restoreState, setRestoreState] = useState<'idle' | 'restoring' | 'error'>('idle');
+
+  const handleRestore = async () => {
+    setRestoreState('restoring');
+    const ok = await restoreBoard();
+    setRestoreState(ok ? 'idle' : 'error');
+  };
 
   // Export board as PNG or SVG
   const handleExport = async (format: 'png' | 'svg') => {
@@ -352,6 +361,7 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
         syncStatus={syncStatus}
         accessLevel={board.access_level}
         isViewMode={isViewMode}
+        isTrashed={isTrashed}
         onlineCollaborators={onlineCollaborators}
         onOpenShare={() => setIsShareOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
@@ -390,6 +400,37 @@ export function BoardPage({ boardId, onBackToDashboard }: BoardPageProps) {
             },
           }}
         />
+
+        {/* Trashed board banner: read-only until the owner restores it */}
+        {isTrashed && (
+          <div
+            role="status"
+            className="absolute top-4 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-30 sm:w-max sm:max-w-[calc(100%-2rem)] flex items-center gap-3 pl-3 pr-2 py-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 animate-pop-in"
+          >
+            <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0" />
+            <span className="text-sm text-slate-700 dark:text-slate-200">
+              {restoreState === 'error'
+                ? 'Não foi possível restaurar. Tente novamente.'
+                : isOwner
+                  ? 'Este quadro está na lixeira. Restaure para voltar a editar.'
+                  : 'Este quadro está na lixeira e só pode ser visualizado.'}
+            </span>
+            {isOwner && (
+              <button
+                onClick={handleRestore}
+                disabled={restoreState === 'restoring'}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold transition flex-shrink-0 disabled:opacity-60"
+              >
+                {restoreState === 'restoring' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="w-4 h-4" />
+                )}
+                <span>Restaurar</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* First-time guest visitor prompt banner */}
         {showGuestPrompt && (

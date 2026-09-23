@@ -1,27 +1,8 @@
 -- ==============================================================================
--- Schema para o Heeey (heeey.click) — Lousa Interativa com Excalidraw e Multiplayer
--- Tabela: public.boards
+-- Base: alinha bancos criados antes do endurecimento de segurança com o schema.sql/storage.sql
+-- (trigger handle_board_update, políticas de boards e do bucket board-media).
+-- Em bancos já alinhados, esta migration não muda nada.
 -- ==============================================================================
-
--- 1. Criação da tabela boards
-create table if not exists public.boards (
-  id uuid primary key default gen_random_uuid(),
-  title text not null default 'Quadro sem título',
-  owner_id uuid references auth.users(id) on delete set null,
-  elements jsonb not null default '[]'::jsonb,
-  app_state jsonb not null default '{}'::jsonb,
-  files jsonb not null default '{}'::jsonb,
-  access_level text not null default 'edit' check (access_level in ('edit', 'view')),
-  created_at timestamptz not null default timezone('utc'::text, now()),
-  updated_at timestamptz not null default timezone('utc'::text, now()),
-  -- Lixeira: preenchido quando o quadro é arquivado (soft delete)
-  deleted_at timestamptz
-);
-
--- 2. Índices de performance
-create index if not exists idx_boards_owner_id on public.boards(owner_id);
-create index if not exists idx_boards_updated_at on public.boards(updated_at desc);
-create index if not exists idx_boards_deleted_at on public.boards(deleted_at) where deleted_at is not null;
 
 -- 3. Função e trigger para atualização automática de updated_at e integridade de owner_id
 create or replace function public.handle_board_update()
@@ -50,32 +31,7 @@ begin
       raise exception 'Um quadro anônimo sem proprietário não pode ser bloqueado como somente leitura.';
     end if;
   end if;
-  -- Lixeira: apenas o proprietário move ou restaura quadros que têm dono
-  if new.deleted_at is distinct from old.deleted_at then
-    if old.owner_id is not null and (auth.uid() is null or auth.uid() != old.owner_id) then
-      raise exception 'Apenas o proprietário pode mover o quadro para a lixeira ou restaurá-lo.';
-    end if;
-    -- O horário do arquivamento vem do servidor, não do cliente
-    if new.deleted_at is not null then
-      new.deleted_at = timezone('utc'::text, now());
-    end if;
-  end if;
-  -- Quadros na lixeira ficam somente leitura até serem restaurados
-  if old.deleted_at is not null and new.deleted_at is not null and (
-    new.elements is distinct from old.elements
-    or new.app_state is distinct from old.app_state
-    or new.files is distinct from old.files
-    or new.title is distinct from old.title
-    or new.access_level is distinct from old.access_level
-  ) then
-    raise exception 'Quadro na lixeira é somente leitura. Restaure-o para editar.';
-  end if;
-  -- Mover para a lixeira ou restaurar não conta como edição
-  if (to_jsonb(new) - 'deleted_at' - 'updated_at') = (to_jsonb(old) - 'deleted_at' - 'updated_at') then
-    new.updated_at = old.updated_at;
-  else
-    new.updated_at = timezone('utc'::text, now());
-  end if;
+  new.updated_at = timezone('utc'::text, now());
   return new;
 end;
 $$;
@@ -147,14 +103,85 @@ create policy "Permitir atualização por proprietário ou em quadros editáveis
     )
   );
 
--- Exclusão definitiva: somente o proprietário autenticado.
--- Quadros anônimos só podem ir para a lixeira (deleted_at); ao entrar na conta, o criador os reivindica.
-drop policy if exists "Permitir exclusão apenas pelo proprietário" on public.boards;
-drop policy if exists "Permitir exclusão por proprietário ou quadros anônimos" on public.boards;
-create policy "Permitir exclusão apenas pelo proprietário"
-  on public.boards
-  for delete
-  using (auth.uid() is not null and auth.uid() = owner_id);
+-- Trigger antigo que só atualizava updated_at (substituído por handle_board_update)
+drop function if exists public.handle_updated_at();
 
--- 6. Habilitar Supabase Realtime para a tabela boards (opcional para tracking de DB)
-alter publication supabase_realtime add table public.boards;
+-- Realtime da tabela (ignorado se já estiver na publicação)
+do $$
+begin
+  alter publication supabase_realtime add table public.boards;
+exception when duplicate_object then
+  null;
+end;
+$$;
+
+-- ==============================================================================
+-- Storage (bucket board-media)
+-- ==============================================================================
+-- 2. Políticas de Acesso (RLS) para o bucket board-media
+
+-- Leitura pública irrestrita: qualquer pessoa visualizando ou colaborando na lousa pode carregar as imagens
+drop policy if exists "Permitir leitura pública de imagens no board-media" on storage.objects;
+create policy "Permitir leitura pública de imagens no board-media"
+  on storage.objects
+  for select
+  using (bucket_id = 'board-media');
+
+-- Upload de imagens no board-media: permitido apenas para o proprietário do quadro, quadros editáveis, ou quadros em rascunho
+drop policy if exists "Permitir upload de imagens no board-media" on storage.objects;
+create policy "Permitir upload de imagens no board-media"
+  on storage.objects
+  for insert
+  with check (
+    bucket_id = 'board-media'
+    and (
+      exists (
+        select 1 from public.boards b
+        where b.id::text = split_part(name, '/', 1)
+          and (
+            (auth.uid() is not null and b.owner_id = auth.uid())
+            or b.access_level = 'edit'
+            or (b.owner_id is null and b.access_level = 'edit')
+          )
+      )
+      or not exists (
+        select 1 from public.boards b
+        where b.id::text = split_part(name, '/', 1)
+      )
+    )
+  );
+
+-- Atualização e sobrescrita restritas: apenas em quadros editáveis ou pelo proprietário do quadro
+drop policy if exists "Permitir atualização de imagens no board-media" on storage.objects;
+create policy "Permitir atualização de imagens no board-media"
+  on storage.objects
+  for update
+  using (
+    bucket_id = 'board-media'
+    and exists (
+      select 1 from public.boards b
+      where b.id::text = split_part(name, '/', 1)
+        and (
+          (auth.uid() is not null and b.owner_id = auth.uid())
+          or b.access_level = 'edit'
+          or (b.owner_id is null and b.access_level = 'edit')
+        )
+    )
+  );
+
+-- Exclusão restrita: apenas pelo proprietário do quadro ou em quadros anônimos criados sem dono
+drop policy if exists "Permitir exclusão de imagens no board-media" on storage.objects;
+create policy "Permitir exclusão de imagens no board-media"
+  on storage.objects
+  for delete
+  using (
+    bucket_id = 'board-media'
+    and exists (
+      select 1 from public.boards b
+      where b.id::text = split_part(name, '/', 1)
+        and (
+          (auth.uid() is not null and b.owner_id = auth.uid())
+          or b.owner_id is null
+        )
+    )
+  );

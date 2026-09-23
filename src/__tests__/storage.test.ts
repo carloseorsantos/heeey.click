@@ -210,7 +210,29 @@ describe('storage', () => {
     // Without activeGuestId argument, returns true for backwards compatibility
     expect(isBoardLocallyCreated('board-guest-1')).toBe(true);
   });
+
+  it('saveLocalBoard should keep the trash state in the index and restore it when cleared', () => {
+    const board: Board = {
+      id: 'trashed-board-1',
+      title: 'Quadro na Lixeira',
+      owner_id: null,
+      elements: [],
+      app_state: {},
+      files: {},
+      access_level: 'edit',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      deleted_at: '2026-09-23T12:00:00.000Z',
+    };
+
+    saveLocalBoard(board);
+    const index = JSON.parse(localStorage.getItem('heeey_local_boards') || '[]');
+    expect(index[0].deleted_at).toBe('2026-09-23T12:00:00.000Z');
+    expect(getLocalBoards()[0].deleted_at).toBe('2026-09-23T12:00:00.000Z');
+
+    saveLocalBoard({ ...board, deleted_at: null });
+    const restoredIndex = JSON.parse(localStorage.getItem('heeey_local_boards') || '[]');
+    expect(restoredIndex[0].deleted_at).toBeUndefined();
+    expect(getLocalBoard('trashed-board-1')?.deleted_at).toBeNull();
+  });
 });
-
-
-

@@ -20,6 +20,7 @@ import { sanitizeFilesForBroadcast, computeSceneSignature, electSyncPeer } from 
 import { useAuth } from './useAuth';
 import { debounce, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
+import { setBoardTrashed } from '../lib/boardTrash';
 
 interface UseRealtimeBoardOptions {
   boardId: string;
@@ -59,7 +60,9 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   const isOwner = board?.owner_id
     ? board.owner_id === user?.id
     : (isBoardLocallyCreated(boardId) && (!creatorGuestId || creatorGuestId === guestProfile.id));
-  const canEdit = board?.access_level === 'edit' || isOwner;
+  // Trashed boards are read-only for everyone until the owner restores them
+  const isTrashed = !!board?.deleted_at;
+  const canEdit = !isTrashed && (board?.access_level === 'edit' || isOwner);
   const isViewMode = !canEdit;
 
   const isOwnerRef = useRef<boolean>(isOwner);
@@ -202,6 +205,10 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         if (error) {
           console.warn('Erro ao salvar no Supabase:', error.message);
           setSyncStatus('error');
+          // The owner moved the board to the trash while it was open here: switch to read-only
+          if (error.message.includes('lixeira')) {
+            setBoard((prev) => (prev && !prev.deleted_at ? { ...prev, deleted_at: new Date().toISOString() } : prev));
+          }
         } else if (!data || data.length === 0) {
           // If board is not in remote database yet and current user is owner, insert it
           if (isOwnerRef.current) {
@@ -517,7 +524,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           }
         }
       })
-      // Broadcast: Meta updates (title, access_level)
+      // Broadcast: Meta updates (title, access_level, trash state)
       .on('broadcast', { event: 'meta-update' }, ({ payload }: { payload: RealtimeMetaUpdate }) => {
         if (!payload || payload.senderId === effectiveUserIdRef.current) return;
 
@@ -527,6 +534,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             ...prev,
             ...(payload.title !== undefined ? { title: payload.title } : {}),
             ...(payload.accessLevel !== undefined ? { access_level: payload.accessLevel } : {}),
+            ...(payload.deletedAt !== undefined ? { deleted_at: payload.deletedAt } : {}),
             updated_at: new Date().toISOString(),
           };
           saveLocalBoard(updated);
@@ -887,6 +895,33 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     [boardId, effectiveUserId]
   );
 
+  // 11. Restore from trash (only the owner is allowed by the server)
+  const restoreBoard = useCallback(async () => {
+    if (!boardRef.current || !isOwnerRef.current) return false;
+    // 'not-found' means the board never reached Supabase, so restoring it locally is enough
+    const result = await setBoardTrashed(boardId, false);
+    if (result === 'error' || !boardRef.current) return false;
+
+    const updated: Board = { ...boardRef.current, deleted_at: null };
+    boardRef.current = updated;
+    setBoard(updated);
+    saveLocalBoard(updated);
+
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'meta-update',
+        payload: {
+          type: 'meta-update',
+          boardId,
+          deletedAt: null,
+          senderId: effectiveUserIdRef.current,
+        },
+      });
+    }
+    return true;
+  }, [boardId]);
+
   return {
     board,
     loading,
@@ -894,6 +929,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     onlineCollaborators,
     canEdit,
     isViewMode,
+    isTrashed,
     isOwner,
     excalidrawAPI,
     setExcalidrawAPI,
@@ -901,5 +937,6 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     handlePointerUpdate,
     updateTitle,
     updateAccessLevel,
+    restoreBoard,
   };
 }

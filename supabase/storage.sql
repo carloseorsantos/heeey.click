@@ -68,7 +68,7 @@ create policy "Permitir atualização de imagens no board-media"
     )
   );
 
--- Exclusão restrita: apenas pelo proprietário do quadro ou em quadros anônimos criados sem dono
+-- Exclusão restrita: apenas pelo proprietário autenticado do quadro
 drop policy if exists "Permitir exclusão de imagens no board-media" on storage.objects;
 create policy "Permitir exclusão de imagens no board-media"
   on storage.objects
@@ -78,9 +78,7 @@ create policy "Permitir exclusão de imagens no board-media"
     and exists (
       select 1 from public.boards b
       where b.id::text = split_part(name, '/', 1)
-        and (
-          (auth.uid() is not null and b.owner_id = auth.uid())
-          or b.owner_id is null
-        )
+        and auth.uid() is not null
+        and b.owner_id = auth.uid()
     )
   );

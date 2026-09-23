@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Plus,
   Search,
@@ -11,6 +11,8 @@ import {
   Sun,
   Moon,
   X,
+  Trash2,
+  ArrowLeft,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -27,6 +29,7 @@ import {
   getFlowchartTemplate,
   getWireframeTemplate,
 } from '../lib/utils';
+import { setBoardTrashed, deleteBoardPermanently } from '../lib/boardTrash';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { BoardCard } from '../components/BoardCard';
@@ -34,13 +37,14 @@ import { AuthModal } from '../components/AuthModal';
 import { NicknameModal } from '../components/NicknameModal';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
+import { Modal } from '../components/Modal';
 
 interface DashboardPageProps {
   onNavigateToBoard: (boardId: string) => void;
 }
 
 const DEFAULT_BOARD_TITLE = 'Quadro sem título';
-const UNDO_DELETE_MS = 5000;
+const TOAST_MS = 5000;
 
 const TEMPLATES = [
   {
@@ -75,10 +79,9 @@ const TEMPLATES = [
 const iconButtonClass =
   'w-10 h-10 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition';
 
-interface PendingDelete {
-  board: Board;
-  index: number;
-  timer: ReturnType<typeof setTimeout>;
+interface Toast {
+  message: string;
+  onUndo?: () => void;
 }
 
 export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
@@ -89,9 +92,11 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
-  const pendingDeleteRef = useRef<PendingDelete | null>(null);
-  pendingDeleteRef.current = pendingDelete;
+  const [view, setView] = useState<'boards' | 'trash'>('boards');
+  const [toast, setToast] = useState<Toast | null>(null);
+  const [boardToPurge, setBoardToPurge] = useState<Board | null>(null);
+  const [isPurging, setIsPurging] = useState(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load boards from Supabase and merge with local boards
   useEffect(() => {
@@ -232,67 +237,93 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     })();
   }
 
-  const commitDelete = useCallback((id: string) => {
-    deleteLocalBoard(id);
-    (async () => {
-      try {
-        const { error } = await supabase.from('boards').delete().eq('id', id);
-        if (error) {
-          console.warn('Erro ao excluir quadro do Supabase:', error.message);
-        }
-      } catch (e) {
-        console.warn('Exceção ao excluir quadro do Supabase:', e);
-      }
-    })();
-  }, []);
-
-  // Deleting is deferred so the user can undo; flush any pending delete on unmount
   useEffect(() => {
     return () => {
-      const pending = pendingDeleteRef.current;
-      if (pending) {
-        clearTimeout(pending.timer);
-        commitDelete(pending.board.id);
-      }
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     };
-  }, [commitDelete]);
+  }, []);
 
-  function handleDelete(id: string) {
-    const index = boards.findIndex((b) => b.id === id);
-    if (index === -1) return;
-
-    // Only one undo slot: finalize the previous deletion right away
-    if (pendingDelete) {
-      clearTimeout(pendingDelete.timer);
-      commitDelete(pendingDelete.board.id);
-    }
-
-    const timer = setTimeout(() => {
-      commitDelete(id);
-      setPendingDelete((current) => (current?.board.id === id ? null : current));
-    }, UNDO_DELETE_MS);
-
-    setPendingDelete({ board: boards[index], index, timer });
-    setBoards((prev) => prev.filter((b) => b.id !== id));
+  function showToast(next: Toast) {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(next);
+    toastTimerRef.current = setTimeout(() => setToast(null), TOAST_MS);
   }
 
-  function handleUndoDelete() {
-    if (!pendingDelete) return;
-    clearTimeout(pendingDelete.timer);
-    const { board, index } = pendingDelete;
-    setBoards((prev) => {
-      const next = [...prev];
-      next.splice(Math.min(index, next.length), 0, board);
-      return next;
+  function applyTrashedLocally(id: string, deletedAt: string | null) {
+    setBoards((prev) =>
+      prev.map((b) => {
+        if (b.id !== id) return b;
+        const updated = { ...b, deleted_at: deletedAt };
+        saveLocalBoard(updated);
+        return updated;
+      })
+    );
+  }
+
+  // Optimistic: 'not-found' is fine (board only exists locally), a server error rolls back
+  function setTrashed(id: string, trashed: boolean) {
+    const now = new Date().toISOString();
+    // Rolling back means going to the opposite state (undo callbacks may hold stale board data)
+    const rollback = trashed ? null : boards.find((b) => b.id === id)?.deleted_at || now;
+    applyTrashedLocally(id, trashed ? now : null);
+    setBoardTrashed(id, trashed).then((result) => {
+      if (result !== 'error') return;
+      applyTrashedLocally(id, rollback);
+      showToast({
+        message: trashed
+          ? 'Não foi possível mover o quadro para a lixeira.'
+          : 'Não foi possível restaurar o quadro.',
+      });
     });
-    setPendingDelete(null);
   }
 
-  const filteredBoards = boards.filter((b) =>
+  function handleMoveToTrash(id: string) {
+    const board = boards.find((b) => b.id === id);
+    if (!board) return;
+    setTrashed(id, true);
+    showToast({
+      message: `“${board.title || DEFAULT_BOARD_TITLE}” foi para a lixeira`,
+      onUndo: () => setTrashed(id, false),
+    });
+  }
+
+  function handleRestore(id: string) {
+    const board = boards.find((b) => b.id === id);
+    if (!board) return;
+    setTrashed(id, false);
+    showToast({
+      message: `“${board.title || DEFAULT_BOARD_TITLE}” foi restaurado`,
+      onUndo: () => setTrashed(id, true),
+    });
+  }
+
+  async function handleConfirmPurge() {
+    if (!boardToPurge) return;
+    const { id, title } = boardToPurge;
+    setIsPurging(true);
+    const ok = await deleteBoardPermanently(id);
+    setIsPurging(false);
+    setBoardToPurge(null);
+
+    if (ok) {
+      deleteLocalBoard(id);
+      setBoards((prev) => prev.filter((b) => b.id !== id));
+      showToast({ message: `“${title || DEFAULT_BOARD_TITLE}” foi excluído definitivamente` });
+    } else {
+      showToast({ message: 'Não foi possível excluir o quadro. Tente novamente.' });
+    }
+  }
+
+  const activeBoards = boards.filter((b) => !b.deleted_at);
+  const trashedBoards = boards.filter((b) => !!b.deleted_at);
+  const isTrashView = view === 'trash';
+  const visibleBoards = isTrashView ? trashedBoards : activeBoards;
+
+  const filteredBoards = visibleBoards.filter((b) =>
     (b.title || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
-  // Keep the list layout while an undo is pending so the page does not jump to the hero
-  const isFirstRun = !loading && boards.length === 0 && !pendingDelete;
+  // Trashed boards still count, so trashing the last board does not jump back to the hero
+  const isFirstRun = !loading && boards.length === 0;
 
   const templatesSection = (
     <section aria-labelledby="templates-heading">
@@ -410,41 +441,78 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
         ) : (
           <section aria-labelledby="boards-heading" className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <h1
-                id="boards-heading"
-                className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"
-              >
-                <span>Meus quadros</span>
-                {!loading && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                    {boards.length}
-                  </span>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {isTrashView && (
+                  <button
+                    onClick={() => setView('boards')}
+                    className="w-9 h-9 -ml-2 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition flex-shrink-0"
+                    aria-label="Voltar para meus quadros"
+                    title="Voltar para meus quadros"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
                 )}
-              </h1>
+                <h1
+                  id="boards-heading"
+                  className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap"
+                >
+                  <span>{isTrashView ? 'Lixeira' : 'Meus quadros'}</span>
+                  {!loading && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+                      {visibleBoards.length}
+                    </span>
+                  )}
+                </h1>
+              </div>
 
-              <div className="flex items-center gap-2">
-                <div className="relative flex-1 sm:w-64 sm:flex-none">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="relative flex-1 min-w-0 sm:w-64 sm:flex-initial">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none" />
                   <input
                     type="search"
-                    placeholder="Buscar quadros"
-                    aria-label="Buscar quadros por título"
+                    placeholder={isTrashView ? 'Buscar na lixeira' : 'Buscar quadros'}
+                    aria-label={isTrashView ? 'Buscar na lixeira por título' : 'Buscar quadros por título'}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full h-10 pl-9 pr-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
                   />
                 </div>
-                <button
-                  onClick={() => handleCreateBoard()}
-                  className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition flex-shrink-0"
-                >
-                  <Plus className="w-4 h-4 stroke-[2.5]" />
-                  <span>Novo quadro</span>
-                </button>
+                {!isTrashView && trashedBoards.length > 0 && (
+                  <button
+                    onClick={() => {
+                      setView('trash');
+                      setSearchQuery('');
+                    }}
+                    className={`${iconButtonClass} relative flex-shrink-0`}
+                    aria-label={`Abrir lixeira (${trashedBoards.length})`}
+                    title="Lixeira"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-slate-700 text-white dark:bg-slate-200 dark:text-slate-900 text-[11px] font-bold flex items-center justify-center">
+                      {trashedBoards.length}
+                    </span>
+                  </button>
+                )}
+                {!isTrashView && (
+                  <button
+                    onClick={() => handleCreateBoard()}
+                    className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition flex-shrink-0"
+                  >
+                    <Plus className="w-4 h-4 stroke-[2.5]" />
+                    <span>Novo quadro</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {!searchQuery && templatesSection}
+            {isTrashView ? (
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Quadros na lixeira ficam somente leitura. Restaure um quadro para voltar a editá-lo.
+                {!isAuthenticated && ' Entre na sua conta para excluir quadros definitivamente.'}
+              </p>
+            ) : (
+              !searchQuery && templatesSection
+            )}
 
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" aria-busy="true">
@@ -461,7 +529,16 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                     onOpen={onNavigateToBoard}
                     onRename={handleRename}
                     onDuplicate={handleDuplicate}
-                    onDelete={handleDelete}
+                    onDelete={handleMoveToTrash}
+                    trash={
+                      isTrashView
+                        ? {
+                            onRestore: handleRestore,
+                            onDeletePermanently:
+                              user?.id && b.owner_id === user.id ? setBoardToPurge : undefined,
+                          }
+                        : undefined
+                    }
                   />
                 ))}
               </div>
@@ -482,27 +559,74 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                   <span>Limpar busca</span>
                 </button>
               </div>
+            ) : isTrashView ? (
+              <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto mb-4">
+                  <Trash2 className="w-7 h-7" />
+                </div>
+                <h2 className="text-base font-bold text-slate-800 dark:text-white">A lixeira está vazia</h2>
+                <button
+                  onClick={() => setView('boards')}
+                  className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 text-sm font-semibold transition"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Voltar para meus quadros</span>
+                </button>
+              </div>
             ) : null}
           </section>
         )}
       </main>
 
-      {/* Undo toast */}
+      {/* Toast (with optional undo) */}
       <div aria-live="polite" className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-sm">
-        {pendingDelete && (
-          <div className="flex items-center justify-between gap-3 pl-4 pr-2 py-2 bg-slate-900 text-white rounded-xl shadow-2xl animate-pop-in dark:bg-slate-800 dark:border dark:border-slate-700">
-            <span className="text-sm truncate">
-              “{pendingDelete.board.title || DEFAULT_BOARD_TITLE}” foi excluído
-            </span>
-            <button
-              onClick={handleUndoDelete}
-              className="px-3 py-2 rounded-lg text-sm font-semibold text-brand-300 hover:bg-white/10 transition flex-shrink-0"
-            >
-              Desfazer
-            </button>
+        {toast && (
+          <div className="flex items-center justify-between gap-3 pl-4 pr-2 py-2 min-h-[3.25rem] bg-slate-900 text-white rounded-xl shadow-2xl animate-pop-in dark:bg-slate-800 dark:border dark:border-slate-700">
+            <span className="text-sm truncate">{toast.message}</span>
+            {toast.onUndo && (
+              <button
+                onClick={() => {
+                  toast.onUndo?.();
+                  setToast(null);
+                }}
+                className="px-3 py-2 rounded-lg text-sm font-semibold text-brand-300 hover:bg-white/10 transition flex-shrink-0"
+              >
+                Desfazer
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      <Modal
+        isOpen={!!boardToPurge}
+        onClose={() => !isPurging && setBoardToPurge(null)}
+        title="Excluir definitivamente?"
+        description={`“${boardToPurge?.title || DEFAULT_BOARD_TITLE}” e as imagens dele serão apagados para sempre. Essa ação não pode ser desfeita.`}
+        icon={
+          <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
+            <Trash2 className="w-5 h-5" />
+          </div>
+        }
+        size="sm"
+      >
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={() => setBoardToPurge(null)}
+            disabled={isPurging}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleConfirmPurge}
+            disabled={isPurging}
+            className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition disabled:opacity-60"
+          >
+            {isPurging ? 'Excluindo…' : 'Excluir definitivamente'}
+          </button>
+        </div>
+      </Modal>
 
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
       <NicknameModal isOpen={isNicknameOpen} onClose={() => setIsNicknameOpen(false)} />

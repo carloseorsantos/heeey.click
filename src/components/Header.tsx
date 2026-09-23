@@ -30,6 +30,7 @@ interface HeaderProps {
   syncStatus: SyncStatus;
   accessLevel: AccessLevel;
   isViewMode: boolean;
+  isTrashed?: boolean;
   onlineCollaborators: CollaboratorUser[];
   onOpenShare: () => void;
   onOpenAuth: () => void;
@@ -92,6 +93,7 @@ export function Header({
   onUpdateTitle,
   syncStatus,
   isViewMode,
+  isTrashed = false,
   onlineCollaborators,
   onOpenShare,
   onOpenAuth,
@@ -208,7 +210,11 @@ export function Header({
           {isViewMode ? (
             <span
               className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
-              title="O dono do quadro deixou o link apenas para visualização"
+              title={
+                isTrashed
+                  ? 'O quadro está na lixeira e não pode ser editado'
+                  : 'O dono do quadro deixou o link apenas para visualização'
+              }
             >
               <Eye className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Só visualização</span>
