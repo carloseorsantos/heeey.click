@@ -4,6 +4,7 @@ import confetti from 'canvas-confetti';
 import { AccessLevel } from '../lib/types';
 import { cn } from '../lib/utils';
 import { Modal } from './Modal';
+import { useI18n, type MessageKey } from '../i18n';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -19,12 +20,12 @@ let hasCelebratedCopy = false;
 
 const ACCESS_OPTIONS: {
   level: AccessLevel;
-  label: string;
-  description: string;
+  label: MessageKey;
+  description: MessageKey;
   Icon: typeof Globe;
 }[] = [
-  { level: 'edit', label: 'Pode editar', description: 'Qualquer pessoa com o link desenha junto', Icon: Globe },
-  { level: 'view', label: 'Só visualizar', description: 'Quem abrir o link apenas vê o quadro', Icon: Lock },
+  { level: 'edit', label: 'share.canEdit', description: 'share.canEditDescription', Icon: Globe },
+  { level: 'view', label: 'share.viewOnly', description: 'share.viewOnlyDescription', Icon: Lock },
 ];
 
 export function ShareModal({
@@ -34,6 +35,7 @@ export function ShareModal({
   isOwner,
   onUpdateAccessLevel,
 }: ShareModalProps) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const [updating, setUpdating] = useState(false);
 
@@ -94,8 +96,8 @@ export function ShareModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Compartilhar quadro"
-      description="Quem tiver o link entra na hora, sem criar conta."
+      title={t('share.title')}
+      description={t('share.description')}
       icon={
         <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
           <Users className="w-5 h-5" />
@@ -105,7 +107,7 @@ export function ShareModal({
       {/* Link input + Copy */}
       <div className="space-y-2 mb-6">
         <label htmlFor="share-url" className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
-          Link do quadro
+          {t('share.link')}
         </label>
         <div className="flex items-center gap-2">
           <input
@@ -124,7 +126,7 @@ export function ShareModal({
             )}
           >
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            <span aria-live="polite">{copied ? 'Copiado!' : 'Copiar'}</span>
+            <span aria-live="polite">{copied ? t('share.copied') : t('common.copy')}</span>
           </button>
         </div>
       </div>
@@ -133,11 +135,11 @@ export function ShareModal({
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
           <span id="share-permission-label" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-            Quem tem o link
+            {t('share.whoHasLink')}
           </span>
           {!isOwner && (
             <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full dark:bg-slate-800 dark:text-slate-300">
-              Só quem criou pode alterar
+              {t('share.onlyOwner')}
             </span>
           )}
         </div>
@@ -172,8 +174,8 @@ export function ShareModal({
                   />
                   {isSelected && <Check className="w-4 h-4 text-brand-600 dark:text-brand-400" />}
                 </div>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{label}</p>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">{description}</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{t(label)}</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 leading-snug">{t(description)}</p>
               </button>
             );
           })}
@@ -181,7 +183,7 @@ export function ShareModal({
       </div>
 
       <p className="mt-5 text-xs text-slate-500 dark:text-slate-400">
-        Tudo é salvo automaticamente e aparece em tempo real para quem está no quadro.
+        {t('share.autosave')}
       </p>
     </Modal>
   );

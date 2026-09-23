@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { getLocale, t, translate, type Locale } from '../i18n';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -41,14 +42,22 @@ export function getRandomCollaboratorColor(seed?: string): { background: string;
   return COLLABORATOR_PALETTE[Math.floor(Math.random() * COLLABORATOR_PALETTE.length)];
 }
 
-const ANIMAL_NAMES = [
-  'Gavião', 'Raposa', 'Golfinho', 'Panda', 'Lobo',
-  'Águia', 'Leão', 'Coruja', 'Tigre', 'Lontra',
-  'Koala', 'Falcão', 'Gato', 'Urso', 'Castor'
-];
+const ANIMAL_NAMES: Record<Locale, string[]> = {
+  'pt-BR': [
+    'Gavião', 'Raposa', 'Golfinho', 'Panda', 'Lobo',
+    'Águia', 'Leão', 'Coruja', 'Tigre', 'Lontra',
+    'Koala', 'Falcão', 'Gato', 'Urso', 'Castor',
+  ],
+  en: [
+    'Hawk', 'Fox', 'Dolphin', 'Panda', 'Wolf',
+    'Eagle', 'Lion', 'Owl', 'Tiger', 'Otter',
+    'Koala', 'Falcon', 'Cat', 'Bear', 'Beaver',
+  ],
+};
 
-export function generateGuestName(): string {
-  const animal = ANIMAL_NAMES[Math.floor(Math.random() * ANIMAL_NAMES.length)];
+export function generateGuestName(locale: Locale = getLocale()): string {
+  const names = ANIMAL_NAMES[locale];
+  const animal = names[Math.floor(Math.random() * names.length)];
   const num = Math.floor(10 + Math.random() * 90);
   return `${animal} #${num}`;
 }
@@ -65,34 +74,30 @@ export function getInitials(name: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export function formatDateRelative(dateStr: string | Date): string {
+/** Relative time in the given locale ("há 5 minutos" / "5 minutes ago"), dates after a week */
+export function formatDateRelative(dateStr: string | Date, locale: Locale = getLocale()): string {
   try {
     const date = new Date(dateStr);
     const now = new Date();
     const diffSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (Number.isNaN(diffSeconds)) return translate(locale, 'dates.recently');
 
-    if (diffSeconds < 60) {
-      return 'Agora mesmo';
-    }
+    if (diffSeconds < 60) return translate(locale, 'dates.justNow');
+    const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
     const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) {
-      return `há ${diffMinutes} ${diffMinutes === 1 ? 'minuto' : 'minutos'}`;
-    }
+    if (diffMinutes < 60) return relative.format(-diffMinutes, 'minute');
     const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) {
-      return `há ${diffHours} ${diffHours === 1 ? 'hora' : 'horas'}`;
-    }
+    if (diffHours < 24) return relative.format(-diffHours, 'hour');
     const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) {
-      return `há ${diffDays} ${diffDays === 1 ? 'dia' : 'dias'}`;
-    }
-    return date.toLocaleDateString('pt-BR', {
+    if (diffDays < 7) return relative.format(-diffDays, 'day');
+
+    return date.toLocaleDateString(locale, {
       day: '2-digit',
       month: 'short',
       year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
     });
   } catch {
-    return 'Recentemente';
+    return translate(locale, 'dates.recently');
   }
 }
 
@@ -229,7 +234,7 @@ function createTextElement(x: number, y: number, text: string, custom: Record<st
 
 export function getBrainstormingTemplate(): any[] {
   return [
-    createTextElement(80, 50, '💡 Sessão de Brainstorming & Ideias', {
+    createTextElement(80, 50, t('templates.brainstorming.title'), {
       fontSize: 28,
       strokeColor: '#6366f1',
     }),
@@ -240,7 +245,7 @@ export function getBrainstormingTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(95, 150, '🎯 Objetivo:\nCriar lousa colaborativa\nultrarrápida e sem fricção.', {
+    createTextElement(95, 150, t('templates.brainstorming.goal'), {
       fontSize: 16,
       strokeColor: '#713f12',
     }),
@@ -251,7 +256,7 @@ export function getBrainstormingTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(335, 150, '✨ Features:\n- Cursors ao vivo\n- Sem login obrigatório\n- Modo somente leitura', {
+    createTextElement(335, 150, t('templates.brainstorming.features'), {
       fontSize: 16,
       strokeColor: '#14532d',
     }),
@@ -262,7 +267,7 @@ export function getBrainstormingTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(575, 150, '🚀 Próximos Passos:\n- Compartilhar com equipe\n- Testar multiplayer\n- Salvar na nuvem', {
+    createTextElement(575, 150, t('templates.brainstorming.nextSteps'), {
       fontSize: 16,
       strokeColor: '#581c87',
     }),
@@ -271,7 +276,7 @@ export function getBrainstormingTemplate(): any[] {
 
 export function getFlowchartTemplate(): any[] {
   return [
-    createTextElement(80, 50, '🔄 Diagrama de Fluxo', {
+    createTextElement(80, 50, t('templates.flowchart.title'), {
       fontSize: 28,
       strokeColor: '#059669',
     }),
@@ -282,7 +287,7 @@ export function getFlowchartTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(115, 162, '1. Início', { fontSize: 18, strokeColor: '#065f46' }),
+    createTextElement(115, 162, t('templates.flowchart.start'), { fontSize: 18, strokeColor: '#065f46' }),
 
     // Arrow 1 -> 2
     createBaseElement('arrow', 245, 175, 80, 0, {
@@ -298,7 +303,7 @@ export function getFlowchartTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(355, 162, '2. Execução', { fontSize: 18, strokeColor: '#312e81' }),
+    createTextElement(355, 162, t('templates.flowchart.run'), { fontSize: 18, strokeColor: '#312e81' }),
 
     // Arrow 2 -> 3
     createBaseElement('arrow', 505, 175, 80, 0, {
@@ -314,13 +319,13 @@ export function getFlowchartTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(625, 162, '3. Conclusão', { fontSize: 18, strokeColor: '#78350f' }),
+    createTextElement(625, 162, t('templates.flowchart.done'), { fontSize: 18, strokeColor: '#78350f' }),
   ];
 }
 
 export function getWireframeTemplate(): any[] {
   return [
-    createTextElement(80, 40, '📱 Wireframe de Interface', {
+    createTextElement(80, 40, t('templates.wireframe.title'), {
       fontSize: 28,
       strokeColor: '#4338ca',
     }),
@@ -338,7 +343,7 @@ export function getWireframeTemplate(): any[] {
     }),
     createTextElement(105, 115, 'Heeey App', { fontSize: 18, strokeColor: '#7c3aed' }),
     // Nav Items
-    createTextElement(500, 117, 'Início      Projetos      Configurações', { fontSize: 14, strokeColor: '#64748b' }),
+    createTextElement(500, 117, t('templates.wireframe.nav'), { fontSize: 14, strokeColor: '#64748b' }),
     // Hero Card
     createBaseElement('rectangle', 120, 180, 600, 160, {
       backgroundColor: '#ffffff',
@@ -346,15 +351,15 @@ export function getWireframeTemplate(): any[] {
       strokeWidth: 1,
       roundness: { type: 3 },
     }),
-    createTextElement(150, 210, 'Título de Destaque da Seção', { fontSize: 22, strokeColor: '#0f172a' }),
-    createTextElement(150, 245, 'Subtítulo descritivo com informações adicionais sobre o produto.', { fontSize: 14, strokeColor: '#64748b' }),
+    createTextElement(150, 210, t('templates.wireframe.heading'), { fontSize: 22, strokeColor: '#0f172a' }),
+    createTextElement(150, 245, t('templates.wireframe.subheading'), { fontSize: 14, strokeColor: '#64748b' }),
     // CTA Button
     createBaseElement('rectangle', 150, 280, 140, 40, {
       backgroundColor: '#7c3aed',
       strokeColor: '#6d28d9',
       roundness: { type: 3 },
     }),
-    createTextElement(185, 290, 'Começar', { fontSize: 14, strokeColor: '#ffffff' }),
+    createTextElement(185, 290, t('templates.wireframe.cta'), { fontSize: 14, strokeColor: '#ffffff' }),
   ];
 }
 

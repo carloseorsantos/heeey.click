@@ -17,6 +17,7 @@ import {
   Moon,
   History,
   Search,
+  Languages,
 } from 'lucide-react';
 import { CollaboratorUser, SyncStatus, AccessLevel } from '../lib/types';
 import { cn } from '../lib/utils';
@@ -24,6 +25,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { useDismiss } from '../hooks/useDismiss';
 import { HeeeyLogo } from './Logo';
+import { useI18n } from '../i18n';
 import { Avatar } from './Avatar';
 
 interface HeaderProps {
@@ -50,21 +52,22 @@ const menuItemClass =
   'w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 focus:outline-none dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800 flex items-center gap-2.5';
 
 function SyncIndicator({ status }: { status: SyncStatus }) {
+  const { t } = useI18n();
   switch (status) {
     case 'saving':
       return (
         <span className="flex items-center gap-1.5 text-xs text-brand-700 dark:text-brand-300" role="status">
           <Loader2 className="w-4 h-4 animate-spin" />
-          <span className="hidden md:inline">Salvando…</span>
-          <span className="sr-only md:hidden">Salvando</span>
+          <span className="hidden md:inline">{t('sync.saving')}</span>
+          <span className="sr-only md:hidden">{t('sync.savingShort')}</span>
         </span>
       );
     case 'saved':
       return (
-        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400" role="status" title="Todas as alterações foram salvas">
+        <span className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400" role="status" title={t('sync.savedTitle')}>
           <CloudCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-          <span className="hidden md:inline">Salvo</span>
-          <span className="sr-only md:hidden">Salvo</span>
+          <span className="hidden md:inline">{t('sync.saved')}</span>
+          <span className="sr-only md:hidden">{t('sync.saved')}</span>
         </span>
       );
     case 'offline':
@@ -72,10 +75,10 @@ function SyncIndicator({ status }: { status: SyncStatus }) {
         <span
           className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
           role="status"
-          title="Você está offline. As alterações estão seguras no navegador."
+          title={t('sync.offlineTitle')}
         >
           <CloudOff className="w-3.5 h-3.5" />
-          <span>Offline</span>
+          <span>{t('sync.offline')}</span>
         </span>
       );
     case 'error':
@@ -83,11 +86,11 @@ function SyncIndicator({ status }: { status: SyncStatus }) {
         <span
           className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900"
           role="alert"
-          title="Erro ao salvar alterações no servidor"
+          title={t('sync.errorTitle')}
         >
           <AlertCircle className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Erro ao salvar</span>
-          <span className="sm:hidden">Erro</span>
+          <span className="hidden sm:inline">{t('sync.error')}</span>
+          <span className="sm:hidden">{t('sync.errorShort')}</span>
         </span>
       );
   }
@@ -110,6 +113,7 @@ export function Header({
 }: HeaderProps) {
   const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { t, locale, setLocale } = useI18n();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [currentTitle, setCurrentTitle] = useState(title);
   const [showMenu, setShowMenu] = useState(false);
@@ -150,7 +154,7 @@ export function Header({
     action();
   }
 
-  const displayTitle = title || 'Quadro sem título';
+  const displayTitle = title || t('board.untitled');
   // The current user is already represented by the profile button on the far right
   const otherCollaborators = onlineCollaborators.filter((c) => !c.isCurrentUser);
   const visibleCollaborators = otherCollaborators.slice(0, MAX_VISIBLE_AVATARS);
@@ -163,8 +167,8 @@ export function Header({
         <button
           onClick={onBackToDashboard}
           className="w-10 h-10 flex items-center justify-center flex-shrink-0 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition"
-          aria-label="Voltar aos meus quadros"
-          title="Voltar aos meus quadros"
+          aria-label={t('header.back')}
+          title={t('header.back')}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
@@ -172,7 +176,7 @@ export function Header({
         <button
           onClick={onBackToDashboard}
           className="hidden lg:flex items-center gap-1.5 rounded-lg pr-1 group flex-shrink-0"
-          aria-label="heeey.click — ir para meus quadros"
+          aria-label={t('header.home')}
         >
           <HeeeyLogo className="w-7 h-7 shadow-md shadow-brand-500/25 group-hover:scale-105 transition-transform" />
           <span className="font-bold text-slate-800 text-sm tracking-tight dark:text-white">
@@ -191,7 +195,7 @@ export function Header({
               onChange={(e) => setCurrentTitle(e.target.value)}
               onBlur={handleTitleSubmit}
               onKeyDown={handleKeyDown}
-              aria-label="Título do quadro"
+              aria-label={t('header.boardTitle')}
               className="px-2 py-1.5 text-sm font-semibold bg-brand-50 border border-brand-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white w-full"
             />
           ) : isViewMode ? (
@@ -203,11 +207,11 @@ export function Header({
               <button
                 onClick={() => setIsEditingTitle(true)}
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg max-w-full hover:bg-slate-100 group dark:hover:bg-slate-800 transition"
-                title="Clique para renomear"
+                title={t('header.clickToRename')}
               >
                 <span className="text-sm font-semibold text-slate-800 truncate dark:text-slate-100">{displayTitle}</span>
                 <Edit2 className="w-3.5 h-3.5 text-slate-500 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity flex-shrink-0" />
-                <span className="sr-only">(renomear)</span>
+                <span className="sr-only">{t('header.renameHint')}</span>
               </button>
             </h1>
           )}
@@ -219,13 +223,13 @@ export function Header({
               className="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800"
               title={
                 isTrashed
-                  ? 'O quadro está na lixeira e não pode ser editado'
-                  : 'O dono do quadro deixou o link apenas para visualização'
+                  ? t('header.trashedReadOnly')
+                  : t('header.viewOnlyTitle')
               }
             >
               <Eye className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Só visualização</span>
-              <span className="sr-only sm:hidden">Só visualização</span>
+              <span className="hidden sm:inline">{t('header.viewOnly')}</span>
+              <span className="sr-only sm:hidden">{t('header.viewOnly')}</span>
             </span>
           ) : (
             <SyncIndicator status={syncStatus} />
@@ -235,7 +239,7 @@ export function Header({
 
       {/* Right: collaborators + share + profile menu */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        <div className="hidden sm:flex items-center -space-x-2 px-1" aria-label={`${otherCollaborators.length} outras pessoas online`}>
+        <div className="hidden sm:flex items-center -space-x-2 px-1" aria-label={t('header.othersOnline', { count: otherCollaborators.length })}>
           {visibleCollaborators.map((collab) => (
             <Avatar
               key={collab.id}
@@ -248,7 +252,7 @@ export function Header({
           {hiddenCount > 0 && (
             <span
               className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-700 dark:border-slate-900 dark:bg-slate-700 dark:text-slate-200"
-              title={`Mais ${hiddenCount} pessoas online`}
+              title={t('header.moreOnline', { count: hiddenCount })}
             >
               +{hiddenCount}
             </span>
@@ -259,7 +263,7 @@ export function Header({
         {otherCollaborators.length > 0 && (
           <span
             className="sm:hidden flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold dark:bg-emerald-950/40 dark:text-emerald-300"
-            title={`Mais ${otherCollaborators.length} pessoas online`}
+            title={t('header.moreOnline', { count: otherCollaborators.length })}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             +{otherCollaborators.length}
@@ -270,8 +274,8 @@ export function Header({
           <button
             onClick={onOpenSearch}
             className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition"
-            aria-label="Ir para outro quadro"
-            title="Ir para outro quadro"
+            aria-label={t('header.goToBoard')}
+            title={t('header.goToBoard')}
           >
             <Search className="w-4 h-4" />
           </button>
@@ -280,10 +284,10 @@ export function Header({
         <button
           onClick={onOpenShare}
           className="h-10 flex items-center gap-1.5 px-3 sm:px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-semibold shadow-sm shadow-brand-600/30 transition"
-          aria-label="Compartilhar"
+          aria-label={t('header.share')}
         >
           <Share2 className="w-4 h-4" />
-          <span className="hidden sm:inline">Compartilhar</span>
+          <span className="hidden sm:inline">{t('header.share')}</span>
         </button>
 
         {/* Profile / options menu */}
@@ -293,8 +297,8 @@ export function Header({
             className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
             aria-haspopup="menu"
             aria-expanded={showMenu}
-            aria-label="Perfil e opções"
-            title="Perfil e opções"
+            aria-label={t('header.profileMenu')}
+            title={t('header.profileMenu')}
           >
             <Avatar
               name={effectiveUserName}
@@ -313,7 +317,7 @@ export function Header({
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{effectiveUserName}</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {isAuthenticated ? user?.email : 'Convidado'}
+                    {isAuthenticated ? user?.email : t('header.guest')}
                   </p>
                 </div>
               </div>
@@ -321,30 +325,39 @@ export function Header({
               <div className="py-1">
                 <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(onOpenNickname)}>
                   <UserPen className="w-4 h-4 text-slate-500" />
-                  <span>Editar nome e cor</span>
+                  <span>{t('header.editProfile')}</span>
                 </button>
                 {onOpenHistory && (
                   <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(onOpenHistory)}>
                     <History className="w-4 h-4 text-slate-500" />
-                    <span>Histórico de versões</span>
+                    <span>{t('header.history')}</span>
                   </button>
                 )}
                 <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(toggleTheme)}>
                   {isDark ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-500" />}
-                  <span>{isDark ? 'Tema claro' : 'Tema escuro'}</span>
+                  <span>{isDark ? t('header.lightTheme') : t('header.darkTheme')}</span>
+                </button>
+                <button
+                  role="menuitem"
+                  lang={locale === 'pt-BR' ? 'en' : 'pt-BR'}
+                  className={menuItemClass}
+                  onClick={() => runMenuAction(() => setLocale(locale === 'pt-BR' ? 'en' : 'pt-BR'))}
+                >
+                  <Languages className="w-4 h-4 text-slate-500" />
+                  <span>{t('language.switchTo')}</span>
                 </button>
               </div>
 
               {onExport && (
                 <div className="py-1 border-t border-slate-100 dark:border-slate-800">
-                  <p className="px-4 pt-1.5 pb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">Exportar</p>
+                  <p className="px-4 pt-1.5 pb-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{t('header.export')}</p>
                   <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(() => onExport('png'))}>
                     <Image className="w-4 h-4 text-slate-500" />
-                    <span>Imagem PNG</span>
+                    <span>{t('header.exportPng')}</span>
                   </button>
                   <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(() => onExport('svg'))}>
                     <FileCode className="w-4 h-4 text-slate-500" />
-                    <span>Vetor SVG</span>
+                    <span>{t('header.exportSvg')}</span>
                   </button>
                 </div>
               )}
@@ -357,7 +370,7 @@ export function Header({
                     onClick={() => runMenuAction(() => signOut())}
                   >
                     <LogOut className="w-4 h-4" />
-                    <span>Sair da conta</span>
+                    <span>{t('header.signOut')}</span>
                   </button>
                 ) : (
                   <button
@@ -366,7 +379,7 @@ export function Header({
                     onClick={() => runMenuAction(onOpenAuth)}
                   >
                     <LogIn className="w-4 h-4" />
-                    <span>Entrar para salvar na conta</span>
+                    <span>{t('header.signInToSave')}</span>
                   </button>
                 )}
               </div>

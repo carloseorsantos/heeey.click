@@ -7,6 +7,7 @@ import { fetchBoardSummaries } from '../lib/boardQueries';
 import { getLocalBoards, isBoardLocallyCreated } from '../lib/storage';
 import { BoardSearchHit, getSearchTerms, searchBoardsRemote, searchLoadedBoards } from '../lib/search';
 import { formatDateRelative } from '../lib/utils';
+import { useI18n } from '../i18n';
 
 interface BoardSearchModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ const RECENT_LIMIT = 8;
 /** Jump to another board by title or canvas text, from inside the editor */
 export function BoardSearchModal({ isOpen, onClose, currentBoardId, onOpenBoard }: BoardSearchModalProps) {
   const { user, guestProfile } = useAuth();
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [ownBoards, setOwnBoards] = useState<Board[]>([]);
   const [hits, setHits] = useState<BoardSearchHit[]>([]);
@@ -114,8 +116,8 @@ export function BoardSearchModal({ isOpen, onClose, currentBoardId, onOpenBoard 
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Ir para outro quadro"
-      description="Busque pelo título ou por textos dentro dos quadros."
+      title={t('search.jumpTitle')}
+      description={t('search.jumpDescription')}
       icon={
         <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
           <Search className="w-5 h-5" />
@@ -129,23 +131,23 @@ export function BoardSearchModal({ isOpen, onClose, currentBoardId, onOpenBoard 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Buscar quadros"
-          aria-label="Buscar quadros por título ou texto"
+          placeholder={t('search.placeholder')}
+          aria-label={t('search.label')}
           aria-controls="board-search-results"
           autoFocus
           className="w-full h-11 pl-9 pr-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500"
         />
         {loading && (
-          <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400" aria-label="Buscando" />
+          <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 animate-spin text-slate-400" aria-label={t('search.searching')} />
         )}
       </div>
 
       <p className="mt-4 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-        {isQueryEmpty ? 'Recentes' : 'Resultados'}
+        {isQueryEmpty ? t('search.recent') : t('search.results')}
       </p>
       {hits.length === 0 ? (
         <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400" role="status">
-          {isQueryEmpty ? 'Nenhum outro quadro ainda.' : loading ? 'Buscando…' : 'Nenhum quadro encontrado.'}
+          {isQueryEmpty ? t('search.noOtherBoards') : loading ? t('search.searching') : t('search.noResults')}
         </p>
       ) : (
         <ul id="board-search-results" ref={listRef} className="max-h-[50vh] overflow-y-auto -mx-2 space-y-0.5">
@@ -162,7 +164,7 @@ export function BoardSearchModal({ isOpen, onClose, currentBoardId, onOpenBoard 
                 <FileText className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-500" />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-slate-800 dark:text-white truncate">
-                    {board.title || 'Quadro sem título'}
+                    {board.title || t('board.untitled')}
                   </span>
                   {snippet ? (
                     <span className="block text-xs text-slate-600 dark:text-slate-300 truncate">
@@ -174,7 +176,7 @@ export function BoardSearchModal({ isOpen, onClose, currentBoardId, onOpenBoard 
                     </span>
                   ) : (
                     <span className="block text-xs text-slate-500 dark:text-slate-400">
-                      Editado {formatDateRelative(board.updated_at || board.created_at).toLowerCase()}
+                      {t('boardCard.edited', { time: formatDateRelative(board.updated_at || board.created_at) })}
                     </span>
                   )}
                 </span>

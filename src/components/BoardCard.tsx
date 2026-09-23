@@ -6,6 +6,7 @@ import { formatDateRelative } from '../lib/utils';
 import { useDismiss } from '../hooks/useDismiss';
 import { useTheme } from '../hooks/useTheme';
 import { BoardThumbnail } from './BoardThumbnail';
+import { useI18n } from '../i18n';
 
 interface BoardCardProps {
   board: Board;
@@ -41,6 +42,7 @@ export function BoardCard({
   trash,
 }: BoardCardProps) {
   const { isDark } = useTheme();
+  const { t } = useI18n();
   const [showMenu, setShowMenu] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [title, setTitle] = useState(board.title);
@@ -76,7 +78,7 @@ export function BoardCard({
     }
   }
 
-  const displayTitle = board.title || 'Quadro sem título';
+  const displayTitle = board.title || t('board.untitled');
 
   return (
     <article className="group relative bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3 shadow-sm hover:shadow-lg hover:border-brand-300 dark:hover:border-brand-700/50 focus-within:border-brand-400 transition-all duration-200 flex flex-col">
@@ -99,7 +101,7 @@ export function BoardCard({
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleRenameSubmit}
               onKeyDown={handleKeyDown}
-              aria-label="Novo nome do quadro"
+              aria-label={t('boardCard.newName')}
               className="w-full text-sm font-semibold px-2 py-1 -mx-2 rounded-lg bg-brand-50 border border-brand-300 text-slate-900 dark:bg-slate-800 dark:border-slate-600 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
           ) : (
@@ -115,8 +117,8 @@ export function BoardCard({
           )}
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {trash && board.deleted_at
-              ? `Na lixeira desde ${formatDateRelative(board.deleted_at).toLowerCase()}`
-              : `Editado ${formatDateRelative(board.updated_at || board.created_at).toLowerCase()}`}
+              ? t('boardCard.inTrashSince', { time: formatDateRelative(board.deleted_at) })
+              : t('boardCard.edited', { time: formatDateRelative(board.updated_at || board.created_at) })}
           </p>
           {snippet && (
             <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-300 line-clamp-2 break-words">
@@ -137,7 +139,7 @@ export function BoardCard({
             className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition"
             aria-haspopup="menu"
             aria-expanded={showMenu}
-            aria-label={`Opções de ${displayTitle}`}
+            aria-label={t('boardCard.options', { title: displayTitle })}
           >
             <MoreVertical className="w-4 h-4" />
           </button>
@@ -158,7 +160,7 @@ export function BoardCard({
                     className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
                   >
                     <RotateCcw className="w-4 h-4 text-slate-500" />
-                    <span>Restaurar</span>
+                    <span>{t('common.restore')}</span>
                   </button>
 
                   {trash.onDeletePermanently && (
@@ -173,7 +175,7 @@ export function BoardCard({
                         className={`${menuItemClass} text-rose-700 hover:bg-rose-50 focus-visible:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:focus-visible:bg-rose-950/40`}
                       >
                         <Trash2 className="w-4 h-4" />
-                        <span>Excluir definitivamente</span>
+                        <span>{t('boardCard.deletePermanently')}</span>
                       </button>
                     </>
                   )}
@@ -189,7 +191,7 @@ export function BoardCard({
                     className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
                   >
                     <Edit3 className="w-4 h-4 text-slate-500" />
-                    <span>Renomear</span>
+                    <span>{t('common.rename')}</span>
                   </button>
 
                   <button
@@ -201,7 +203,7 @@ export function BoardCard({
                     className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
                   >
                     <Copy className="w-4 h-4 text-slate-500" />
-                    <span>Duplicar</span>
+                    <span>{t('boardCard.duplicate')}</span>
                   </button>
 
                   {onMove && (
@@ -214,7 +216,7 @@ export function BoardCard({
                       className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
                     >
                       <FolderInput className="w-4 h-4 text-slate-500" />
-                      <span>Mover para pasta</span>
+                      <span>{t('boardCard.moveToFolder')}</span>
                     </button>
                   )}
 
@@ -229,7 +231,7 @@ export function BoardCard({
                     className={`${menuItemClass} text-rose-700 hover:bg-rose-50 focus-visible:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 dark:focus-visible:bg-rose-950/40`}
                   >
                     <Trash2 className="w-4 h-4" />
-                    <span>Mover para a lixeira</span>
+                    <span>{t('boardCard.moveToTrash')}</span>
                   </button>
                 </>
               )}

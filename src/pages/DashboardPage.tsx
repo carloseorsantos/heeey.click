@@ -16,6 +16,7 @@ import {
   FolderPlus,
   ChevronRight,
   KeyRound,
+  Languages,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -47,6 +48,7 @@ import { FolderCard } from '../components/FolderCard';
 import { FolderNameModal } from '../components/FolderNameModal';
 import { MoveToFolderModal } from '../components/MoveToFolderModal';
 import { ApiKeysModal } from '../components/ApiKeysModal';
+import { useI18n, type MessageKey } from '../i18n';
 import { useFolders } from '../hooks/useFolders';
 import { Folder, getFolderPath, moveBoardToFolder } from '../lib/folders';
 import { BoardSearchHit, searchBoardsRemote, searchLoadedBoards } from '../lib/search';
@@ -55,32 +57,41 @@ interface DashboardPageProps {
   onNavigateToBoard: (boardId: string) => void;
 }
 
-const DEFAULT_BOARD_TITLE = 'Quadro sem título';
 const TOAST_MS = 5000;
 
-const TEMPLATES = [
+interface TemplateOption {
+  title: MessageKey;
+  boardTitle: MessageKey;
+  description: MessageKey;
+  Icon: typeof Lightbulb;
+  iconClass: string;
+  hoverClass: string;
+  getElements: () => any[];
+}
+
+const TEMPLATES: TemplateOption[] = [
   {
-    title: 'Brainstorming',
-    boardTitle: 'Sessão de brainstorming',
-    description: 'Ideias e post-its',
+    title: 'dashboard.templates.brainstorming.title',
+    boardTitle: 'dashboard.templates.brainstorming.boardTitle',
+    description: 'dashboard.templates.brainstorming.description',
     Icon: Lightbulb,
     iconClass: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
     hoverClass: 'hover:border-amber-400 dark:hover:border-amber-600',
     getElements: getBrainstormingTemplate,
   },
   {
-    title: 'Fluxograma',
-    boardTitle: 'Diagrama de fluxo',
-    description: 'Processos e conexões',
+    title: 'dashboard.templates.flowchart.title',
+    boardTitle: 'dashboard.templates.flowchart.boardTitle',
+    description: 'dashboard.templates.flowchart.description',
     Icon: Workflow,
     iconClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
     hoverClass: 'hover:border-emerald-400 dark:hover:border-emerald-600',
     getElements: getFlowchartTemplate,
   },
   {
-    title: 'Wireframe',
-    boardTitle: 'Wireframe de interface',
-    description: 'Layouts e protótipos',
+    title: 'dashboard.templates.wireframe.title',
+    boardTitle: 'dashboard.templates.wireframe.boardTitle',
+    description: 'dashboard.templates.wireframe.description',
     Icon: PanelsTopLeft,
     iconClass: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400',
     hoverClass: 'hover:border-indigo-400 dark:hover:border-indigo-600',
@@ -99,6 +110,12 @@ interface Toast {
 export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
   const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { t, locale, setLocale } = useI18n();
+  const untitled = t('board.untitled');
+
+  useEffect(() => {
+    document.title = t('app.documentTitle');
+  }, [t]);
   const [boards, setBoards] = useState<Board[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -223,7 +240,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     const newId = generateId();
     const newBoard: Board = {
       id: newId,
-      title: templateTitle || DEFAULT_BOARD_TITLE,
+      title: templateTitle || untitled,
       owner_id: user?.id || null,
       elements: initialElements || [],
       app_state: {
@@ -282,7 +299,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     if (source.contentLoaded === false) {
       const content = await fetchBoardContent(source.id);
       if (!content) {
-        showToast({ message: 'Não foi possível duplicar o quadro. Tente novamente.' });
+        showToast({ message: t('dashboard.duplicateError') });
         return;
       }
       board = { ...source, ...content };
@@ -293,7 +310,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     const duplicate: Board = {
       ...boardData,
       id: newId,
-      title: `${board.title} (cópia)`,
+      title: t('dashboard.copySuffix', { title: board.title }),
       owner_id: user?.id || null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -343,8 +360,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       applyTrashedLocally(id, rollback);
       showToast({
         message: trashed
-          ? 'Não foi possível mover o quadro para a lixeira.'
-          : 'Não foi possível restaurar o quadro.',
+          ? t('dashboard.trashError')
+          : t('dashboard.restoreError'),
       });
     });
   }
@@ -354,7 +371,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     if (!board) return;
     setTrashed(id, true);
     showToast({
-      message: `“${board.title || DEFAULT_BOARD_TITLE}” foi para a lixeira`,
+      message: t('dashboard.movedToTrash', { title: board.title || untitled }),
       onUndo: () => setTrashed(id, false),
     });
   }
@@ -364,7 +381,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     if (!board) return;
     setTrashed(id, false);
     showToast({
-      message: `“${board.title || DEFAULT_BOARD_TITLE}” foi restaurado`,
+      message: t('dashboard.restored', { title: board.title || untitled }),
       onUndo: () => setTrashed(id, true),
     });
   }
@@ -380,9 +397,9 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     if (ok) {
       deleteLocalBoard(id);
       setBoards((prev) => prev.filter((b) => b.id !== id));
-      showToast({ message: `“${title || DEFAULT_BOARD_TITLE}” foi excluído definitivamente` });
+      showToast({ message: t('dashboard.deletedPermanently', { title: title || untitled }) });
     } else {
-      showToast({ message: 'Não foi possível excluir o quadro. Tente novamente.' });
+      showToast({ message: t('dashboard.deleteError') });
     }
   }
 
@@ -405,7 +422,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     setFolderToDelete(null);
 
     if (!removed) {
-      showToast({ message: 'Não foi possível excluir a pasta. Tente novamente.' });
+      showToast({ message: t('dashboard.folderDeleteError') });
       return;
     }
     // Boards inside go back to the root (the database does the same with on delete set null)
@@ -417,7 +434,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       })
     );
     if (activeFolderId && removed.has(activeFolderId)) setCurrentFolderId(folder.parent_id);
-    showToast({ message: `Pasta “${folder.name}” excluída` });
+    showToast({ message: t('dashboard.folderDeleted', { name: folder.name }) });
   }
 
   async function handleMoveBoard(folderId: string | null) {
@@ -433,7 +450,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
     }
     updateLocalBoardMeta(id, { folder_id: folderId });
     const target = folders.find((f) => f.id === folderId);
-    showToast({ message: `Movido para “${target?.name ?? 'Meus quadros'}”` });
+    showToast({ message: t('dashboard.movedTo', { name: target?.name ?? t('dashboard.myBoards') }) });
     return true;
   }
 
@@ -497,13 +514,13 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
         id="templates-heading"
         className="text-sm font-semibold text-slate-600 dark:text-slate-400 mb-3"
       >
-        {isFirstRun ? 'Ou comece com um modelo' : 'Começar com um modelo'}
+        {isFirstRun ? t('dashboard.orStartWithTemplate') : t('dashboard.startWithTemplate')}
       </h2>
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {TEMPLATES.map(({ title, boardTitle, description, Icon, iconClass, hoverClass, getElements }) => (
           <button
             key={title}
-            onClick={() => handleCreateBoard(boardTitle, getElements())}
+            onClick={() => handleCreateBoard(t(boardTitle), getElements())}
             className={`flex flex-col sm:flex-row items-center gap-2 sm:gap-3 p-3 rounded-2xl text-center sm:text-left bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm transition group ${hoverClass}`}
           >
             <span
@@ -512,8 +529,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
               <Icon className="w-5 h-5" />
             </span>
             <span className="min-w-0 max-w-full">
-              <span className="block text-xs sm:text-sm font-semibold text-slate-900 dark:text-white sm:truncate">{title}</span>
-              <span className="hidden sm:block text-xs text-slate-500 dark:text-slate-400">{description}</span>
+              <span className="block text-xs sm:text-sm font-semibold text-slate-900 dark:text-white sm:truncate">{t(title)}</span>
+              <span className="hidden sm:block text-xs text-slate-500 dark:text-slate-400">{t(description)}</span>
             </span>
           </button>
         ))}
@@ -531,7 +548,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             <p className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
               heeey<span className="text-brand-600 dark:text-brand-400">.click</span>
             </p>
-            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-0.5">Lousa colaborativa ao vivo</p>
+            <p className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 mt-0.5">{t('dashboard.tagline')}</p>
           </div>
         </div>
 
@@ -539,17 +556,27 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
           <button
             onClick={toggleTheme}
             className={iconButtonClass}
-            aria-label={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
-            title={isDark ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+            aria-label={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')}
+            title={isDark ? t('dashboard.switchToLight') : t('dashboard.switchToDark')}
           >
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4" />}
           </button>
 
           <button
+            onClick={() => setLocale(locale === 'pt-BR' ? 'en' : 'pt-BR')}
+            className={iconButtonClass}
+            aria-label={`${t('language.label')}: ${t('language.switchTo')}`}
+            title={t('language.switchTo')}
+            lang={locale === 'pt-BR' ? 'en' : 'pt-BR'}
+          >
+            <Languages className="w-4 h-4" />
+          </button>
+
+          <button
             onClick={() => setIsNicknameOpen(true)}
             className="h-10 flex items-center gap-2 pl-1 pr-1 sm:pr-3 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-            aria-label={`Editar perfil (${effectiveUserName})`}
-            title="Editar nome e cor"
+            aria-label={t('dashboard.editProfile', { name: effectiveUserName })}
+            title={t('dashboard.editNameColor')}
           >
             <Avatar name={effectiveUserName} color={guestProfile.color} className="w-8 h-8" />
             <span className="hidden sm:inline text-sm font-medium text-slate-700 dark:text-slate-200 max-w-[140px] truncate">
@@ -561,8 +588,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             <button
               onClick={() => setIsApiKeysOpen(true)}
               className={iconButtonClass}
-              aria-label="Chaves de API e integrações"
-              title="Chaves de API e integrações"
+              aria-label={t('dashboard.apiKeys')}
+              title={t('dashboard.apiKeys')}
             >
               <KeyRound className="w-4 h-4" />
             </button>
@@ -572,8 +599,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             <button
               onClick={() => signOut()}
               className={iconButtonClass}
-              aria-label="Sair da conta"
-              title="Sair da conta"
+              aria-label={t('dashboard.signOut')}
+              title={t('dashboard.signOut')}
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -583,7 +610,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
               className="h-10 flex items-center gap-1.5 px-4 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 text-sm font-semibold transition"
             >
               <LogIn className="w-4 h-4" />
-              <span>Entrar</span>
+              <span>{t('dashboard.signIn')}</span>
             </button>
           )}
         </div>
@@ -596,18 +623,17 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-indigo-700 p-6 sm:p-10 text-white shadow-xl shadow-brand-600/10 mb-8">
               <div className="relative z-10 max-w-2xl">
                 <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-                  Desenhe, crie ideias e colabore em tempo real.
+                  {t('dashboard.heroTitle')}
                 </h1>
                 <p className="text-brand-50 text-base mt-3 max-w-lg">
-                  Convide pessoas com um link, veja os cursores ao vivo e tenha tudo salvo na nuvem. Sem
-                  cadastro.
+                  {t('dashboard.heroBody')}
                 </p>
                 <button
                   onClick={() => handleCreateBoard()}
                   className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-white text-brand-700 font-bold text-sm shadow-lg hover:bg-brand-50 active:scale-95 transition"
                 >
                   <Plus className="w-5 h-5 stroke-[2.5]" />
-                  <span>Criar meu primeiro quadro</span>
+                  <span>{t('dashboard.createFirst')}</span>
                 </button>
               </div>
               <div className="absolute -right-12 -bottom-12 w-64 h-64 rounded-full bg-white/10 blur-2xl pointer-events-none" />
@@ -623,17 +649,17 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                   <button
                     onClick={() => (isTrashView ? setView('boards') : setCurrentFolderId(currentFolder?.parent_id ?? null))}
                     className="w-9 h-9 -ml-2 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition flex-shrink-0"
-                    aria-label={isTrashView ? 'Voltar para meus quadros' : 'Voltar para a pasta anterior'}
-                    title={isTrashView ? 'Voltar para meus quadros' : 'Voltar'}
+                    aria-label={isTrashView ? t('dashboard.backToBoards') : t('dashboard.backToParent')}
+                    title={isTrashView ? t('dashboard.backToBoards') : t('dashboard.back')}
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </button>
                 )}
                 <div className="min-w-0">
                   {!isTrashView && folderPath.length > 0 && (
-                    <nav aria-label="Caminho da pasta">
+                    <nav aria-label={t('dashboard.folderPath')}>
                       <ol className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 min-w-0">
-                        {[{ id: null as string | null, name: 'Meus quadros' }, ...folderPath.slice(0, -1)].map((crumb) => (
+                        {[{ id: null as string | null, name: t('dashboard.myBoards') }, ...folderPath.slice(0, -1)].map((crumb) => (
                           <li key={crumb.id ?? 'root'} className="flex items-center gap-1 min-w-0">
                             <button
                               onClick={() => setCurrentFolderId(crumb.id)}
@@ -652,7 +678,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                     className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 whitespace-nowrap min-w-0"
                   >
                     <span className="truncate">
-                      {isTrashView ? 'Lixeira' : currentFolder?.name ?? 'Meus quadros'}
+                      {isTrashView ? t('dashboard.trash') : currentFolder?.name ?? t('dashboard.myBoards')}
                     </span>
                     {!loading && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
@@ -669,8 +695,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                   <input
                     ref={searchInputRef}
                     type="search"
-                    placeholder={isTrashView ? 'Buscar na lixeira' : currentFolder ? 'Buscar em todas as pastas' : 'Buscar quadros'}
-                    aria-label={isTrashView ? 'Buscar na lixeira por título' : 'Buscar quadros por título ou texto'}
+                    placeholder={isTrashView ? t('dashboard.searchTrash') : currentFolder ? t('dashboard.searchAllFolders') : t('dashboard.searchBoards')}
+                    aria-label={isTrashView ? t('dashboard.searchTrashLabel') : t('dashboard.searchLabel')}
                     aria-keyshortcuts="/"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -684,8 +710,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                       setSearchQuery('');
                     }}
                     className={`${iconButtonClass} relative flex-shrink-0`}
-                    aria-label={`Abrir lixeira (${trashedBoards.length})`}
-                    title="Lixeira"
+                    aria-label={t('dashboard.openTrash', { count: trashedBoards.length })}
+                    title={t('dashboard.trash')}
                   >
                     <Trash2 className="w-4 h-4" />
                     <span className="absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-slate-700 text-white dark:bg-slate-200 dark:text-slate-900 text-[11px] font-bold flex items-center justify-center">
@@ -697,8 +723,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                   <button
                     onClick={() => setFolderModal({ mode: 'create' })}
                     className={`${iconButtonClass} flex-shrink-0`}
-                    aria-label="Nova pasta"
-                    title="Nova pasta"
+                    aria-label={t('folders.new')}
+                    title={t('folders.new')}
                   >
                     <FolderPlus className="w-4 h-4" />
                   </button>
@@ -706,11 +732,11 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 {!isTrashView && (
                   <button
                     onClick={() => handleCreateBoard()}
-                    aria-label="Novo quadro"
+                    aria-label={t('dashboard.newBoard')}
                     className="h-10 flex items-center gap-1.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-95 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition flex-shrink-0"
                   >
                     <Plus className="w-4 h-4 stroke-[2.5]" />
-                    <span className="inline sm:hidden md:inline">Novo quadro</span>
+                    <span className="inline sm:hidden md:inline">{t('dashboard.newBoard')}</span>
                   </button>
                 )}
               </div>
@@ -718,8 +744,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
 
             {isTrashView ? (
               <p className="text-sm text-slate-600 dark:text-slate-400">
-                Quadros na lixeira ficam somente leitura. Restaure um quadro para voltar a editá-lo.
-                {!isAuthenticated && ' Entre na sua conta para excluir quadros definitivamente.'}
+                {t('dashboard.trashNote')}
+                {!isAuthenticated && t('dashboard.trashGuestNote')}
               </p>
             ) : (
               !isSearching && !currentFolder && templatesSection
@@ -743,7 +769,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             {isSearching && !isTrashView && isSearchingContent && (
               <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2" role="status">
                 <Search className="w-4 h-4 animate-pulse" />
-                <span>Buscando também no conteúdo dos quadros…</span>
+                <span>{t('dashboard.searchingContent')}</span>
               </p>
             )}
 
@@ -783,16 +809,16 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto mb-4">
                   <LayoutGrid className="w-7 h-7" />
                 </div>
-                <h2 className="text-base font-bold text-slate-800 dark:text-white">Nenhum quadro encontrado</h2>
+                <h2 className="text-base font-bold text-slate-800 dark:text-white">{t('dashboard.noResultsTitle')}</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1.5">
-                  Nada corresponde a “{searchQuery}”{isTrashView ? ' na lixeira' : ' nos títulos nem no conteúdo dos quadros'}.
+                  {isTrashView ? t('dashboard.noResultsTrash', { query: searchQuery }) : t('dashboard.noResults', { query: searchQuery })}
                 </p>
                 <button
                   onClick={() => setSearchQuery('')}
                   className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 text-sm font-semibold transition"
                 >
                   <X className="w-4 h-4" />
-                  <span>Limpar busca</span>
+                  <span>{t('dashboard.clearSearch')}</span>
                 </button>
               </div>
             ) : isTrashView ? (
@@ -800,27 +826,27 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto mb-4">
                   <Trash2 className="w-7 h-7" />
                 </div>
-                <h2 className="text-base font-bold text-slate-800 dark:text-white">A lixeira está vazia</h2>
+                <h2 className="text-base font-bold text-slate-800 dark:text-white">{t('dashboard.trashEmpty')}</h2>
                 <button
                   onClick={() => setView('boards')}
                   className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 text-sm font-semibold transition"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  <span>Voltar para meus quadros</span>
+                  <span>{t('dashboard.backToBoards')}</span>
                 </button>
               </div>
             ) : currentFolder && !isSearching && visibleFolders.length === 0 ? (
               <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
-                <h2 className="text-base font-bold text-slate-800 dark:text-white">Esta pasta está vazia</h2>
+                <h2 className="text-base font-bold text-slate-800 dark:text-white">{t('dashboard.folderEmpty')}</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1.5">
-                  Crie um quadro aqui ou mova quadros existentes pelo menu de cada um.
+                  {t('dashboard.folderEmptyHint')}
                 </p>
                 <button
                   onClick={() => handleCreateBoard()}
                   className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow-md shadow-brand-600/20 transition"
                 >
                   <Plus className="w-4 h-4" />
-                  <span>Novo quadro nesta pasta</span>
+                  <span>{t('dashboard.newBoardInFolder')}</span>
                 </button>
               </div>
             ) : null}
@@ -841,7 +867,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 }}
                 className="px-3 py-2 rounded-lg text-sm font-semibold text-brand-300 hover:bg-white/10 transition flex-shrink-0"
               >
-                Desfazer
+                {t('dashboard.undo')}
               </button>
             )}
           </div>
@@ -851,8 +877,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       <Modal
         isOpen={!!boardToPurge}
         onClose={() => !isPurging && setBoardToPurge(null)}
-        title="Excluir definitivamente?"
-        description={`“${boardToPurge?.title || DEFAULT_BOARD_TITLE}” e as imagens dele serão apagados para sempre. Essa ação não pode ser desfeita.`}
+        title={t('dashboard.purgeTitle')}
+        description={t('dashboard.purgeDescription', { title: boardToPurge?.title || untitled })}
         icon={
           <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
             <Trash2 className="w-5 h-5" />
@@ -866,14 +892,14 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             disabled={isPurging}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
           >
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirmPurge}
             disabled={isPurging}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition disabled:opacity-60"
           >
-            {isPurging ? 'Excluindo…' : 'Excluir definitivamente'}
+            {isPurging ? t('dashboard.deleting') : t('boardCard.deletePermanently')}
           </button>
         </div>
       </Modal>
@@ -890,7 +916,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
 
       <MoveToFolderModal
         isOpen={!!boardToMove}
-        itemName={boardToMove?.title || DEFAULT_BOARD_TITLE}
+        itemName={boardToMove?.title || untitled}
         folders={folders}
         currentFolderId={parentOf(boardToMove?.folder_id)}
         onClose={() => setBoardToMove(null)}
@@ -900,8 +926,8 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       <Modal
         isOpen={!!folderToDelete}
         onClose={() => !isDeletingFolder && setFolderToDelete(null)}
-        title="Excluir pasta?"
-        description={`A pasta “${folderToDelete?.name ?? ''}” e as subpastas dela serão excluídas. Os quadros de dentro voltam para Meus quadros.`}
+        title={t('dashboard.deleteFolderTitle')}
+        description={t('dashboard.deleteFolderDescription', { name: folderToDelete?.name ?? '' })}
         icon={
           <div className="w-11 h-11 rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 flex items-center justify-center flex-shrink-0">
             <Trash2 className="w-5 h-5" />
@@ -915,14 +941,14 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
             disabled={isDeletingFolder}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 transition disabled:opacity-50"
           >
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleConfirmDeleteFolder}
             disabled={isDeletingFolder}
             className="px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition disabled:opacity-60"
           >
-            {isDeletingFolder ? 'Excluindo…' : 'Excluir pasta'}
+            {isDeletingFolder ? t('dashboard.deleting') : t('folders.delete')}
           </button>
         </div>
       </Modal>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, createContext, useContext } from 'rea
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getGuestProfile, updateGuestProfile, resetGuestProfile, GuestProfile, claimLocalBoardsForUser } from '../lib/storage';
+import { t } from '../i18n';
 
 interface AuthContextType {
   user: User | null;
@@ -161,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (isGuestCustomized ? guestProfile.name : null) ||
     user?.email?.split('@')[0] ||
     guestProfile.name ||
-    'Colaborador';
+    t('common.collaborator');
 
   return (
     <AuthContext.Provider

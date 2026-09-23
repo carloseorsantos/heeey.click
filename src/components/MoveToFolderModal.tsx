@@ -3,6 +3,7 @@ import { FolderInput, Folder as FolderIcon, Home, Check, Loader2 } from 'lucide-
 import { Modal } from './Modal';
 import { Folder, flattenFolderTree } from '../lib/folders';
 import { cn } from '../lib/utils';
+import { useI18n } from '../i18n';
 
 interface MoveToFolderModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export function MoveToFolderModal({
   onClose,
   onMove,
 }: MoveToFolderModalProps) {
+  const { t } = useI18n();
   const [movingTo, setMovingTo] = useState<string | null | undefined>(undefined);
   const [error, setError] = useState(false);
   const tree = flattenFolderTree(folders);
@@ -35,7 +37,7 @@ export function MoveToFolderModal({
   }
 
   const options: { id: string | null; name: string; depth: number }[] = [
-    { id: null, name: 'Meus quadros', depth: 0 },
+    { id: null, name: t('folders.root'), depth: 0 },
     ...tree.map(({ folder, depth }) => ({ id: folder.id, name: folder.name, depth: depth + 1 })),
   ];
 
@@ -43,8 +45,8 @@ export function MoveToFolderModal({
     <Modal
       isOpen={isOpen}
       onClose={() => movingTo === undefined && onClose()}
-      title="Mover para pasta"
-      description={`Escolha onde guardar “${itemName}”.`}
+      title={t('folders.moveTitle')}
+      description={t('folders.moveDescription', { name: itemName })}
       size="sm"
       icon={
         <div className="w-11 h-11 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 flex-shrink-0">
@@ -54,7 +56,7 @@ export function MoveToFolderModal({
     >
       {error && (
         <p className="mb-3 text-sm text-rose-700 dark:text-rose-400" role="alert">
-          Não foi possível mover. Tente novamente.
+          {t('folders.moveError')}
         </p>
       )}
       <ul className="max-h-[50vh] overflow-y-auto -mx-2 space-y-0.5">
@@ -76,7 +78,7 @@ export function MoveToFolderModal({
               >
                 <Icon className="w-4 h-4 flex-shrink-0 text-slate-500" />
                 <span className="truncate flex-1">{option.name}</span>
-                {isCurrent && <Check className="w-4 h-4 flex-shrink-0" aria-label="Pasta atual" />}
+                {isCurrent && <Check className="w-4 h-4 flex-shrink-0" aria-label={t('folders.current')} />}
                 {movingTo === option.id && <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />}
               </button>
             </li>

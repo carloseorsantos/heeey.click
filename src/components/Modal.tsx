@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useI18n } from '../i18n';
 
 interface ModalProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export function Modal({ isOpen, onClose, title, description, icon, size = 'md', children }: ModalProps) {
+  const { t } = useI18n();
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const descriptionId = useId();
@@ -89,7 +91,7 @@ export function Modal({ isOpen, onClose, title, description, icon, size = 'md', 
           type="button"
           onClick={onClose}
           className="absolute right-3 top-3 w-10 h-10 flex items-center justify-center rounded-full text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 transition-colors"
-          aria-label="Fechar"
+          aria-label={t('common.close')}
         >
           <X className="w-5 h-5" />
         </button>
