@@ -97,3 +97,41 @@ npm test
 ```bash
 npm run build
 ```
+
+---
+
+## 🔌 API pública
+
+Crie uma chave em **Chaves de API** (ícone de chave no dashboard, com a conta conectada). A chave tem as mesmas permissões que você e alcança apenas os seus quadros e pastas; chaves "somente leitura" não criam nem alteram nada.
+
+```bash
+curl https://heeey.click/api/v1/boards -H "Authorization: Bearer hk_..."
+```
+
+| Método | Rota | Corpo |
+|---|---|---|
+| `GET` | `/api/v1/boards?folder_id=&include_trashed=&limit=&offset=` | |
+| `POST` | `/api/v1/boards` | `{ "title", "elements"?, "folder_id"? }` |
+| `GET` | `/api/v1/boards/:id` | (inclui a cena completa) |
+| `PATCH` | `/api/v1/boards/:id` | `{ "title"?, "elements"?, "delete_element_ids"? }` |
+| `DELETE` | `/api/v1/boards/:id` | (move para a lixeira) |
+| `POST` | `/api/v1/boards/:id/move` | `{ "folder_id" }` (`null` = raiz) |
+| `GET` | `/api/v1/search?q=` | |
+| `GET` / `POST` | `/api/v1/folders` | `{ "name", "parent_id"? }` |
+
+**Elementos** podem ser elementos completos do Excalidraw ou descrições curtas; o servidor completa o resto, coloca o texto dentro das formas e conecta as setas:
+
+```json
+{
+  "title": "Fluxo de login",
+  "elements": [
+    { "id": "form", "type": "rectangle", "x": 0, "y": 0, "label": "Formulário" },
+    { "id": "auth", "type": "diamond", "x": 320, "y": -15, "label": "Senha ok?" },
+    { "type": "arrow", "start": { "id": "form" }, "end": { "id": "auth" }, "label": "envia" }
+  ]
+}
+```
+
+No `PATCH`, elementos com o mesmo `id` são atualizados e os demais são adicionados; quem estiver com o quadro aberto vê a mudança na hora. Erros vêm como `{ "error": { "code", "message" } }` com status 400, 401, 403, 404 ou 409.
+
+A API roda como Vercel Function (`api/v1.ts` → `src/server/apiHandler.ts`) e não precisa de segredos: a autenticação acontece no banco, nas funções `api_*` (migration `public_api`). Opcionalmente defina `APP_URL` para os links dos quadros.

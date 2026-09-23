@@ -1,4 +1,4 @@
-/** Minimal Supabase environment for running migrations in PGlite (auth, storage, roles) */
+/** Minimal Supabase environment for running migrations in PGlite (auth, storage, roles, realtime) */
 export const SUPABASE_STUBS = `
 create schema if not exists extensions;
 create schema auth;
@@ -16,4 +16,9 @@ grant execute on function auth.uid() to anon, authenticated;
 alter default privileges in schema public grant select, insert, update, delete on tables to anon, authenticated;
 grant select, insert, update, delete on storage.objects to anon, authenticated;
 create publication supabase_realtime;
+-- Realtime "broadcast from database": record calls so tests can inspect them
+create schema realtime;
+create table realtime.sent (payload jsonb, event text, topic text, private boolean);
+create function realtime.send(payload jsonb, event text, topic text, private boolean default true)
+returns void language sql as $$ insert into realtime.sent values (payload, event, topic, private) $$;
 `;
