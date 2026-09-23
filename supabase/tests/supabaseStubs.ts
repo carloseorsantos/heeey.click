@@ -12,5 +12,8 @@ alter table storage.objects enable row level security;
 create role anon; create role authenticated;
 grant usage on schema auth, extensions, public, storage to anon, authenticated;
 grant execute on function auth.uid() to anon, authenticated;
+-- Like Supabase: new tables in public are granted to the API roles when created
+alter default privileges in schema public grant select, insert, update, delete on tables to anon, authenticated;
+grant select, insert, update, delete on storage.objects to anon, authenticated;
 create publication supabase_realtime;
 `;
