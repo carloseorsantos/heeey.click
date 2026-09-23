@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Excalidraw,
   convertToExcalidrawElements,
   viewportCoordsToSceneCoords,
   exportToBlob,
   exportToSvg,
+  useHandleLibrary,
 } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
 import { Loader2, X, Trash2, RotateCcw } from 'lucide-react';
@@ -22,6 +23,7 @@ import { Avatar } from '../components/Avatar';
 import { isBoardLocallyCreated } from '../lib/storage';
 import { generateId } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
+import { createLibraryAdapter, createGuestLibraryMigration } from '../lib/libraryAdapter';
 
 function safeGetStorage(storage: Storage, key: string): string | null {
   try {
@@ -72,6 +74,15 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard }: BoardPage
   const [isNicknameOpen, setIsNicknameOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Personal library: this browser for guests, synced with the account when signed in
+  const libraryAdapter = useMemo(() => createLibraryAdapter(user?.id), [user?.id]);
+  const libraryMigrationAdapter = useMemo(() => createGuestLibraryMigration(user?.id), [user?.id]);
+  useHandleLibrary({
+    excalidrawAPI,
+    adapter: libraryAdapter,
+    migrationAdapter: libraryMigrationAdapter,
+  });
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
   const [restoreState, setRestoreState] = useState<'idle' | 'restoring' | 'error'>('idle');

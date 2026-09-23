@@ -131,6 +131,23 @@ describe('database schema and migrations', () => {
     });
   });
 
+  describe('personal library', () => {
+    it('is private to its owner and upserts', async () => {
+      const upsert = (user: string, owner: string, items: string) =>
+        as(user, `insert into public.user_libraries (user_id, items) values ($1, $2::jsonb)
+                  on conflict (user_id) do update set items = excluded.items`, [owner, items]);
+
+      expect((await upsert(A, A, '[{"id":"lib-1"}]')).error).toBeUndefined();
+      expect((await upsert(A, A, '[{"id":"lib-1"},{"id":"lib-2"}]')).error).toBeUndefined();
+      expect((await as(A, `select jsonb_array_length(items) as n from public.user_libraries`)).rows).toEqual([{ n: 2 }]);
+
+      expect((await as(B, `select count(*)::int as n from public.user_libraries`)).rows[0].n).toBe(0);
+      expect((await upsert(B, A, '[]')).error).toBeDefined();
+      expect((await as(null, `select count(*)::int as n from public.user_libraries`)).rows[0].n).toBe(0);
+      expect((await upsert(A, A, '{"not":"an array"}')).error).toBeDefined();
+    });
+  });
+
   describe('search', () => {
     it('matches titles and canvas text by unaccented prefix, for the owner only', async () => {
       await as(A, `update public.boards set elements = $2::jsonb where id = $1`, [BOARD, texts(['Reunião de planejamento', 'Orçamento anual'])]);
