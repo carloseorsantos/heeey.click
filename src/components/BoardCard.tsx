@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MoreVertical, Copy, Trash2, Edit3, RotateCcw } from 'lucide-react';
+import { MoreVertical, Copy, Trash2, Edit3, RotateCcw, FolderInput } from 'lucide-react';
 import { Board } from '../lib/types';
 import { formatDateRelative } from '../lib/utils';
 import { useDismiss } from '../hooks/useDismiss';
@@ -13,6 +13,8 @@ interface BoardCardProps {
   onDuplicate: (board: Board) => void;
   onDelete: (id: string) => void;
   onThumbnailGenerated?: (boardId: string, thumbnail: string) => void;
+  /** Present when folders are available (signed-in owners) */
+  onMove?: (board: Board) => void;
   /** Present when the card is shown in the trash */
   trash?: {
     onRestore: (id: string) => void;
@@ -31,6 +33,7 @@ export function BoardCard({
   onDuplicate,
   onDelete,
   onThumbnailGenerated,
+  onMove,
   trash,
 }: BoardCardProps) {
   const { isDark } = useTheme();
@@ -187,6 +190,20 @@ export function BoardCard({
                     <Copy className="w-4 h-4 text-slate-500" />
                     <span>Duplicar</span>
                   </button>
+
+                  {onMove && (
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setShowMenu(false);
+                        onMove(board);
+                      }}
+                      className={`${menuItemClass} text-slate-700 hover:bg-slate-50 focus-visible:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800 dark:focus-visible:bg-slate-800`}
+                    >
+                      <FolderInput className="w-4 h-4 text-slate-500" />
+                      <span>Mover para pasta</span>
+                    </button>
+                  )}
 
                   <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 

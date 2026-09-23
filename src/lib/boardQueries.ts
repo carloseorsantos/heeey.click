@@ -3,7 +3,7 @@ import { Board } from './types';
 
 /** Everything the dashboard needs, without the heavy scene columns */
 export const BOARD_SUMMARY_COLUMNS =
-  'id,title,owner_id,access_level,created_at,updated_at,deleted_at,thumbnail';
+  'id,title,owner_id,access_level,created_at,updated_at,deleted_at,thumbnail,folder_id';
 
 function toSummary(row: any): Board {
   return { ...row, elements: [], app_state: {}, files: {}, contentLoaded: false };

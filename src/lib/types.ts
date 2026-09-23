@@ -14,6 +14,8 @@ export interface Board {
   deleted_at?: string | null;
   /** WebP data URL preview for the dashboard; '' = empty board, null = not generated yet */
   thumbnail?: string | null;
+  /** Folder of the owner's dashboard; null = root */
+  folder_id?: string | null;
   /** Client-only: false when only the dashboard summary columns were fetched */
   contentLoaded?: boolean;
 }

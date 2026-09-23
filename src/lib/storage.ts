@@ -319,7 +319,7 @@ export function saveLocalBoard(board: Board): void {
  */
 export function updateLocalBoardMeta(
   id: string,
-  patch: Partial<Pick<Board, 'title' | 'updated_at' | 'deleted_at' | 'thumbnail'>>
+  patch: Partial<Pick<Board, 'title' | 'updated_at' | 'deleted_at' | 'thumbnail' | 'folder_id'>>
 ): void {
   try {
     const individualRaw = localStorage.getItem(`${BOARD_CONTENT_PREFIX}${id}`);
