@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   History,
+  Search,
 } from 'lucide-react';
 import { CollaboratorUser, SyncStatus, AccessLevel } from '../lib/types';
 import { cn } from '../lib/utils';
@@ -40,6 +41,7 @@ interface HeaderProps {
   onExport?: (format: 'png' | 'svg') => void;
   /** Only passed to people who can edit the board */
   onOpenHistory?: () => void;
+  onOpenSearch?: () => void;
 }
 
 const MAX_VISIBLE_AVATARS = 4;
@@ -104,6 +106,7 @@ export function Header({
   onBackToDashboard,
   onExport,
   onOpenHistory,
+  onOpenSearch,
 }: HeaderProps) {
   const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -261,6 +264,17 @@ export function Header({
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             +{otherCollaborators.length}
           </span>
+        )}
+
+        {onOpenSearch && (
+          <button
+            onClick={onOpenSearch}
+            className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:text-white dark:hover:bg-slate-800 transition"
+            aria-label="Ir para outro quadro"
+            title="Ir para outro quadro"
+          >
+            <Search className="w-4 h-4" />
+          </button>
         )}
 
         <button

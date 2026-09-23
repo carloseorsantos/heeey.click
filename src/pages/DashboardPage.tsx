@@ -47,6 +47,7 @@ import { FolderNameModal } from '../components/FolderNameModal';
 import { MoveToFolderModal } from '../components/MoveToFolderModal';
 import { useFolders } from '../hooks/useFolders';
 import { Folder, getFolderPath, moveBoardToFolder } from '../lib/folders';
+import { BoardSearchHit, searchBoardsRemote, searchLoadedBoards } from '../lib/search';
 
 interface DashboardPageProps {
   onNavigateToBoard: (boardId: string) => void;
@@ -118,6 +119,44 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [isDeletingFolder, setIsDeletingFolder] = useState(false);
   const [boardToMove, setBoardToMove] = useState<Board | null>(null);
+  // Canvas-text search (server-side for signed-in users); null = not available
+  const [remoteHits, setRemoteHits] = useState<BoardSearchHit[] | null>(null);
+  const [isSearchingContent, setIsSearchingContent] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!user?.id || view === 'trash' || !query) {
+      setRemoteHits(null);
+      setIsSearchingContent(false);
+      return;
+    }
+    let cancelled = false;
+    setIsSearchingContent(true);
+    const timer = setTimeout(async () => {
+      const hits = await searchBoardsRemote(query);
+      if (cancelled) return;
+      setRemoteHits(hits);
+      setIsSearchingContent(false);
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, user?.id, view]);
+
+  // "/" focuses the search box, like in many web apps
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      e.preventDefault();
+      searchInputRef.current?.focus();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Load boards from Supabase and merge with local boards
   useEffect(() => {
@@ -423,9 +462,29 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
       ? activeBoards
       : activeBoards.filter((b) => parentOf(b.folder_id) === activeFolderId);
 
-  const filteredBoards = visibleBoards.filter((b) =>
-    (b.title || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Searching: titles and locally available canvas text, plus server hits in canvas text
+  const searchHits: BoardSearchHit[] = [];
+  if (isSearching && !isTrashView) {
+    const byId = new Map<string, BoardSearchHit>();
+    for (const hit of searchLoadedBoards(visibleBoards, searchQuery)) byId.set(hit.board.id, hit);
+    const activeById = new Map(visibleBoards.map((b) => [b.id, b]));
+    for (const hit of remoteHits || []) {
+      const local = activeById.get(hit.board.id);
+      const existing = byId.get(hit.board.id);
+      if (existing) {
+        if (!existing.snippet) existing.snippet = hit.snippet;
+      } else if (local) {
+        byId.set(local.id, { board: local, snippet: hit.snippet });
+      }
+    }
+    searchHits.push(...byId.values());
+  }
+  const snippetById = new Map(searchHits.map((hit) => [hit.board.id, hit.snippet]));
+
+  const filteredBoards =
+    isSearching && !isTrashView
+      ? searchHits.map((hit) => hit.board)
+      : visibleBoards.filter((b) => (b.title || '').toLowerCase().includes(searchQuery.toLowerCase()));
   // Trashed boards still count, so trashing the last board does not jump back to the hero
   const isFirstRun = !loading && boards.length === 0 && folders.length === 0;
 
@@ -583,7 +642,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                     </span>
                     {!loading && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
-                        {visibleBoards.length}
+                        {isSearching ? filteredBoards.length : visibleBoards.length}
                       </span>
                     )}
                   </h1>
@@ -594,9 +653,11 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                 <div className="relative flex-1 min-w-0 sm:w-56 sm:flex-initial">
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 pointer-events-none" />
                   <input
+                    ref={searchInputRef}
                     type="search"
                     placeholder={isTrashView ? 'Buscar na lixeira' : currentFolder ? 'Buscar em todas as pastas' : 'Buscar quadros'}
-                    aria-label={isTrashView ? 'Buscar na lixeira por título' : 'Buscar quadros por título'}
+                    aria-label={isTrashView ? 'Buscar na lixeira por título' : 'Buscar quadros por título ou texto'}
+                    aria-keyshortcuts="/"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full h-10 pl-9 pr-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition"
@@ -665,6 +726,13 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
               </div>
             )}
 
+            {isSearching && !isTrashView && isSearchingContent && (
+              <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2" role="status">
+                <Search className="w-4 h-4 animate-pulse" />
+                <span>Buscando também no conteúdo dos quadros…</span>
+              </p>
+            )}
+
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" aria-busy="true">
                 {[1, 2, 3, 4].map((n) => (
@@ -683,6 +751,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                     onDelete={handleMoveToTrash}
                     onThumbnailGenerated={handleThumbnailGenerated}
                     onMove={foldersAvailable && !isTrashView ? setBoardToMove : undefined}
+                    snippet={snippetById.get(b.id)}
                     trash={
                       isTrashView
                         ? {
@@ -695,14 +764,14 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                   />
                 ))}
               </div>
-            ) : searchQuery ? (
+            ) : searchQuery && !(isSearchingContent && !isTrashView) ? (
               <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
                 <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto mb-4">
                   <LayoutGrid className="w-7 h-7" />
                 </div>
                 <h2 className="text-base font-bold text-slate-800 dark:text-white">Nenhum quadro encontrado</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1.5">
-                  Nenhum título corresponde a “{searchQuery}”.
+                  Nada corresponde a “{searchQuery}”{isTrashView ? ' na lixeira' : ' nos títulos nem no conteúdo dos quadros'}.
                 </p>
                 <button
                   onClick={() => setSearchQuery('')}
@@ -726,7 +795,7 @@ export function DashboardPage({ onNavigateToBoard }: DashboardPageProps) {
                   <span>Voltar para meus quadros</span>
                 </button>
               </div>
-            ) : currentFolder && visibleFolders.length === 0 ? (
+            ) : currentFolder && !isSearching && visibleFolders.length === 0 ? (
               <div className="rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 p-12 text-center">
                 <h2 className="text-base font-bold text-slate-800 dark:text-white">Esta pasta está vazia</h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto mt-1.5">
