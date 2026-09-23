@@ -63,7 +63,7 @@ export function App() {
             <BoardPage
               key={boardId}
               boardId={boardId}
-              onBackToDashboard={() => navigate('/')}
+              onBackToDashboard={() => navigate('/app')}
               onOpenBoard={(id) => navigate(`/b/${id}`)}
               onNavigateToDocs={() => navigate('/docs')}
             />
@@ -73,7 +73,7 @@ export function App() {
             <DocsPage
               slug={docsSlug || 'getting-started'}
               onNavigateDoc={(slug) => navigate(`/docs/${slug}`)}
-              onBackToDashboard={() => navigate('/')}
+              onBackToDashboard={() => navigate('/app')}
               onNavigateToBoard={(id) => navigate(`/b/${id}`)}
             />
           </Suspense>

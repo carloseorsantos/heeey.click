@@ -64,3 +64,12 @@ Append-only. Newest entry at the bottom. Never delete or rewrite past entries.
 - Verified: dev offline — desktop/mobile/light/dark, sem scroll horizontal, deep link abre Conta e limpa a URL, $pageview enviado; 160 testes; build gera dist/lousa-online e dist/whiteboard-mcp com o conteúdo no HTML (2,8 KB de JS)
 - Approved? pendente — revisão de copy pelo usuário
 - Changed live: não
+
+## 2026-09-23 — ship (passo 3b: nova estrutura de URLs, decisão do usuário)
+- `/` = landing PT-BR (antes /lousa-online), `/mcp` = landing EN (antes /whiteboard-mcp), app movido para `/app`; `/b/:id` e `/docs/*` mantidos (links compartilhados e URLs devolvidas pela API)
+- Redirects 308: /lousa-online → /, /whiteboard-mcp → /mcp
+- Visitante recorrente (sessão Supabase `sb-*-auth-token` ou quadros em `heeey_local_boards`) é enviado de `/` para `/app` antes do primeiro paint; `/?home` ignora o redirect; crawlers sempre veem a landing
+- robots: Disallow /app; sitemap: /, /mcp, docs
+- Verified (dev offline): todas as rotas servem o HTML certo; visitante novo fica na landing; convidado com quadro vai para /app; /?home fica; só abrir /app não marca como recorrente; /app?settings=account abre Conta e limpa a URL; 160 testes; build gera dist/index.html, dist/app, dist/mcp
+- Risk: Supabase de produção precisa aceitar redirect do magic link para https://www.heeey.click/app (conferir Redirect URLs)
+- Changed live: não

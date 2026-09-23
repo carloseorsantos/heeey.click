@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 # Boards are user content, reachable only by shared link
 Disallow: /b/
+# The app itself; the landing page at / is what should rank
+Disallow: /app
 Disallow: /api/
 
 Sitemap: https://www.heeey.click/sitemap.xml

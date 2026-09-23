@@ -1,20 +1,11 @@
 {
+  "redirects": [
+    { "source": "/lousa-online", "destination": "/", "permanent": true },
+    { "source": "/whiteboard-mcp", "destination": "/mcp", "permanent": true }
+  ],
   "rewrites": [
-    {
-      "source": "/api/v1/:path*",
-      "destination": "/api/v1?path=:path*"
-    },
-    {
-      "source": "/lousa-online",
-      "destination": "/lousa-online/index.html"
-    },
-    {
-      "source": "/whiteboard-mcp",
-      "destination": "/whiteboard-mcp/index.html"
-    },
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
-    }
+    { "source": "/api/v1/:path*", "destination": "/api/v1?path=:path*" },
+    { "source": "/mcp", "destination": "/mcp/index.html" },
+    { "source": "/((?!api/).*)", "destination": "/app/index.html" }
   ]
 }

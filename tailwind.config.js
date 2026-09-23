@@ -7,8 +7,8 @@ export default {
   future: { hoverOnlyWhenSupported: true },
   content: [
     "./index.html",
-    "./lousa-online/index.html",
-    "./whiteboard-mcp/index.html",
+    "./app/index.html",
+    "./mcp/index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
