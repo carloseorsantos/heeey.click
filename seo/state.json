@@ -1,0 +1,27 @@
+{
+  "updated": null,
+  "focus": {
+    "page": null,
+    "main_query": null,
+    "reason": null,
+    "chosen_on": null
+  },
+  "pages": {
+    "<url>": {
+      "baseline": {
+        "window": ["YYYY-MM-DD", "YYYY-MM-DD"],
+        "impressions": null,
+        "clicks": null,
+        "avg_position": null,
+        "conversions": null
+      },
+      "last_change": {
+        "date_live": null,
+        "what": null
+      },
+      "daily": [
+        { "date": "YYYY-MM-DD", "impressions": 0, "clicks": 0, "avg_position": 0, "conversions": 0 }
+      ]
+    }
+  }
+}
