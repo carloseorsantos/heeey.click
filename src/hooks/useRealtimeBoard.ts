@@ -121,9 +121,13 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         console.warn('Falha ao buscar quadro no Supabase, tentando armazenamento local:', err);
       }
 
+      // Unmounted meanwhile (navigation, StrictMode remount): never fall through to creating
+      // a blank board, which would overwrite a cached board that was not synced yet
+      if (!isMounted) return;
+
       // Check local cache
       const cached = getLocalBoard(boardId);
-      if (cached && isMounted) {
+      if (cached) {
         setBoard(cached);
         setLoading(false);
         return;
@@ -146,12 +150,10 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         updated_at: new Date().toISOString(),
       };
 
-      if (isMounted) {
-        markBoardAsCreated(boardId);
-        setBoard(newBoard);
-        saveLocalBoard(newBoard);
-        setLoading(false);
-      }
+      markBoardAsCreated(boardId);
+      setBoard(newBoard);
+      saveLocalBoard(newBoard);
+      setLoading(false);
 
       // Try creating in Supabase
       (async () => {
