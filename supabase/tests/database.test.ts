@@ -9,6 +9,7 @@ import { unaccent } from '@electric-sql/pglite/contrib/unaccent';
 import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { handleApiRequest, Rpc } from '../../src/server/apiHandler';
 
 const root = path.resolve(__dirname, '..');
 const A = '00000000-0000-4000-8000-00000000000a';
@@ -32,6 +33,11 @@ grant execute on function auth.uid() to anon, authenticated;
 alter default privileges in schema public grant select, insert, update, delete on tables to anon, authenticated;
 grant select, insert, update, delete on storage.objects to anon, authenticated;
 create publication supabase_realtime;
+-- Realtime "broadcast from database": record calls so tests can inspect them
+create schema realtime;
+create table realtime.sent (payload jsonb, event text, topic text, private boolean);
+create function realtime.send(payload jsonb, event text, topic text, private boolean default true)
+returns void language sql as $$ insert into realtime.sent values (payload, event, topic, private) $$;
 `;
 
 let db: PGlite;
@@ -190,6 +196,165 @@ describe('database schema and migrations', () => {
       expect((await as(B, `select public.revoke_api_key($1) as ok`, [id])).rows[0].ok).toBe(false);
       expect((await as(A, `select public.revoke_api_key($1) as ok`, [id])).rows[0].ok).toBe(true);
       await expect(db.query(`select public.api_authenticate($1, 'read')`, [key])).rejects.toThrow(/revogada/);
+    });
+  });
+
+  describe('public API functions', () => {
+    let writeKey: string;
+    let readKey: string;
+    let otherKey: string;
+    let apiBoard: string;
+
+    const call = async (fn: string, args: Record<string, unknown>) => {
+      const names = Object.keys(args);
+      const sql = `select public.${fn}(${names.map((n, i) => `${n} => $${i + 1}`).join(', ')}) as r`;
+      const result = await as(null, sql, Object.values(args));
+      return { data: result.rows[0]?.r, error: result.error };
+    };
+    const el = (id: string, extra: Record<string, unknown> = {}) => ({ id, type: 'rectangle', x: 0, y: 0, version: 1, ...extra });
+
+    beforeAll(async () => {
+      writeKey = (await as(A, `select key from public.create_api_key('rw')`)).rows[0].key;
+      readKey = (await as(A, `select key from public.create_api_key('ro', array['read'])`)).rows[0].key;
+      otherKey = (await as(B, `select key from public.create_api_key('b')`)).rows[0].key;
+    });
+
+    it('creates boards with the write scope only', async () => {
+      const created = await call('api_create_board', { p_key: writeKey, p_title: 'Via API', p_elements: JSON.stringify([el('r1')]) });
+      expect(created.error).toBeUndefined();
+      expect(created.data).toMatchObject({ title: 'Via API', element_count: 1 });
+      apiBoard = created.data.id;
+      expect((await board(apiBoard)).owner_id).toBe(A);
+
+      expect((await call('api_create_board', { p_key: readKey, p_title: 'x' })).error).toMatch(/escrita/);
+      expect((await call('api_create_board', { p_key: 'hk_bad', p_title: 'x' })).error).toMatch(/inválida/);
+      expect((await call('api_create_board', { p_key: writeKey, p_elements: '[{"type":"rectangle"}]' })).error).toMatch(/id e type/);
+    });
+
+    it("lists and reads only the key owner's boards", async () => {
+      const mine = (await call('api_list_boards', { p_key: readKey })).data;
+      expect(mine.map((b: any) => b.id)).toContain(apiBoard);
+      expect((await call('api_list_boards', { p_key: otherKey })).data).toEqual([]);
+
+      const full = (await call('api_get_board', { p_key: readKey, p_board_id: apiBoard })).data;
+      expect(full.elements).toHaveLength(1);
+      expect((await call('api_get_board', { p_key: otherKey, p_board_id: apiBoard })).error).toMatch(/não encontrado/);
+    });
+
+    it('upserts elements with bumped versions, deletes as tombstones and broadcasts the changes', async () => {
+      await db.exec('delete from realtime.sent');
+      const updated = await call('api_update_board', {
+        p_key: writeKey,
+        p_board_id: apiBoard,
+        p_title: 'Renomeado',
+        p_elements: JSON.stringify([el('r1', { x: 50 }), el('r2')]),
+      });
+      expect(updated.error).toBeUndefined();
+      expect(updated.data).toMatchObject({ title: 'Renomeado', element_count: 2 });
+
+      let elements = (await board(apiBoard)).elements;
+      expect(elements.map((e: any) => [e.id, e.x, e.version])).toEqual([
+        ['r1', 50, 2],
+        ['r2', 0, 2],
+      ]);
+
+      const removed = await call('api_update_board', { p_key: writeKey, p_board_id: apiBoard, p_delete_element_ids: ['r1'] });
+      expect(removed.data.element_count).toBe(1);
+      elements = (await board(apiBoard)).elements;
+      expect(elements.find((e: any) => e.id === 'r1')).toMatchObject({ isDeleted: true, version: 3 });
+
+      const sent = (await db.query<any>('select payload, event, topic from realtime.sent order by ctid')).rows;
+      expect(sent).toHaveLength(2);
+      expect(sent[0]).toMatchObject({ event: 'canvas-update', topic: `heeey:room:${apiBoard}` });
+      expect(sent[0].payload).toMatchObject({ type: 'canvas-update', senderId: 'api', boardId: apiBoard });
+      expect(sent[0].payload.elements.map((e: any) => e.id)).toEqual(['r1', 'r2']);
+      expect(sent[1].payload.elements.map((e: any) => e.id)).toEqual(['r1']);
+
+      expect((await call('api_update_board', { p_key: otherKey, p_board_id: apiBoard, p_title: 'x' })).error).toMatch(/não encontrado/);
+    });
+
+    it('trashes, moves, searches and manages folders', async () => {
+      const folder = (await call('api_create_folder', { p_key: writeKey, p_name: 'Agentes' })).data;
+      expect(folder).toMatchObject({ name: 'Agentes', parent_id: null });
+      expect((await call('api_list_folders', { p_key: readKey })).data.map((f: any) => f.id)).toContain(folder.id);
+      expect((await call('api_move_board', { p_key: writeKey, p_board_id: apiBoard, p_folder_id: folder.id })).data.folder_id).toBe(folder.id);
+      expect((await call('api_list_boards', { p_key: readKey, p_folder_id: folder.id })).data).toHaveLength(1);
+
+      const hits = (await call('api_search_boards', { p_key: readKey, p_query: 'renomeado' })).data;
+      expect(hits.map((h: any) => h.id)).toEqual([apiBoard]);
+
+      const trashed = (await call('api_trash_board', { p_key: writeKey, p_board_id: apiBoard })).data;
+      expect(trashed.deleted_at).not.toBeNull();
+      expect((await call('api_trash_board', { p_key: writeKey, p_board_id: apiBoard })).error).toBeUndefined();
+      expect((await call('api_list_boards', { p_key: readKey })).data.map((b: any) => b.id)).not.toContain(apiBoard);
+      expect((await call('api_update_board', { p_key: writeKey, p_board_id: apiBoard, p_title: 'x' })).error).toMatch(/lixeira/);
+    });
+
+    it('keeps internal helpers private', async () => {
+      expect((await as(null, `select public.api_authenticate($1, 'read')`, [readKey])).error).toMatch(/permission denied/);
+      expect((await as(A, `select public.api_own_board($1, $2)`, [A, BOARD])).error).toMatch(/permission denied/);
+    });
+  });
+
+  describe('REST API end to end (HTTP handler → SQL functions)', () => {
+    // Same contract as supabase.rpc: named arguments, { data, error: { message, code } }
+    const rpc: Rpc = async (fn, args) => {
+      const names = Object.keys(args);
+      const values = Object.values(args).map((v) => (Array.isArray(v) && v.some((x) => typeof x === 'object') ? JSON.stringify(v) : v));
+      const sql = `select public.${fn}(${names.map((n, i) => `${n} => $${i + 1}`).join(', ')}) as r`;
+      await db.exec(`reset role; select set_config('request.jwt.claim.sub', '', false); set role anon;`);
+      try {
+        return { data: (await db.query<any>(sql, values)).rows[0].r, error: null };
+      } catch (e: any) {
+        return { data: null, error: { message: e.message, code: e.code } };
+      } finally {
+        await db.exec('reset role');
+      }
+    };
+    const api = async (method: string, route: string, key: string, body?: unknown) => {
+      const res = await handleApiRequest(
+        new Request(`https://heeey.click/api/v1/${route}`, {
+          method,
+          headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+          body: body === undefined ? undefined : JSON.stringify(body),
+        }),
+        rpc,
+        { appOrigin: 'https://heeey.click' }
+      );
+      return { status: res.status, body: await res.json() };
+    };
+
+    it('creates a diagram, extends it with an arrow to an existing shape, and finds it', async () => {
+      const key = (await as(B, `select key from public.create_api_key('e2e')`)).rows[0].key;
+
+      const created = await api('POST', 'boards', key, {
+        title: 'Arquitetura',
+        elements: [{ id: 'web', type: 'rectangle', x: 0, y: 0, label: 'Aplicação web' }],
+      });
+      expect(created.status).toBe(201);
+      const id = created.body.board.id;
+      expect(created.body.board).toMatchObject({ title: 'Arquitetura', element_count: 2, url: `https://heeey.click/b/${id}` });
+
+      const patched = await api('PATCH', `boards/${id}`, key, {
+        elements: [
+          { id: 'db', type: 'ellipse', x: 400, y: 0, label: 'Postgres' },
+          { id: 'q', type: 'arrow', start: { id: 'web' }, end: { id: 'db' }, label: 'SQL' },
+        ],
+      });
+      expect(patched.status).toBe(200);
+
+      const full = (await api('GET', `boards/${id}`, key)).body.board;
+      const byId = Object.fromEntries(full.elements.map((e: any) => [e.id, e]));
+      expect(byId.q).toMatchObject({ type: 'arrow', startBinding: { elementId: 'web' }, endBinding: { elementId: 'db' } });
+      expect(byId.web.boundElements).toContainEqual({ type: 'arrow', id: 'q' });
+      expect(byId.web.version).toBeGreaterThan(1);
+
+      const found = await api('GET', `search?q=postgres`, key);
+      expect(found.body.results.map((r: any) => r.id)).toEqual([id]);
+
+      const other = await api('GET', `boards/${id}`, (await as(A, `select key from public.create_api_key('a2')`)).rows[0].key);
+      expect(other.status).toBe(404);
+      expect((await api('GET', 'boards', 'hk_invalid')).status).toBe(401);
     });
   });
 
