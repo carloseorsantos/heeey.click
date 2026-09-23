@@ -15,6 +15,7 @@ import {
   FileCode,
   Sun,
   Moon,
+  History,
 } from 'lucide-react';
 import { CollaboratorUser, SyncStatus, AccessLevel } from '../lib/types';
 import { cn } from '../lib/utils';
@@ -37,6 +38,8 @@ interface HeaderProps {
   onOpenNickname: () => void;
   onBackToDashboard: () => void;
   onExport?: (format: 'png' | 'svg') => void;
+  /** Only passed to people who can edit the board */
+  onOpenHistory?: () => void;
 }
 
 const MAX_VISIBLE_AVATARS = 4;
@@ -100,6 +103,7 @@ export function Header({
   onOpenNickname,
   onBackToDashboard,
   onExport,
+  onOpenHistory,
 }: HeaderProps) {
   const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
   const { isDark, toggleTheme } = useTheme();
@@ -305,6 +309,12 @@ export function Header({
                   <UserPen className="w-4 h-4 text-slate-500" />
                   <span>Editar nome e cor</span>
                 </button>
+                {onOpenHistory && (
+                  <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(onOpenHistory)}>
+                    <History className="w-4 h-4 text-slate-500" />
+                    <span>Histórico de versões</span>
+                  </button>
+                )}
                 <button role="menuitem" className={menuItemClass} onClick={() => runMenuAction(toggleTheme)}>
                   {isDark ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-500" />}
                   <span>{isDark ? 'Tema claro' : 'Tema escuro'}</span>

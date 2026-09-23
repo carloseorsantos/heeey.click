@@ -99,7 +99,10 @@ export function formatDateRelative(dateStr: string | Date): string {
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   waitMs: number
-): ((...args: Parameters<T>) => void) & { cancel: () => void; flush: () => void } {
+): ((...args: Parameters<T>) => void) & {
+  cancel: () => void;
+  flush: () => ReturnType<T> | undefined;
+} {
   let timeout: ReturnType<typeof setTimeout> | null = null;
   let pendingArgs: Parameters<T> | null = null;
 
@@ -121,14 +124,14 @@ export function debounce<T extends (...args: any[]) => any>(
     pendingArgs = null;
   };
 
-  // Runs the pending call right away (no-op when nothing is pending)
-  debounced.flush = () => {
-    if (!timeout || !pendingArgs) return;
+  // Runs the pending call right away and returns its result (undefined when nothing is pending)
+  debounced.flush = (): ReturnType<T> | undefined => {
+    if (!timeout || !pendingArgs) return undefined;
     const args = pendingArgs;
     clearTimeout(timeout);
     timeout = null;
     pendingArgs = null;
-    func(...args);
+    return func(...args);
   };
 
   return debounced;
