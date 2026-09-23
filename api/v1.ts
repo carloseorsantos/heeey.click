@@ -5,14 +5,27 @@
 import { handleApiRequest } from '../src/server/apiHandler';
 import { createRpc, appOrigin } from '../src/server/supabaseRpc';
 
-declare const process: { env: Record<string, string | undefined> };
+export const config = {
+  runtime: 'edge',
+};
 
-const rpc = createRpc(process.env);
+declare const process: { env?: Record<string, string | undefined> };
 
-function handle(request: Request): Promise<Response> {
-  return handleApiRequest(request, rpc, { appOrigin: appOrigin(request, process.env) });
+function getEnv(): Record<string, string | undefined> {
+  try {
+    return typeof process !== 'undefined' && process.env ? process.env : {};
+  } catch {
+    return {};
+  }
 }
 
+function handle(request: Request): Promise<Response> {
+  const env = getEnv();
+  const rpc = createRpc(env);
+  return handleApiRequest(request, rpc, { appOrigin: appOrigin(request, env) });
+}
+
+export default handle;
 export const GET = handle;
 export const POST = handle;
 export const PATCH = handle;
