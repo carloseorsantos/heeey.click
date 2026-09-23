@@ -1,0 +1,1 @@
+-- Empty migration already recorded in the remote history (created from the Supabase dashboard/CLI before this folder existed).
