@@ -174,7 +174,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
   }, [t]);
   const [boards, setBoards] = useState<Board[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const { openSettings } = useSettings();
+  const { openSettings, openAuthDialog } = useSettings();
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'boards' | 'trash'>('boards');
   const [toast, setToast] = useState<ToastData | null>(null);
@@ -824,7 +824,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
               </Button>
             )}
             {!isAuthenticated && (
-              <Button variant="secondary" onClick={() => openSettings('account')} className="hidden sm:inline-flex">
+              <Button variant="secondary" onClick={() => openAuthDialog('login')} className="hidden sm:inline-flex">
                 <LogIn className="w-4 h-4" />
                 <span>{t('dashboard.signIn')}</span>
               </Button>

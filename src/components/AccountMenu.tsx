@@ -18,7 +18,7 @@ const MOD_KEY = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navig
 /** Who I am, plus the way into Settings; preferences themselves live in Settings */
 export function AccountMenu({ onOpenDocs, children }: AccountMenuProps) {
   const { user, isAuthenticated, signOut, effectiveUserName, guestProfile } = useAuth();
-  const { openSettings } = useSettings();
+  const { openSettings, openAuthDialog } = useSettings();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
@@ -77,7 +77,7 @@ export function AccountMenu({ onOpenDocs, children }: AccountMenuProps) {
         ) : (
           <MenuItem
             icon={LogIn}
-            onClick={() => run(() => openSettings('account'))}
+            onClick={() => run(() => openAuthDialog('login'))}
             className="text-accent-text font-medium [&>svg]:text-accent-text"
           >
             {t('header.signInToSave')}

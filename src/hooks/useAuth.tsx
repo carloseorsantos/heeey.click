@@ -13,7 +13,7 @@ interface AuthContextType {
   effectiveUserId: string;
   effectiveUserName: string;
   isAuthenticated: boolean;
-  signInWithMagicLink: (email: string) => Promise<{ error: Error | null }>;
+  signInWithMagicLink: (email: string, options?: { createUser?: boolean }) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   setNickname: (name: string, color?: { background: string; stroke: string }) => void;
 }
@@ -86,12 +86,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [applyUserCustomization, guestProfile.id]);
 
-  const signInWithMagicLink = useCallback(async (email: string) => {
+  const signInWithMagicLink = useCallback(async (email: string, { createUser = true } = {}) => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
           emailRedirectTo: window.location.href,
+          shouldCreateUser: createUser,
         },
       });
       return { error };
