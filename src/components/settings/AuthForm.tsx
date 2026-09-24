@@ -27,7 +27,7 @@ export type AuthMode = 'signup' | 'login';
  * "signup" creates the account, so it asks for the age and terms confirmation every time;
  * "login" never creates one, so it can skip it.
  */
-export function AuthForm({ mode = 'signup' }: { mode?: AuthMode }) {
+export function AuthForm({ mode = 'signup', onSwitchMode }: { mode?: AuthMode; onSwitchMode?: () => void }) {
   const { signInWithMagicLink } = useAuth();
   const { t, locale } = useI18n();
   const [email, setEmail] = useState('');
@@ -174,6 +174,22 @@ export function AuthForm({ mode = 'signup' }: { mode?: AuthMode }) {
               )}
             </Button>
           </div>
+
+          {/* Hidden once the link is sent, and locked while sending so a late answer
+              never lands in the other dialog */}
+          {onSwitchMode && (
+            <p className="text-center text-sm text-label-2">
+              {mode === 'login' ? t('auth.noAccountYet') : t('auth.haveAccount')}{' '}
+              <button
+                type="button"
+                onClick={onSwitchMode}
+                disabled={loading}
+                className="font-medium text-accent-text underline-offset-2 hover:underline disabled:opacity-50 disabled:no-underline"
+              >
+                {mode === 'login' ? t('auth.createAccount') : t('dashboard.signIn')}
+              </button>
+            </p>
+          )}
         </form>
       )}
     </>
