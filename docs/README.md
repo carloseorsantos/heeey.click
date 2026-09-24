@@ -21,7 +21,7 @@ Aprenda sobre o gerenciamento de quadros, pastas hierárquicas, busca global com
 Saiba como snapshots automáticos a cada 10 minutos, retenção de 30 dias e snapshots pré-restauração garantem recuperação de estados com reconciliação sem perdas.
 
 ### 🌍 [Internacionalização (i18n)](features/i18n.md)
-Suporte nativo e verificado a Português (`pt-BR`) e Inglês (`en`), detecção automática de idioma do navegador, pluralização ICU e sincronização do idioma do Excalidraw.
+Suporte nativo a Português (`pt-BR`), Inglês (`en-US`) e Espanhol (`es-ES`) no app, nas páginas do site e nesta documentação, com detecção automática de idioma do navegador, pluralização ICU e sincronização do idioma do Excalidraw.
 
 ### 🧩 [Bibliotecas Pessoais](features/libraries.md)
 Persistência na nuvem de bibliotecas de componentes reutilizáveis para usuários autenticados, cache local para convidados e migração automática no primeiro login.
@@ -48,7 +48,7 @@ O Heeey é uma aplicação web moderna de colaboração visual desenvolvida com 
 - **Multiplayer Ultrarrápido**: Realtime Broadcast e Presence integrados sobre o canal `heeey:room:{boardId}`, permitindo latência mínima em alterações de canvas e cursores ao vivo.
 - **Autenticação Descomplicada**: Acesso híbrido — convidados podem criar quadros instantaneamente; usuários registrados autenticam-se sem senhas via Magic Link (Email OTP) e herdam seus quadros anônimos automaticamente.
 - **Programável & Orientado a Agentes**: Toda a infraestrutura possui suporte de primeira classe para automação via API REST e protocolo MCP, permitindo que agentes LLM leiam, compreendam, gerem e organizem diagramas complexos em segundos.
-- **Totalmente Internacionalizado**: Suporte nativo e verificado em testes a Português (`pt-BR`) e Inglês (`en`).
+- **Totalmente Internacionalizado**: Suporte nativo e verificado em testes a Português (`pt-BR`), Inglês (`en-US`) e Espanhol (`es-ES`).
 
 ---
 

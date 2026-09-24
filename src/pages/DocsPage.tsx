@@ -33,6 +33,7 @@ import {
   extractDocFiles,
   calculateReadingTime,
   slugify,
+  LLMS_FULL_URLS,
 } from '../lib/docsData';
 import { MarkdownRenderer } from '../components/docs/MarkdownRenderer';
 import { HeeeyWordmark } from '../components/Logo';
@@ -66,7 +67,7 @@ export function DocsPage({
   onNavigateToBoard,
 }: DocsPageProps) {
   const { openSettings } = useSettings();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [internalSlug, setInternalSlug] = useState(() =>
     normalizeSlug(propSlug || initialSlug)
@@ -147,7 +148,7 @@ export function DocsPage({
     }
   }, [currentSlug]);
 
-  const currentDoc = useMemo(() => getDocBySlug(currentSlug), [currentSlug]);
+  const currentDoc = useMemo(() => getDocBySlug(currentSlug, locale), [currentSlug, locale]);
 
   // Set document title
   useEffect(() => {
@@ -175,11 +176,11 @@ export function DocsPage({
     }
   };
 
-  const adjacent = useMemo(() => getAdjacentDocs(currentSlug), [currentSlug]);
+  const adjacent = useMemo(() => getAdjacentDocs(currentSlug, locale), [currentSlug, locale]);
   const toc = useMemo(() => (currentDoc ? extractToc(currentDoc.content) : []), [currentDoc]);
   const fileSections = useMemo(
-    () => (currentSlug === 'llms-full' && currentDoc ? extractDocFiles(currentDoc.content) : []),
-    [currentSlug, currentDoc]
+    () => (currentSlug === 'llms-full' && currentDoc ? extractDocFiles(currentDoc.content, locale) : []),
+    [currentSlug, currentDoc, locale]
   );
   const [copiedFull, setCopiedFull] = useState(false);
   const [activeId, setActiveId] = useState<string>('');
@@ -254,10 +255,10 @@ export function DocsPage({
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return null;
-    return searchDocs(searchQuery);
-  }, [searchQuery]);
+    return searchDocs(searchQuery, locale);
+  }, [searchQuery, locale]);
 
-  const groupedDocs = useMemo(() => getDocsGroupedByCategory(), []);
+  const groupedDocs = useMemo(() => getDocsGroupedByCategory(locale), [locale]);
 
   const currentCategoryMeta = useMemo(() => {
     if (!currentDoc) return null;
@@ -517,7 +518,7 @@ export function DocsPage({
                               <span>{copiedFull ? t('docs.copied') : t('docs.copyFullDump')}</span>
                             </Button>
                             <a
-                              href="/llms-full.txt"
+                              href={LLMS_FULL_URLS[locale]}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="pressable inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-callout font-semibold bg-fill text-label hover:bg-fill-2"

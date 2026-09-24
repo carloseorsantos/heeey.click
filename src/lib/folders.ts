@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { getLocale } from '../i18n';
 
 export interface Folder {
   id: string;
@@ -49,7 +50,7 @@ export function flattenFolderTree(folders: readonly Folder[]): { folder: Folder;
   const result: { folder: Folder; depth: number }[] = [];
   const visit = (parentId: string | null, depth: number) => {
     const list = [...(children.get(parentId) || [])].sort((a, b) =>
-      a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' })
+      a.name.localeCompare(b.name, getLocale(), { sensitivity: 'base' })
     );
     for (const folder of list) {
       result.push({ folder, depth });

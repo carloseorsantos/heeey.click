@@ -48,7 +48,7 @@ import { Toast, type ToastData } from '../components/ui/Toast';
 import { FolderCard } from '../components/FolderCard';
 import { FolderNameModal } from '../components/FolderNameModal';
 import { MoveToFolderModal } from '../components/MoveToFolderModal';
-import { useI18n, type MessageKey } from '../i18n';
+import { STATIC_PAGES, useI18n, type MessageKey } from '../i18n';
 import { useFolders } from '../hooks/useFolders';
 import { Folder, flattenFolderTree, getFolderPath, moveBoardToFolder } from '../lib/folders';
 import { cn } from '../lib/utils';
@@ -166,7 +166,7 @@ function SidebarItem({
 
 export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: DashboardPageProps) {
   const { user, isAuthenticated, guestProfile } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const untitled = t('board.untitled');
 
   useEffect(() => {
@@ -545,7 +545,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
   const visibleFolders = showFolders
     ? folders
         .filter((f) => parentOf(f.parent_id) === activeFolderId)
-        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }))
+        .sort((a, b) => a.name.localeCompare(b.name, locale, { sensitivity: 'base' }))
     : [];
   const folderItemCount = (folderId: string) =>
     activeBoards.filter((b) => parentOf(b.folder_id) === folderId).length +
@@ -749,7 +749,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
             <SidebarItem icon={BookOpen} label={t('dashboard.documentation')} onClick={onNavigateToDocs} />
           )}
           {/* ?home: signed-in users are otherwise sent from the landing page straight back here */}
-          <SidebarItem icon={Info} label={t('dashboard.aboutHeeey')} onClick={() => window.location.assign('/?home')} />
+          <SidebarItem icon={Info} label={t('dashboard.aboutHeeey')} onClick={() => window.location.assign(`${STATIC_PAGES.home[locale]}?home`)} />
           <SidebarItem icon={Settings} label={t('settings.title')} onClick={() => openSettings()} />
         </div>
       </aside>
@@ -1001,7 +1001,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
         </main>
 
         <footer className="lg:hidden py-6 px-4 sm:px-8 flex items-center justify-between gap-3 text-xs text-label-2">
-          <a href="/?home" className="hover:text-label transition-colors">heeey.click</a>
+          <a href={`${STATIC_PAGES.home[locale]}?home`} className="hover:text-label transition-colors">heeey.click</a>
           <div className="flex items-center gap-4">
             {onNavigateToDocs && (
               <button onClick={onNavigateToDocs} className="hover:text-label transition-colors">

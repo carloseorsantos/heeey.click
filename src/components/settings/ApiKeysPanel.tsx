@@ -74,7 +74,7 @@ export function ApiKeysPanel() {
     const result = await createApiKey(name, readOnly ? ['read'] : ['read', 'write']);
     setCreating(false);
     if ('error' in result) {
-      setCreateError(result.error);
+      setCreateError(t(result.error === 'limit' ? 'apiKeys.limitReached' : 'apiKeys.createError'));
       return;
     }
     setNewKey(result.key);

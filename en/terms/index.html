@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms of use — Heeey</title>
+    <meta name="description" content="Terms of use for Heeey, the collaborative online whiteboard: minimum age, your content, copyright and limits of liability." />
+    <link rel="canonical" href="https://www.heeey.click/en/terms" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/termos" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/en/terms" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es/terminos" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/termos" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/termos', 'en-US': '/en/terms', 'es-ES': '/es/terminos' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Skip to content</a>
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/en" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <a href="/app?lang=en-US" class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-fill">Open the app</a>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1" class="legal mx-auto max-w-3xl px-4 pb-20 pt-12 sm:px-6">
+      <h1>Terms of use</h1>
+      <p class="updated">Last updated September 23, 2026</p>
+
+      <p>
+        This is a translation of the <a href="/termos" hreflang="pt-BR" data-locale="pt-BR">Portuguese version</a>, provided for your
+        convenience. If the two differ, the Portuguese version prevails.
+      </p>
+
+      <p>
+        Heeey (heeey.click) is a free collaborative online whiteboard run by Carlos Santos.
+        By using Heeey you agree to these terms. If you don't agree, don't use the service.
+      </p>
+
+      <h2>1. Minimum age</h2>
+      <p>
+        You must be <strong>16 or older</strong> to create an account. Heeey is not directed at children.
+        If we learn that an account belongs to someone under 16, the account and its data will be deleted.
+        Parents or guardians can request deletion by emailing <a href="mailto:contato@heeey.click">contato@heeey.click</a>.
+      </p>
+
+      <h2>2. Your account and your boards</h2>
+      <p>
+        You sign in with a link sent to your email and are responsible for what happens in your account.
+        You can also use Heeey as a guest, without an account; in that case your boards are tied to your browser.
+      </p>
+      <p>
+        Every board has a link. <strong>Anyone with the link can see the board</strong> and, if the access level is
+        “can edit”, change it. Don't put information on shared boards that you don't want other people with the
+        link to see.
+      </p>
+
+      <h2>3. Your content</h2>
+      <p>
+        What you create and upload (drawings, text, images) remains yours. You only give us the permission needed to
+        store, process and show that content to you and to the people you share it with, for the sole purpose of
+        running the service. You confirm that you have the rights to what you upload.
+      </p>
+
+      <h2>4. Acceptable use</h2>
+      <p>Don't use Heeey to:</p>
+      <ul>
+        <li>publish illegal content, child sexual abuse material, hate speech, or content that violates other people's rights;</li>
+        <li>upload copyrighted images or text without permission;</li>
+        <li>distribute malware, run phishing or harvest other people's data;</li>
+        <li>overload the service, get around limits or try to access data without permission, including through the API and the MCP server.</li>
+      </ul>
+      <p>We may remove content and suspend accounts that break these rules.</p>
+
+      <h2 id="copyright">5. Copyright: how to request removal</h2>
+      <p>
+        If you believe content on Heeey infringes your copyright, send the following to
+        <a href="mailto:contato@heeey.click">contato@heeey.click</a>:
+      </p>
+      <ul>
+        <li>the protected work and the link to the board where it appears;</li>
+        <li>your name, email and address;</li>
+        <li>a good-faith statement that the use is not authorized and that the information is accurate, under penalty of law;</li>
+        <li>your signature (physical or electronic) or that of your representative.</li>
+      </ul>
+      <p>
+        We remove the reported content and notify the person responsible, who can send a counter-notice to the same
+        email. Accounts with repeated infringements are terminated. Notices under the DMCA (United States) can also be
+        sent to this address.
+      </p>
+
+      <h2>6. Free service, provided “as is”</h2>
+      <p>
+        Heeey is offered free of charge, with no guarantee of continuous availability or of being error-free. Keep copies
+        of anything important: you can export your boards at any time. We may change or shut down the service; if we shut
+        it down, we'll give at least 30 days' notice so you can export your boards.
+      </p>
+
+      <h2>7. Limitation of liability</h2>
+      <p>
+        To the fullest extent permitted by law, we are not liable for indirect damages, lost profits or loss of data
+        arising from the use of, or inability to use, Heeey, and our total liability is limited to the amount you paid us
+        in the 12 months before the event, if any. Nothing in these terms removes rights that the law guarantees you and
+        that cannot be limited by contract, such as those under Brazil's Consumer Protection Code (Código de Defesa do
+        Consumidor).
+      </p>
+
+      <h2>8. Governing law</h2>
+      <p>
+        These terms are governed by the laws of Brazil. If you are a consumer, you may bring any claim in the courts where
+        you live.
+      </p>
+
+      <h2>9. Changes and contact</h2>
+      <p>
+        If we change these terms in a meaningful way, we'll let you know in the app or by email before the change takes
+        effect. Questions: <a href="mailto:contato@heeey.click">contato@heeey.click</a>. See also the
+        <a href="/en/privacy">Privacy Policy</a>.
+      </p>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — collaborative whiteboard</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/en/terms" class="hover:text-label" aria-current="page">Terms of use</a>
+          <a href="/en/privacy" class="hover:text-label">Privacy</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+      <nav aria-label="Language" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/termos" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="hover:text-label">Português</a>
+        <a href="/en/terms" lang="en-US" hreflang="en" data-locale="en-US" class="font-medium text-label" aria-current="page">English</a>
+        <a href="/es/terminos" lang="es-ES" hreflang="es" data-locale="es-ES" class="hover:text-label">Español</a>
+      </nav>
+    </footer>
+
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

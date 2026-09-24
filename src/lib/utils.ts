@@ -48,10 +48,15 @@ const ANIMAL_NAMES: Record<Locale, string[]> = {
     'Águia', 'Leão', 'Coruja', 'Tigre', 'Lontra',
     'Koala', 'Falcão', 'Gato', 'Urso', 'Castor',
   ],
-  en: [
+  'en-US': [
     'Hawk', 'Fox', 'Dolphin', 'Panda', 'Wolf',
     'Eagle', 'Lion', 'Owl', 'Tiger', 'Otter',
     'Koala', 'Falcon', 'Cat', 'Bear', 'Beaver',
+  ],
+  'es-ES': [
+    'Halcón', 'Zorro', 'Delfín', 'Panda', 'Lobo',
+    'Águila', 'León', 'Búho', 'Tigre', 'Nutria',
+    'Koala', 'Cernícalo', 'Gato', 'Oso', 'Castor',
   ],
 };
 

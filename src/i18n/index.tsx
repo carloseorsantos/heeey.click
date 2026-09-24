@@ -5,17 +5,39 @@
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ptBR, type Messages } from './locales/pt-BR';
-import { en } from './locales/en';
+import { enUS } from './locales/en-US';
+import { esES } from './locales/es-ES';
 
-export type Locale = 'pt-BR' | 'en';
+export type Locale = 'pt-BR' | 'en-US' | 'es-ES';
 
 export const LOCALES: { id: Locale; label: string; excalidrawLangCode: string }[] = [
   { id: 'pt-BR', label: 'Português', excalidrawLangCode: 'pt-BR' },
-  { id: 'en', label: 'English', excalidrawLangCode: 'en' },
+  { id: 'en-US', label: 'English', excalidrawLangCode: 'en' },
+  { id: 'es-ES', label: 'Español', excalidrawLangCode: 'es-ES' },
 ];
 
-const DICTIONARIES: Record<Locale, Messages> = { 'pt-BR': ptBR, en };
+const DICTIONARIES: Record<Locale, Messages> = { 'pt-BR': ptBR, 'en-US': enUS, 'es-ES': esES };
+// Shared with the static landing pages, which read it to open in the visitor's chosen language
 const STORAGE_KEY = 'heeey_locale';
+
+/** The static pages (landing, legal, MCP) are separate HTML files per language */
+export type StaticPage = 'home' | 'terms' | 'privacy' | 'mcp';
+
+export const STATIC_PAGES: Record<StaticPage, Record<Locale, string>> = {
+  home: { 'pt-BR': '/', 'en-US': '/en', 'es-ES': '/es' },
+  terms: { 'pt-BR': '/termos', 'en-US': '/en/terms', 'es-ES': '/es/terminos' },
+  privacy: { 'pt-BR': '/privacidade', 'en-US': '/en/privacy', 'es-ES': '/es/privacidad' },
+  mcp: { 'pt-BR': '/pt-br/mcp', 'en-US': '/mcp', 'es-ES': '/es/mcp' },
+};
+
+/** Maps a language tag ("en", "es-MX", "pt-BR", the legacy saved "en") to a supported locale */
+export function toLocale(tag: string | null | undefined): Locale | null {
+  if (!tag) return null;
+  if (/^pt\b/i.test(tag)) return 'pt-BR';
+  if (/^en\b/i.test(tag)) return 'en-US';
+  if (/^es\b/i.test(tag)) return 'es-ES';
+  return null;
+}
 
 type Leaves<T, Prefix extends string = ''> = {
   [K in keyof T & string]: T[K] extends string ? `${Prefix}${K}` : Leaves<T[K], `${Prefix}${K}.`>;
@@ -26,16 +48,23 @@ export type MessageParams = Record<string, string | number>;
 export type Translate = (key: MessageKey, params?: MessageParams) => string;
 
 export function detectLocale(): Locale {
+  // ?lang= comes from links on the static pages (/en, /es), so the app opens in the page's language
+  const fromUrl = typeof location !== 'undefined' ? toLocale(new URLSearchParams(location.search).get('lang')) : null;
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved === 'pt-BR' || saved === 'en') return saved;
+    if (fromUrl) {
+      localStorage.setItem(STORAGE_KEY, fromUrl);
+      return fromUrl;
+    }
+    const saved = toLocale(localStorage.getItem(STORAGE_KEY));
+    if (saved) return saved;
   } catch {
     // Storage unavailable: fall back to the browser language
   }
+  if (fromUrl) return fromUrl;
   const languages = typeof navigator !== 'undefined' ? navigator.languages ?? [navigator.language] : [];
   for (const language of languages) {
-    if (/^pt\b/i.test(language)) return 'pt-BR';
-    if (/^en\b/i.test(language)) return 'en';
+    const locale = toLocale(language);
+    if (locale) return locale;
   }
   return 'pt-BR';
 }
@@ -103,6 +132,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     } catch {
       // Not persisted in private mode; the choice lasts for this visit
     }
+  }, []);
+
+  // Drop ?lang= once read (see detectLocale) so it doesn't stick to shared links
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('lang')) return;
+    url.searchParams.delete('lang');
+    window.history.replaceState(window.history.state, '', url);
   }, []);
 
   useEffect(() => {

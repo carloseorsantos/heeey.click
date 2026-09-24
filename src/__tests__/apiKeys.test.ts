@@ -14,9 +14,12 @@ describe('apiKeys', () => {
     expect(rpc).toHaveBeenCalledWith('create_api_key', { p_name: 'Agente', p_scopes: ['read'] });
   });
 
-  it('createApiKey surfaces server errors (e.g. the active key limit)', async () => {
-    vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: null, error: { message: 'Limite de 20 chaves' } } as any);
-    expect(await createApiKey('x', ['read', 'write'])).toEqual({ error: 'Limite de 20 chaves' });
+  it('createApiKey tells the active key limit apart from other failures, for the UI to translate', async () => {
+    const rpc = vi.spyOn(supabase, 'rpc');
+    rpc.mockResolvedValue({ data: null, error: { message: 'Limite de 20 chaves ativas atingido. Revogue uma chave antes de criar outra.' } } as any);
+    expect(await createApiKey('x', ['read', 'write'])).toEqual({ error: 'limit' });
+    rpc.mockResolvedValue({ data: null, error: { message: 'Entre na sua conta para criar chaves de API.' } } as any);
+    expect(await createApiKey('x', ['read', 'write'])).toEqual({ error: 'failed' });
   });
 
   it('revokeApiKey is true only when a key was revoked', async () => {

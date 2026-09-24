@@ -3,17 +3,26 @@ import react from '@vitejs/plugin-react'
 import { cpSync, createReadStream, existsSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
-// Mirrors the rewrites in vercel.json: `/` is the static landing page, `/mcp` the MCP
-// landing page, and the React app (dashboard, boards, docs) is served from app/index.html.
+// Mirrors the rewrites in vercel.json: `/` is the static landing page, the other static pages
+// (MCP, terms, privacy, and their English and Spanish versions) are HTML files of their own, and
+// the React app (dashboard, boards, docs) is served from app/index.html.
 const APP_ROUTE = /^\/(app|b|docs)(\/|$)/
+export const STATIC_PAGES = [
+  'mcp', 'termos', 'privacidade',
+  'en', 'en/terms', 'en/privacy',
+  'es', 'es/mcp', 'es/terminos', 'es/privacidad',
+  'pt-br/mcp',
+]
 
 function htmlRoutes(): Plugin {
   const rewrite = (req: { url?: string }, _res: unknown, next: () => void) => {
     const [path, query] = (req.url ?? '').split('?')
     const q = query ? `?${query}` : ''
+    const page = path.replace(/^\/|\/$/g, '')
+    // Files keep their own URL: /docs/*.md is also where the app imports the docs' Markdown from
+    if (/\.\w+$/.test(path)) return next()
     if (APP_ROUTE.test(path)) req.url = `/app/index.html${q}`
-    else if (/^\/mcp\/?$/.test(path)) req.url = `/mcp/index.html${q}`
-    else if (/^\/(termos|privacidade)\/?$/.test(path)) req.url = `/${path.split('/')[1]}/index.html${q}`
+    else if (STATIC_PAGES.includes(page)) req.url = `/${page}/index.html${q}`
     next()
   }
   return {
@@ -59,10 +68,8 @@ export default defineConfig({
       input: {
         // Static landing pages ship as their own HTML so search engines see real content
         home: resolve(__dirname, 'index.html'),
-        mcp: resolve(__dirname, 'mcp/index.html'),
         app: resolve(__dirname, 'app/index.html'),
-        termos: resolve(__dirname, 'termos/index.html'),
-        privacidade: resolve(__dirname, 'privacidade/index.html'),
+        ...Object.fromEntries(STATIC_PAGES.map((page) => [page, resolve(__dirname, page, 'index.html')])),
       },
     },
   },

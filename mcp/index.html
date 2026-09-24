@@ -1,17 +1,24 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-US">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Whiteboard MCP server for AI agents — Heeey</title>
     <meta name="description" content="A hosted, multiplayer whiteboard MCP server. Let Claude, Cursor or any MCP client draw diagrams on a shared Excalidraw canvas your team watches live. Free, no install." />
     <link rel="canonical" href="https://www.heeey.click/mcp" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/mcp" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/pt-br/mcp" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es/mcp" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/mcp" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.heeey.click/mcp" />
     <meta property="og:title" content="Whiteboard MCP server for AI agents — Heeey" />
     <meta property="og:description" content="Let your AI agent draw diagrams on a shared canvas your team watches live. Hosted, free, no install." />
     <meta property="og:image" content="https://www.heeey.click/logo.png" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="pt_BR" />
+    <meta property="og:locale:alternate" content="es_ES" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
     <script>
@@ -22,18 +29,29 @@
         }
       } catch (e) {}
     </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/pt-br/mcp', 'en-US': '/mcp', 'es-ES': '/es/mcp' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
   </head>
   <body class="bg-app text-label antialiased">
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Skip to content</a>
     <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
       <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
-        <a href="/" class="flex items-center gap-2 text-base font-semibold">
+        <a href="/en" class="flex items-center gap-2 text-base font-semibold">
           <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
           Heeey
         </a>
         <div class="flex items-center gap-1 text-sm sm:gap-2">
-          <a href="/docs/mcp/overview" class="hidden rounded-lg px-3 py-1.5 text-label-2 hover:bg-fill hover:text-label sm:inline-block">MCP docs</a>
-          <a href="/app?settings=account" class="rounded-lg px-3 py-1.5 font-medium text-accent-text hover:bg-fill">Sign in</a>
+          <a href="/pt-br/mcp" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="rounded-lg px-2 py-1.5 text-label-3 hover:bg-fill hover:text-label" title="Português">PT</a>
+          <a href="/es/mcp" lang="es-ES" hreflang="es" data-locale="es-ES" class="rounded-lg px-2 py-1.5 text-label-3 hover:bg-fill hover:text-label" title="Español">ES</a>
+          <a href="/docs/mcp/overview?lang=en-US" class="hidden rounded-lg px-3 py-1.5 text-label-2 hover:bg-fill hover:text-label sm:inline-block">MCP docs</a>
+          <a href="/app?settings=account&amp;lang=en-US" class="rounded-lg px-3 py-1.5 font-medium text-accent-text hover:bg-fill">Sign in</a>
         </div>
       </nav>
     </header>
@@ -49,10 +67,10 @@
             for an architecture diagram and watch it appear on a board everyone can open, edit and keep.
           </p>
           <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <a href="/app?settings=account" class="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+            <a href="/app?settings=account&amp;lang=en-US" class="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
               Get your free API key
             </a>
-            <a href="/docs/mcp/getting-started" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
+            <a href="/docs/mcp/getting-started?lang=en-US" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
               Read the setup guide
             </a>
           </div>
@@ -129,7 +147,7 @@ claude mcp add --transport http heeey https://www.heeey.click/api/mcp \
           </div>
           <div>
             <dt class="font-semibold">Plus a REST API</dt>
-            <dd class="mt-1 text-label-2">The same key works with <a href="/docs/api/overview" class="text-accent-text hover:underline">/api/v1</a> for scripts and CI.</dd>
+            <dd class="mt-1 text-label-2">The same key works with <a href="/docs/api/overview?lang=en-US" class="text-accent-text hover:underline">/api/v1</a> for scripts and CI.</dd>
           </div>
         </dl>
       </section>
@@ -144,7 +162,7 @@ claude mcp add --transport http heeey https://www.heeey.click/api/mcp \
             </div>
             <div class="py-6">
               <h3 class="text-lg font-semibold">Which MCP clients does it work with?</h3>
-              <p class="mt-2 text-label-2">Any client that supports remote MCP servers over Streamable HTTP with a custom header, including Claude Code and Cursor. The <a href="/docs/mcp/getting-started" class="text-accent-text hover:underline">setup guide</a> has copy-paste configs.</p>
+              <p class="mt-2 text-label-2">Any client that supports remote MCP servers over Streamable HTTP with a custom header, including Claude Code and Cursor. The <a href="/docs/mcp/getting-started?lang=en-US" class="text-accent-text hover:underline">setup guide</a> has copy-paste configs.</p>
             </div>
             <div class="py-6">
               <h3 class="text-lg font-semibold">How is this different from a local Excalidraw MCP server?</h3>
@@ -152,7 +170,7 @@ claude mcp add --transport http heeey https://www.heeey.click/api/mcp \
             </div>
             <div class="py-6">
               <h3 class="text-lg font-semibold">Can I control what the agent is allowed to do?</h3>
-              <p class="mt-2 text-label-2">Yes. API keys are scoped to read or read and write, and can be revoked at any time. See <a href="/docs/mcp/auth-and-permissions" class="text-accent-text hover:underline">auth and permissions</a>.</p>
+              <p class="mt-2 text-label-2">Yes. API keys are scoped to read or read and write, and can be revoked at any time. See <a href="/docs/mcp/auth-and-permissions?lang=en-US" class="text-accent-text hover:underline">auth and permissions</a>.</p>
             </div>
             <div class="py-6">
               <h3 class="text-lg font-semibold">Do people need an account to see the diagram?</h3>
@@ -165,7 +183,7 @@ claude mcp add --transport http heeey https://www.heeey.click/api/mcp \
       <section class="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6">
         <h2 class="text-3xl font-bold tracking-tight">Give your agent a whiteboard</h2>
         <p class="mx-auto mt-3 max-w-xl text-lg text-label-2">Sign in, create a key and your next diagram is one prompt away.</p>
-        <a href="/app?settings=account" class="mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+        <a href="/app?settings=account&amp;lang=en-US" class="mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
           Get your free API key
         </a>
       </section>
@@ -175,13 +193,18 @@ claude mcp add --transport http heeey https://www.heeey.click/api/mcp \
       <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <span>Heeey — collaborative whiteboard</span>
         <div class="flex flex-wrap gap-x-5 gap-y-2">
-          <a href="/docs/mcp/overview" class="hover:text-label">MCP docs</a>
-          <a href="/" class="hover:text-label" hreflang="pt-BR">Lousa online (PT-BR)</a>
-          <a href="/termos" class="hover:text-label" hreflang="pt-BR">Terms (PT-BR)</a>
-          <a href="/privacidade" class="hover:text-label" hreflang="pt-BR">Privacy (PT-BR)</a>
+          <a href="/docs/mcp/overview?lang=en-US" class="hover:text-label">MCP docs</a>
+          <a href="/en" class="hover:text-label">Online whiteboard</a>
+          <a href="/en/terms" class="hover:text-label">Terms of use</a>
+          <a href="/en/privacy" class="hover:text-label">Privacy</a>
           <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
         </div>
       </div>
+      <nav aria-label="Language" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/pt-br/mcp" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="hover:text-label">Português</a>
+        <a href="/mcp" lang="en-US" hreflang="en" data-locale="en-US" class="font-medium text-label" aria-current="page">English</a>
+        <a href="/es/mcp" lang="es-ES" hreflang="es" data-locale="es-ES" class="hover:text-label">Español</a>
+      </nav>
     </footer>
 
     <script type="module" src="/src/landing/main.ts"></script>

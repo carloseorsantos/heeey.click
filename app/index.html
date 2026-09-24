@@ -13,6 +13,15 @@
       window.EXCALIDRAW_ASSET_PATH = '/excalidraw-assets/';
     </script>
     <script>
+      // Language before first paint (the React app keeps it in sync afterwards, see src/i18n)
+      try {
+        var lang = (new URLSearchParams(location.search).get('lang') || localStorage.getItem('heeey_locale') || navigator.language || '').toLowerCase();
+        var locale = /^en/.test(lang) ? 'en-US' : /^es/.test(lang) ? 'es-ES' : 'pt-BR';
+        document.documentElement.lang = locale;
+        document.title = { 'pt-BR': 'Heeey — Lousa colaborativa', 'en-US': 'Heeey — Collaborative whiteboard', 'es-ES': 'Heeey — Pizarra colaborativa' }[locale];
+      } catch (e) {}
+    </script>
+    <script>
       // Apply theme before first paint to avoid a light/dark flash
       try {
         var t = localStorage.getItem('heeey_theme');

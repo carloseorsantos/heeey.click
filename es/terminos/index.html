@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es-ES">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Términos de uso — Heeey</title>
+    <meta name="description" content="Términos de uso de Heeey, la pizarra online colaborativa: edad mínima, tu contenido, derechos de autor y límites de responsabilidad." />
+    <link rel="canonical" href="https://www.heeey.click/es/terminos" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/termos" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/en/terms" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es/terminos" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/termos" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/termos', 'en-US': '/en/terms', 'es-ES': '/es/terminos' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Saltar al contenido</a>
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/es" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <a href="/app?lang=es-ES" class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-fill">Abrir la app</a>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1" class="legal mx-auto max-w-3xl px-4 pb-20 pt-12 sm:px-6">
+      <h1>Términos de uso</h1>
+      <p class="updated">Actualizado el 23 de septiembre de 2026</p>
+
+      <p>
+        Esta es una traducción de la <a href="/termos" hreflang="pt-BR" data-locale="pt-BR">versión en portugués</a>, ofrecida para tu
+        comodidad. Si ambas difieren, prevalece la versión en portugués.
+      </p>
+
+      <p>
+        Heeey (heeey.click) es una pizarra online colaborativa y gratuita, mantenida por Carlos Santos.
+        Al usar Heeey aceptas estos términos. Si no estás de acuerdo, no uses el servicio.
+      </p>
+
+      <h2>1. Edad mínima</h2>
+      <p>
+        Debes tener <strong>16 años o más</strong> para crear una cuenta. Heeey no está dirigido a menores.
+        Si sabemos que una cuenta pertenece a alguien menor de 16 años, la cuenta y sus datos se eliminarán.
+        Los padres, madres o tutores pueden pedir la eliminación escribiendo a <a href="mailto:contato@heeey.click">contato@heeey.click</a>.
+      </p>
+
+      <h2>2. Tu cuenta y tus pizarras</h2>
+      <p>
+        Inicias sesión con un enlace enviado a tu correo y eres responsable de lo que ocurra en tu cuenta.
+        También puedes usar Heeey como invitado, sin cuenta; en ese caso, las pizarras quedan vinculadas a tu navegador.
+      </p>
+      <p>
+        Cada pizarra tiene un enlace. <strong>Cualquiera que tenga el enlace puede ver la pizarra</strong> y, si el nivel
+        de acceso es «puede editar», modificarla. No pongas en pizarras compartidas información que no quieras que vean
+        otras personas con el enlace.
+      </p>
+
+      <h2>3. Tu contenido</h2>
+      <p>
+        Lo que creas y subes (dibujos, textos, imágenes) sigue siendo tuyo. Solo nos das el permiso necesario para
+        guardar, procesar y mostrar ese contenido a ti y a las personas con las que lo compartas, con el único objetivo
+        de hacer funcionar el servicio. Declaras que tienes los derechos sobre lo que subes.
+      </p>
+
+      <h2>4. Uso aceptable</h2>
+      <p>No uses Heeey para:</p>
+      <ul>
+        <li>publicar contenido ilegal, de abuso sexual infantil, de odio o que vulnere los derechos de otras personas;</li>
+        <li>subir imágenes o textos protegidos por derechos de autor sin autorización;</li>
+        <li>distribuir malware, hacer phishing o recopilar datos de otras personas;</li>
+        <li>sobrecargar el servicio, saltarse límites o intentar acceder a datos sin permiso, también a través de la API y del servidor MCP.</li>
+      </ul>
+      <p>Podemos retirar contenido y suspender cuentas que incumplan estas normas.</p>
+
+      <h2 id="derechos-de-autor">5. Derechos de autor: cómo pedir la retirada</h2>
+      <p>
+        Si crees que un contenido de Heeey infringe tus derechos de autor, envía a
+        <a href="mailto:contato@heeey.click">contato@heeey.click</a>:
+      </p>
+      <ul>
+        <li>la obra protegida y el enlace de la pizarra donde aparece;</li>
+        <li>tu nombre, correo electrónico y dirección;</li>
+        <li>una declaración de buena fe de que el uso no está autorizado y de que la información es verdadera, bajo las responsabilidades legales que correspondan;</li>
+        <li>tu firma (física o electrónica) o la de tu representante.</li>
+      </ul>
+      <p>
+        Retiramos el contenido notificado y avisamos a la persona responsable, que puede enviar una contranotificación al
+        mismo correo. Las cuentas con infracciones reiteradas se cierran. Las notificaciones conforme a la DMCA (Estados
+        Unidos) también pueden enviarse a esta dirección.
+      </p>
+
+      <h2>6. Servicio gratuito, «tal cual»</h2>
+      <p>
+        Heeey se ofrece gratis y sin garantías de disponibilidad continua ni de ausencia de errores. Guarda copias de lo
+        que sea importante: puedes exportar tus pizarras en cualquier momento. Podemos cambiar o cerrar el servicio; si lo
+        cerramos, avisaremos con al menos 30 días de antelación para que puedas exportar tus pizarras.
+      </p>
+
+      <h2>7. Limitación de responsabilidad</h2>
+      <p>
+        En la máxima medida permitida por la ley, no respondemos de daños indirectos, lucro cesante ni pérdida de datos
+        derivados del uso o de la imposibilidad de usar Heeey, y nuestra responsabilidad total se limita a la cantidad que
+        nos hayas pagado en los 12 meses anteriores al hecho, si la hubiera. Nada en estos términos elimina los derechos que
+        la ley te garantiza y que no pueden limitarse por contrato, como los previstos en el Código de Defensa del
+        Consumidor de Brasil (Código de Defesa do Consumidor).
+      </p>
+
+      <h2>8. Ley aplicable</h2>
+      <p>
+        Estos términos se rigen por las leyes de Brasil. Si eres consumidor, puedes presentar cualquier reclamación ante los
+        tribunales de tu domicilio.
+      </p>
+
+      <h2>9. Cambios y contacto</h2>
+      <p>
+        Si cambiamos estos términos de forma relevante, te avisaremos en la app o por correo antes de que el cambio entre en
+        vigor. Dudas: <a href="mailto:contato@heeey.click">contato@heeey.click</a>. Consulta también la
+        <a href="/es/privacidad">Política de privacidad</a>.
+      </p>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — pizarra colaborativa</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/es/terminos" class="hover:text-label" aria-current="page">Términos de uso</a>
+          <a href="/es/privacidad" class="hover:text-label">Privacidad</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+      <nav aria-label="Idioma" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/termos" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="hover:text-label">Português</a>
+        <a href="/en/terms" lang="en-US" hreflang="en" data-locale="en-US" class="hover:text-label">English</a>
+        <a href="/es/terminos" lang="es-ES" hreflang="es" data-locale="es-ES" class="font-medium text-label" aria-current="page">Español</a>
+      </nav>
+    </footer>
+
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

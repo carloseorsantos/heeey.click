@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="es-ES">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Política de privacidad — Heeey</title>
+    <meta name="description" content="Qué datos recoge Heeey, para qué, con quién los comparte y cómo ejercer tus derechos según la LGPD y el RGPD." />
+    <link rel="canonical" href="https://www.heeey.click/es/privacidad" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/privacidade" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/en/privacy" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es/privacidad" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/privacidade" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/privacidade', 'en-US': '/en/privacy', 'es-ES': '/es/privacidad' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Saltar al contenido</a>
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/es" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <a href="/app?lang=es-ES" class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-fill">Abrir la app</a>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1" class="legal mx-auto max-w-3xl px-4 pb-20 pt-12 sm:px-6">
+      <h1>Política de privacidad</h1>
+      <p class="updated">Actualizada el 23 de septiembre de 2026</p>
+
+      <p>
+        Esta es una traducción de la <a href="/privacidade" hreflang="pt-BR" data-locale="pt-BR">versión en portugués</a>, ofrecida para tu
+        comodidad. Si ambas difieren, prevalece la versión en portugués.
+      </p>
+
+      <p>
+        Esta política explica qué datos trata Heeey (heeey.click) y por qué. El responsable del tratamiento es
+        Carlos Santos, responsable de Heeey. Contacto para cualquier asunto de privacidad:
+        <a href="mailto:contato@heeey.click">contato@heeey.click</a>.
+      </p>
+
+      <h2>1. Datos que tratamos</h2>
+      <ul>
+        <li><strong>Correo electrónico</strong>, cuando creas una cuenta, para enviarte el enlace de acceso e identificar la cuenta.</li>
+        <li><strong>Contenido de las pizarras</strong> (dibujos, textos, imágenes subidas, título e historial de versiones).</li>
+        <li><strong>El nombre y el color del cursor</strong> que eliges, que ven las personas que están en la misma pizarra.</li>
+        <li>
+          <strong>Datos de uso</strong>: páginas visitadas y eventos de la app (por ejemplo, «cuenta creada»), vinculados a
+          un identificador aleatorio, nunca a tu correo. No grabamos sesiones ni lo que escribes.
+        </li>
+        <li><strong>Datos técnicos</strong>, como la dirección IP y el navegador, que nuestros proveedores de alojamiento registran por seguridad.</li>
+      </ul>
+      <p>No vendemos datos ni usamos cookies publicitarias.</p>
+
+      <h2>2. Finalidades y bases legales</h2>
+      <ul>
+        <li>Prestar el servicio (cuenta, guardar y sincronizar pizarras): ejecución del contrato.</li>
+        <li>Seguridad, prevención de abusos y métricas de uso para mejorar el producto: interés legítimo.</li>
+        <li>Cumplir obligaciones legales y atender peticiones de las autoridades: obligación legal.</li>
+      </ul>
+
+      <h2>3. Con quién los compartimos</h2>
+      <p>Usamos estos proveedores para hacer funcionar Heeey, y solo tratan los datos siguiendo nuestras instrucciones:</p>
+      <ul>
+        <li><strong>Supabase</strong>: base de datos, inicio de sesión y almacenamiento de imágenes.</li>
+        <li><strong>Vercel</strong>: alojamiento del sitio y de la API.</li>
+        <li>
+          <strong>Vercel AI Gateway</strong>: solo cuando usas la búsqueda por significado, los títulos y textos de tus
+          pizarras se envían al modelo de IA para encontrar los resultados.
+        </li>
+        <li><strong>PostHog</strong>: las métricas de uso descritas arriba.</li>
+      </ul>
+      <p>
+        Algunos de estos proveedores están fuera de Brasil (por ejemplo, en Estados Unidos). Estas transferencias cumplen la
+        LGPD (Ley General de Protección de Datos de Brasil) y el RGPD, con cláusulas contractuales de protección de datos.
+      </p>
+      <p>
+        Recuerda: cualquiera que tenga el enlace de una pizarra puede verla (consulta los <a href="/es/terminos">Términos de uso</a>).
+      </p>
+
+      <h2>4. Almacenamiento en tu navegador</h2>
+      <p>
+        Usamos el almacenamiento local del navegador (localStorage) para mantener tu sesión iniciada, recordar el tema y el
+        idioma, y guardar las pizarras de invitado y copias para usarlas sin conexión. Esta información se queda en tu dispositivo.
+      </p>
+
+      <h2>5. Durante cuánto tiempo</h2>
+      <p>
+        Conservamos tus datos mientras exista tu cuenta. Las pizarras eliminadas van a la papelera y puedes borrarlas
+        definitivamente. Cuando pides eliminar tu cuenta, borramos tus datos en un plazo de 30 días, salvo lo que la ley
+        nos obligue a conservar.
+      </p>
+
+      <h2>6. Tus derechos</h2>
+      <p>
+        Según la LGPD (y el RGPD, si estás en la Unión Europea) puedes pedir la confirmación y el acceso a tus datos, su
+        rectificación, portabilidad y supresión, información sobre con quién se comparten, y oponerte a los tratamientos
+        basados en el interés legítimo. Escribe a <a href="mailto:contato@heeey.click">contato@heeey.click</a>; respondemos
+        en un plazo de 15 días. También puedes presentar una reclamación ante la autoridad de protección de datos de Brasil
+        (ANPD) o ante la de tu país, como la AEPD en España.
+      </p>
+
+      <h2>7. Menores</h2>
+      <p>
+        Heeey no está dirigido a menores de 16 años y no se pueden crear cuentas por debajo de esa edad. Si eres responsable
+        de un menor que ha creado una cuenta, escríbenos para eliminarla.
+      </p>
+
+      <h2>8. Seguridad</h2>
+      <p>
+        Los datos viajan cifrados (HTTPS) y la base de datos aplica reglas de acceso por fila: cada persona solo puede leer
+        sus propias pizarras o aquellas cuyo enlace ha recibido.
+      </p>
+
+      <h2>9. Cambios</h2>
+      <p>Si esta política cambia de forma relevante, te avisaremos en la app o por correo.</p>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — pizarra colaborativa</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/es/terminos" class="hover:text-label">Términos de uso</a>
+          <a href="/es/privacidad" class="hover:text-label" aria-current="page">Privacidad</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+      <nav aria-label="Idioma" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/privacidade" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="hover:text-label">Português</a>
+        <a href="/en/privacy" lang="en-US" hreflang="en" data-locale="en-US" class="hover:text-label">English</a>
+        <a href="/es/privacidad" lang="es-ES" hreflang="es" data-locale="es-ES" class="font-medium text-label" aria-current="page">Español</a>
+      </nav>
+    </footer>
+
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

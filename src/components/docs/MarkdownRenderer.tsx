@@ -88,7 +88,7 @@ export function MarkdownRenderer({
       /(?:^|\n)={10,}\s*\n\s*FILE:\s*([^\n]+)\s*\n\s*={10,}(?:\n|$)/gi,
       (_match, filePath) => {
         const cleanPath = filePath.trim();
-        const docSlug = normalizeSlug(cleanPath.replace(/^docs\//, ''));
+        const docSlug = normalizeSlug(cleanPath.replace(/^docs\/(?:(?:en|es)\/)?/, ''));
         const fileId = `file-${slugify(cleanPath)}`;
         return `\n\n<div class="doc-file-banner my-12 pt-8 border-t border-separator" id="${fileId}">
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-surface shadow-card">
@@ -99,12 +99,12 @@ export function MarkdownRenderer({
         </svg>
       </div>
       <div class="min-w-0 truncate">
-        <span class="text-2xs font-semibold text-label-2 block leading-none mb-1">Arquivo Fonte</span>
+        <span class="text-2xs font-semibold text-label-2 block leading-none mb-1">${escapeHtml(t('docs.sourceFile'))}</span>
         <span class="font-mono text-xs sm:text-sm font-semibold text-label truncate block">${escapeHtml(cleanPath)}</span>
       </div>
     </div>
     <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-accent-text bg-accent/10 hover:bg-accent/15 transition-colors flex-shrink-0">
-      <span>Abrir documento isolado</span>
+      <span>${escapeHtml(t('docs.openStandalone'))}</span>
       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
       </svg>
@@ -134,7 +134,7 @@ export function MarkdownRenderer({
           // Defense-in-depth: if heading contains equal signs banner or starts with FILE:
           if (/={10,}/.test(plain) || /^FILE:\s+/i.test(plain)) {
             const cleanPath = plain.replace(/={5,}/g, '').replace(/^FILE:\s*/i, '').trim();
-            const docSlug = normalizeSlug(cleanPath.replace(/^docs\//, ''));
+            const docSlug = normalizeSlug(cleanPath.replace(/^docs\/(?:(?:en|es)\/)?/, ''));
             const fileId = `file-${slugify(cleanPath)}`;
             return `
               <div class="doc-file-banner my-12 pt-8 border-t border-separator" id="${fileId}">
@@ -146,12 +146,12 @@ export function MarkdownRenderer({
                       </svg>
                     </div>
                     <div class="min-w-0 truncate">
-                      <span class="text-2xs font-semibold text-label-2 block leading-none mb-1">Arquivo Fonte</span>
+                      <span class="text-2xs font-semibold text-label-2 block leading-none mb-1">${escapeHtml(t('docs.sourceFile'))}</span>
                       <span class="font-mono text-xs sm:text-sm font-semibold text-label truncate block">${escapeHtml(cleanPath)}</span>
                     </div>
                   </div>
                   <a href="/docs/${docSlug}" data-doc-slug="${docSlug}" class="doc-internal-link no-underline inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-accent-text bg-accent/10 hover:bg-accent/15 transition-colors flex-shrink-0">
-                    <span>Abrir documento isolado</span>
+                    <span>${escapeHtml(t('docs.openStandalone'))}</span>
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
@@ -245,8 +245,8 @@ export function MarkdownRenderer({
           const raw = tokens.map((t: any) => t.raw || t.text || '').join('');
 
           // Tip Callout
-          if (raw.includes('[!TIP]') || /\*\*Dica\*\*:|\*\*Tip\*\*/i.test(raw)) {
-            const cleanText = text.replace(/\[!TIP\]/g, '').replace(/<strong>(?:Dica|Tip)<\/strong>:?/i, '').trim();
+          if (raw.includes('[!TIP]') || /\*\*(?:Dica|Tip|Consejo)\*\*/i.test(raw)) {
+            const cleanText = text.replace(/\[!TIP\]/g, '').replace(/<strong[^>]*>(?:Dica|Tip|Consejo)<\/strong>:?/i, '').trim();
             return `
               <div class="my-5 rounded-xl bg-emerald-500/10 p-4 text-label text-sm">
                 <div class="flex items-center gap-2 font-semibold text-emerald-700 dark:text-emerald-300 mb-1">
@@ -258,8 +258,8 @@ export function MarkdownRenderer({
           }
 
           // Warning Callout
-          if (raw.includes('[!WARNING]') || /\*\*Atenção\*\*:|\*\*Warning\*\*:|\*\*Nota de Segurança\*\*/i.test(raw)) {
-            const cleanText = text.replace(/\[!WARNING\]/g, '').replace(/<strong>(?:Atenção|Warning|Nota de Segurança)<\/strong>:?/i, '').trim();
+          if (raw.includes('[!WARNING]') || /\*\*(?:Atenção|Atención|Warning|Nota de Segurança|Security Note|Nota de seguridad)\*\*/i.test(raw)) {
+            const cleanText = text.replace(/\[!WARNING\]/g, '').replace(/<strong[^>]*>(?:Atenção|Atención|Warning|Nota de Segurança|Security Note|Nota de seguridad)<\/strong>:?/i, '').trim();
             return `
               <div class="my-5 rounded-xl bg-amber-500/10 p-4 text-label text-sm">
                 <div class="flex items-center gap-2 font-semibold text-amber-700 dark:text-amber-300 mb-1">
@@ -271,8 +271,8 @@ export function MarkdownRenderer({
           }
 
           // Note Callout
-          if (raw.includes('[!NOTE]') || /\*\*Nota\*\*:|\*\*Note\*\*:|\*\*Importante\*\*/i.test(raw)) {
-            const cleanText = text.replace(/\[!NOTE\]/g, '').replace(/<strong>(?:Nota|Note|Importante)<\/strong>:?/i, '').trim();
+          if (raw.includes('[!NOTE]') || /\*\*(?:Nota|Note|Importante|Important)\*\*/i.test(raw)) {
+            const cleanText = text.replace(/\[!NOTE\]/g, '').replace(/<strong[^>]*>(?:Nota|Note|Importante|Important)<\/strong>:?/i, '').trim();
             return `
               <div class="my-5 rounded-xl bg-sky-500/10 p-4 text-label text-sm">
                 <div class="flex items-center gap-2 font-semibold text-sky-700 dark:text-sky-300 mb-1">

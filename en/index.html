@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Free online collaborative whiteboard — Heeey</title>
+    <meta name="description" content="A free online collaborative whiteboard that runs in your browser. Draw, make diagrams and teach with other people in real time, with nothing to install." />
+    <link rel="canonical" href="https://www.heeey.click/en" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/en" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.heeey.click/en" />
+    <meta property="og:title" content="Free online collaborative whiteboard — Heeey" />
+    <meta property="og:description" content="Draw, make diagrams and teach with other people in real time, right in your browser." />
+    <meta property="og:image" content="https://www.heeey.click/logo.png" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="pt_BR" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      // Signed-in users go straight to the app; crawlers never have a session, so they always
+      // get this page. ?home skips the redirect (the app's "About Heeey" link uses it).
+      try {
+        if (!/[?&]home\b/.test(location.search) && Object.keys(localStorage).some(function (k) { return /^sb-.+-auth-token$/.test(k); })) {
+          location.replace('/app');
+        }
+      } catch (e) {}
+    </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/', 'en-US': '/en', 'es-ES': '/es' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
+    <script>
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Skip to content</a>
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/en" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <div class="flex items-center gap-1 text-sm sm:gap-2">
+          <a href="/" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="rounded-lg px-2 py-1.5 text-label-3 hover:bg-fill hover:text-label" title="Português">PT</a>
+          <a href="/es" lang="es-ES" hreflang="es" data-locale="es-ES" class="rounded-lg px-2 py-1.5 text-label-3 hover:bg-fill hover:text-label" title="Español">ES</a>
+          <a href="/docs?lang=en-US" class="hidden rounded-lg px-3 py-1.5 text-label-2 hover:bg-fill hover:text-label sm:inline-block">Documentation</a>
+          <a href="/app?settings=account&amp;lang=en-US" class="rounded-lg px-3 py-1.5 font-medium text-accent-text hover:bg-fill">Sign in</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section class="mx-auto max-w-5xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20">
+        <div class="max-w-2xl">
+          <h1 class="text-4xl font-bold tracking-tight sm:text-5xl sm:leading-[1.1]">
+            A free online collaborative whiteboard, nothing to install
+          </h1>
+          <p class="mt-5 text-lg text-label-2">
+            Draw, make diagrams and teach with other people in real time, right in your browser.
+            Create an account with just your email and your boards are saved on every device.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a href="/app?settings=account&amp;lang=en-US" class="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+              Create a free account
+            </a>
+            <a href="/app?lang=en-US" data-guest-label="Open my boards" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
+              Try it without an account
+            </a>
+          </div>
+          <p class="mt-3 text-sm text-label-3">No password: you sign in with a link sent to your email.</p>
+        </div>
+
+        <figure class="mt-12 overflow-hidden rounded-3xl bg-surface shadow-card" aria-label="Illustration of a whiteboard with two people drawing at the same time">
+          <svg viewBox="0 0 960 400" class="block h-auto w-full" role="img" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <defs>
+              <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1.2" fill="rgb(var(--label-3) / 0.35)" />
+              </pattern>
+            </defs>
+            <rect width="960" height="400" fill="url(#dots)" />
+            <g stroke="rgb(var(--label))" stroke-width="2.5">
+              <path d="M102 128c40-3 138-4 176 1 4 22 3 70-1 94-44 3-133 2-174-1-3-26-4-68-1-94z" fill="rgb(var(--accent) / 0.08)" />
+              <path d="M398 110c24-4 116-5 160 0 5 30 5 100 0 128-38 5-126 4-160-1-4-30-5-99 0-127z" fill="rgb(var(--accent) / 0.14)" />
+              <path d="M700 136c42-2 128-3 160 2 3 22 2 64-2 88-40 3-120 3-158-1-3-24-4-66 0-89z" fill="rgb(var(--accent) / 0.08)" />
+              <path d="M286 176c36-2 70-1 104 0" /><path d="M378 166l14 10-14 10" />
+              <path d="M566 176c40 0 82 1 126 3" /><path d="M680 169l14 10-15 9" />
+            </g>
+            <g fill="rgb(var(--label))" font-size="22" font-weight="600" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+              <text x="190" y="183">Idea</text>
+              <text x="478" y="183">Draft</text>
+              <text x="780" y="187">Lesson ready</text>
+            </g>
+            <path d="M148 300c30-26 64-26 94 0s64 26 94 0 64-26 94 0" stroke="#30b04f" stroke-width="3" />
+            <g>
+              <path d="M612 282l0 34 10-9 7 15 7-3-7-15 13 0z" fill="#30b04f" stroke="rgb(var(--surface))" stroke-width="1.5" />
+              <rect x="636" y="316" width="76" height="26" rx="8" fill="#30b04f" />
+              <text x="674" y="334" font-size="14" font-weight="600" fill="#fff" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">Ingrid</text>
+            </g>
+            <g>
+              <path d="M436 300l0 34 10-9 7 15 7-3-7-15 13 0z" fill="#0a84ff" stroke="rgb(var(--surface))" stroke-width="1.5" />
+              <rect x="460" y="334" width="80" height="26" rx="8" fill="#0a84ff" />
+              <text x="500" y="352" font-size="14" font-weight="600" fill="#fff" text-anchor="middle" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">Carlos</text>
+            </g>
+          </svg>
+        </figure>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">How do you use the Heeey online whiteboard?</h2>
+          <p class="mt-3 max-w-2xl text-lg text-label-2">
+            Open a new board, share the link and everyone draws on the same screen, seeing each person's cursor live.
+          </p>
+          <ol class="mt-10 grid gap-6 sm:grid-cols-3">
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">1</span>
+              <h3 class="mt-2 text-lg font-semibold">Create a board</h3>
+              <p class="mt-2 text-label-2">Click new board and start drawing. You can try it without an account; your work is saved in the browser.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">2</span>
+              <h3 class="mt-2 text-lg font-semibold">Share the link</h3>
+              <p class="mt-2 text-label-2">Choose whether people with the link can edit or only watch, and send it to your class or team.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">3</span>
+              <h3 class="mt-2 text-lg font-semibold">Draw together</h3>
+              <p class="mt-2 text-label-2">Each person shows up with a name and color on their cursor. Changes reach everyone instantly.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">What can you do on the whiteboard?</h2>
+        <p class="mt-3 max-w-2xl text-lg text-label-2">
+          Everything you'd do on a real whiteboard, with Excalidraw's hand-drawn style and a few things paper can't do.
+        </p>
+        <ul class="mt-10 grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <li>
+            <h3 class="font-semibold">Shapes, arrows and text</h3>
+            <p class="mt-1 text-label-2">Rectangles, circles, arrows that snap to shapes, text and freehand drawing.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Real-time collaboration</h3>
+            <p class="mt-1 text-label-2">Named cursors, a laser pointer and each person's selection, visible to everyone.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Images</h3>
+            <p class="mt-1 text-label-2">Paste or drag images onto the board to draw notes over them.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Folders and search</h3>
+            <p class="mt-1 text-label-2">Organize boards in folders and find any of them by the text written inside.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Version history</h3>
+            <p class="mt-1 text-label-2">Go back to an earlier version of the board when someone deletes what they shouldn't have.</p>
+          </li>
+          <li>
+            <h3 class="font-semibold">Element libraries</h3>
+            <p class="mt-1 text-label-2">Use ready-made libraries of icons and components to build diagrams faster.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">Frequently asked questions</h2>
+          <div class="mt-8 divide-y divide-separator">
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Is the Heeey online whiteboard free?</h3>
+              <p class="mt-2 text-label-2">Yes. You can create boards, share them and collaborate in real time without paying anything.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Do I need an account to use it?</h3>
+              <p class="mt-2 text-label-2">Not to try it: you can draw as a guest, and the board is saved in your browser. With an account, your boards live in the cloud and you get folders, search and version history. Boards you created as a guest move to your account when you sign in.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">How do I sign in without a password?</h3>
+              <p class="mt-2 text-label-2">You type your email and get a sign-in link (a magic link). Click it and you're in. There's no password to forget.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Can I use it to teach online?</h3>
+              <p class="mt-2 text-label-2">Yes. Share the link as "View only" so students can follow along live, or as "Can edit" so they can solve exercises with you on the same board.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">Does it work on phones and tablets?</h3>
+              <p class="mt-2 text-label-2">It works in the browser on any device, with no app to install.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">What happens if the internet goes down?</h3>
+              <p class="mt-2 text-label-2">Nothing is lost. Every stroke is saved in your browser first and synced to the cloud when the connection comes back.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">Your next idea starts on a blank board</h2>
+        <p class="mx-auto mt-3 max-w-xl text-lg text-label-2">Create your account in seconds and keep all your boards in one place.</p>
+        <a href="/app?settings=account&amp;lang=en-US" class="mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+          Create a free account
+        </a>
+      </section>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — collaborative whiteboard</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/docs?lang=en-US" class="hover:text-label">Documentation</a>
+          <a href="/mcp" class="hover:text-label">For developers: MCP for AI agents</a>
+          <a href="/en/terms" class="hover:text-label">Terms of use</a>
+          <a href="/en/privacy" class="hover:text-label">Privacy</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+      <nav aria-label="Language" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="hover:text-label">Português</a>
+        <a href="/en" lang="en-US" hreflang="en" data-locale="en-US" class="font-medium text-label" aria-current="page">English</a>
+        <a href="/es" lang="es-ES" hreflang="es" data-locale="es-ES" class="hover:text-label">Español</a>
+      </nav>
+    </footer>
+
+    <script>
+      // Guests who already have boards in this browser: point them back to their boards
+      try {
+        var boards = JSON.parse(localStorage.getItem('heeey_local_boards') || '[]');
+        if (Array.isArray(boards) && boards.length > 0) {
+          document.querySelectorAll('[data-guest-label]').forEach(function (el) {
+            el.textContent = el.getAttribute('data-guest-label');
+          });
+        }
+      } catch (e) {}
+    </script>
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
-import { useI18n } from '../../i18n';
+import { STATIC_PAGES, useI18n } from '../../i18n';
 
 const RATE_LIMIT_MARKERS = [
   'rate limit',
@@ -34,7 +34,7 @@ function isRateLimitError(message: string) {
 /** Magic-link sign-in, inline in Settings › Account */
 export function AuthForm() {
   const { signInWithMagicLink } = useAuth();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -62,7 +62,8 @@ export function AuthForm() {
 
     setLoading(false);
     if (err) {
-      setError(err.message || t('auth.sendError'));
+      // Supabase's messages are in English; show ours, in the user's language
+      setError(err.message && isRateLimitError(err.message) ? err.message : t('auth.sendError'));
     } else {
       setSuccess(true);
     }
@@ -123,11 +124,11 @@ export function AuthForm() {
             />
             <span>
               {t('auth.consentBefore')}{' '}
-              <a href="/termos" target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+              <a href={STATIC_PAGES.terms[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
                 {t('auth.terms')}
               </a>{' '}
               {t('auth.consentAnd')}{' '}
-              <a href="/privacidade" target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+              <a href={STATIC_PAGES.privacy[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
                 {t('auth.privacy')}
               </a>
               .

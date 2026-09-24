@@ -1,0 +1,71 @@
+# Heeey (heeey.click)
+
+Heeey es una aplicación web de pizarra colaborativa y diagramas construida sobre el núcleo open source oficial del editor Excalidraw (`@excalidraw/excalidraw` 0.18.x), con persistencia en la nube, multijugador en tiempo real mediante Supabase (Broadcast y Presence), acceso híbrido como invitado o con magic link, panel con varias pizarras y carpetas, papelera con borrado reversible, historial de versiones, búsqueda de texto completo en el lienzo, bibliotecas personales, API REST pública y un servidor Model Context Protocol (MCP) para agentes de IA.
+
+## Qué somos
+
+- Aplicación web: https://heeey.click
+- Repositorio open source: https://github.com/carloseorsantos/heeey.click
+- Documentación: https://heeey.click/docs (en portugués, inglés y español; sigue el idioma de la app, o pasa `?lang=es-ES`, `?lang=en-US` o `?lang=pt-BR`)
+- Idiomas del sitio: portugués https://heeey.click/, inglés https://heeey.click/en, español https://heeey.click/es
+- Versiones de este archivo: https://heeey.click/llms.txt (inglés), https://heeey.click/pt-br/llms.txt (portugués)
+- Motor de la pizarra: `@excalidraw/excalidraw` 0.18.x
+
+## Qué hacemos
+
+- Pizarra colaborativa y diagramas en tiempo real, con la estética vectorial dibujada a mano.
+- Sincronización multijugador con cursores en directo, colores de los participantes y puntero láser mediante Supabase Realtime (`heeey:room:{boardId}`).
+- Panel con varias pizarras, carpetas anidadas, migas de pan, búsqueda y papelera con borrado reversible.
+- Historial de versiones automático (instantáneas cada 10 min y antes de cada restauración), con restauración sin conflictos y retención de 30 días.
+- Internacionalización (i18n) completa en portugués (`pt-BR`), inglés (`en-US`) y español (`es-ES`) en la app, en las páginas del sitio y en la documentación, con detección del idioma del navegador y sincronización del idioma de Excalidraw.
+- Bibliotecas personales de componentes sincronizadas en la nube para usuarios con sesión y migración local para invitados.
+- Compresión automática de imágenes en el cliente (WebP, máx. 1600px, <150KB) e integración con Supabase Storage (`board-media`).
+- Búsqueda de texto completo en los títulos y en el texto del lienzo (etiquetas y formas), con unaccent y fragmentos de contexto.
+- API REST pública (`/api/v1`) con claves personales (`hk_...`), alcances de lectura/escritura y especificación abreviada de elementos.
+- Servidor Model Context Protocol (MCP) (`/api/mcp`) mediante Streamable HTTP para agentes de IA (Claude Code, Claude Desktop, Cursor).
+- Motor de disposición automática de diagramas con el algoritmo Dagre/Sugiyama (`create_diagram`, `layout_board`), con tamaño automático de los nodos, trazado inteligente de flechas y direcciones de flujo (`TB`, `LR`, `BT`, `RL`).
+
+## Datos de integración
+
+- URL base de la API REST pública: https://heeey.click/api/v1
+- Endpoint MCP: https://heeey.click/api/mcp (Streamable HTTP, JSON-RPC 2.0)
+- Versiones del protocolo MCP: 2025-06-18, 2025-03-26, 2024-11-05
+- Cabecera de autenticación: `Authorization: Bearer hk_...` o `X-API-Key: hk_...`
+- La API y el MCP están en beta activa en producción.
+
+## Recursos principales
+
+- [Inicio de la documentación](https://heeey.click/docs): empieza aquí para la visión general y la navegación de la documentación.
+- [Primeros pasos](https://heeey.click/docs/getting-started): guía rápida para usuarios, desarrolladores y agentes de IA.
+- [Visión general de la API](https://heeey.click/docs/api/overview): conceptos, URL base y convenciones de la API REST.
+- [Primeros pasos con la API](https://heeey.click/docs/api/getting-started): crea tu primera pizarra con la API en 3 minutos.
+- [Esquema del contenido de la escena](https://heeey.click/docs/api/scene-content-schema): referencia legible del formato compartido ElementSpec.
+- [Visión general de MCP](https://heeey.click/docs/mcp/overview): cómo se conectan los agentes de IA a Heeey mediante MCP.
+- [Catálogo de herramientas MCP](https://heeey.click/docs/mcp/tools): especificación de las 13 herramientas MCP.
+- [Documentación completa para LLMs](https://heeey.click/es/llms-full.txt): exportación en texto de toda la documentación, en español.
+
+## Índice de la documentación
+
+- [Documentación de Heeey](https://heeey.click/docs)
+- [Primeros pasos](https://heeey.click/docs/getting-started): crea tu primera pizarra en 3 minutos
+- [Editor de la pizarra](https://heeey.click/docs/features/whiteboard-editor): herramientas del lienzo, texto vinculado y atajos
+- [Colaboración en tiempo real](https://heeey.click/docs/features/collaboration-realtime): multijugador, difusión y cursores
+- [Carpetas y organización](https://heeey.click/docs/features/folders-and-organization): carpetas anidadas, migas de pan, plantillas y papelera
+- [Historial de versiones](https://heeey.click/docs/features/version-history): instantáneas automáticas, retención y restauración sin conflictos
+- [Internacionalización](https://heeey.click/docs/features/i18n): soporte nativo de pt-BR, en-US y es-ES, detección y sincronización con Excalidraw
+- [Bibliotecas de componentes](https://heeey.click/docs/features/libraries): bibliotecas sincronizadas en la nube y migración de invitados
+- [Medios e imágenes](https://heeey.click/docs/features/media-and-images): compresión WebP en el cliente y almacenamiento en Supabase
+- [Búsqueda en el lienzo](https://heeey.click/docs/features/search): búsqueda de texto completo con unaccent y vista previa de fragmentos
+- [Visión general de la API](https://heeey.click/docs/api/overview): conceptos, URL base y convenciones de la API REST
+- [Primeros pasos con la API](https://heeey.click/docs/api/getting-started): crea tu primera pizarra con la API en 3 minutos
+- [Autenticación de la API](https://heeey.click/docs/api/authentication): claves de API, almacenamiento SHA-256 y alcances
+- [Paginación de la API](https://heeey.click/docs/api/pagination): cómo trabajar con resultados paginados
+- [Límites de la API](https://heeey.click/docs/api/rate-limiting): límites y restricciones operativas
+- [Errores de la API](https://heeey.click/docs/api/error-handling): códigos de estado HTTP y depuración
+- [Esquema del contenido de la escena](https://heeey.click/docs/api/scene-content-schema): referencia legible del formato ElementSpec
+- [Endpoints de la API](https://heeey.click/docs/api/endpoints): referencia completa de todos los endpoints de la API REST
+- [Visión general de MCP](https://heeey.click/docs/mcp/overview): cómo se conectan los agentes de IA a Heeey mediante MCP
+- [Configurar MCP](https://heeey.click/docs/mcp/getting-started): conecta Claude Code, Claude Desktop y Cursor
+- [Autenticación y permisos MCP](https://heeey.click/docs/mcp/auth-and-permissions): autorización MCP y anotaciones de seguridad de las herramientas
+- [Catálogo de herramientas MCP](https://heeey.click/docs/mcp/tools): catálogo detallado de las 13 herramientas MCP
+- [Motor de disposición de diagramas](https://heeey.click/docs/mcp/diagram-layout): disposición automática de diagramas por capas con Dagre/Sugiyama
