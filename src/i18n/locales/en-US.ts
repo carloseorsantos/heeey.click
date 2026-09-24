@@ -1,6 +1,6 @@
 import type { Messages } from './pt-BR';
 
-export const en: Messages = {
+export const enUS: Messages = {
   apiKeys: {
     active: "Active keys",
     connectMcp: "Connect an agent via MCP",
@@ -8,8 +8,10 @@ export const en: Messages = {
     copyKey: "Copy API key",
     copyMcpConfig: "Copy MCP configuration",
     copyNow: "Copy the key now. It won't be shown again.",
+    createError: "Couldn't create the key. Please try again.",
     create: "Create",
     description: "Connect agents and integrations to your account. Each key has the same permissions as you.",
+    limitReached: "You have reached the limit of 20 active keys. Revoke a key before creating another.",
     loadError: "Couldn't load your keys right now.",
     namePlaceholder: "E.g. Claude, report automation",
     neverUsed: "never used",
@@ -174,6 +176,8 @@ export const en: Messages = {
     recently: "recently",
   },
   docs: {
+    openStandalone: "Open as a standalone page",
+    sourceFile: "Source file",
     aiActions: "Actions for AI and reading",
     backToTop: "Back to top",
     copyFullDump: "Copy full content",
@@ -273,7 +277,6 @@ export const en: Messages = {
   },
   language: {
     label: "Language",
-    switchTo: "Português",
   },
   profile: {
     color: "Cursor and avatar color",

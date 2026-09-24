@@ -7,8 +7,10 @@ export const ptBR = {
     copyKey: "Copiar chave de API",
     copyMcpConfig: "Copiar configuração MCP",
     copyNow: "Copie a chave agora. Ela não será mostrada de novo.",
+    createError: "Não foi possível criar a chave. Tente novamente.",
     create: "Criar",
     description: "Conecte agentes e integrações à sua conta. Cada chave tem as mesmas permissões que você.",
+    limitReached: "Limite de 20 chaves ativas atingido. Revogue uma chave antes de criar outra.",
     loadError: "Não foi possível carregar as chaves agora.",
     namePlaceholder: "Ex.: Claude, automação de relatórios",
     neverUsed: "nunca usada",
@@ -173,6 +175,8 @@ export const ptBR = {
     recently: "recentemente",
   },
   docs: {
+    openStandalone: "Abrir documento isolado",
+    sourceFile: "Arquivo fonte",
     aiActions: "Ações para IA e leitura",
     backToTop: "Voltar ao topo",
     copyFullDump: "Copiar conteúdo completo",
@@ -272,7 +276,6 @@ export const ptBR = {
   },
   language: {
     label: "Idioma",
-    switchTo: "English",
   },
   profile: {
     color: "Cor do cursor e avatar",

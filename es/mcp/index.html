@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="es-ES">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Servidor MCP de pizarra para agentes de IA — Heeey</title>
+    <meta name="description" content="Un servidor MCP de pizarra alojado y multijugador. Deja que Claude, Cursor o cualquier cliente MCP dibuje diagramas en un lienzo de Excalidraw compartido que tu equipo ve en directo. Gratis y sin instalar nada." />
+    <link rel="canonical" href="https://www.heeey.click/es/mcp" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/mcp" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/pt-br/mcp" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es/mcp" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/mcp" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.heeey.click/es/mcp" />
+    <meta property="og:title" content="Servidor MCP de pizarra para agentes de IA — Heeey" />
+    <meta property="og:description" content="Deja que tu agente de IA dibuje diagramas en un lienzo compartido que tu equipo ve en directo. Alojado, gratis y sin instalar nada." />
+    <meta property="og:image" content="https://www.heeey.click/logo.png" />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:locale:alternate" content="pt_BR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/pt-br/mcp', 'en-US': '/mcp', 'es-ES': '/es/mcp' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Saltar al contenido</a>
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/es" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <div class="flex items-center gap-1 text-sm sm:gap-2">
+          <a href="/pt-br/mcp" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="rounded-lg px-2 py-1.5 text-label-3 hover:bg-fill hover:text-label" title="Português">PT</a>
+          <a href="/mcp" lang="en-US" hreflang="en" data-locale="en-US" class="rounded-lg px-2 py-1.5 text-label-3 hover:bg-fill hover:text-label" title="English">EN</a>
+          <a href="/docs/mcp/overview?lang=es-ES" class="hidden rounded-lg px-3 py-1.5 text-label-2 hover:bg-fill hover:text-label sm:inline-block">Docs de MCP</a>
+          <a href="/app?settings=account&amp;lang=es-ES" class="rounded-lg px-3 py-1.5 font-medium text-accent-text hover:bg-fill">Iniciar sesión</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section class="mx-auto max-w-5xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20">
+        <div class="max-w-2xl">
+          <h1 class="text-4xl font-bold tracking-tight sm:text-5xl sm:leading-[1.1]">
+            Una pizarra en la que tu agente de IA dibuja en directo con tu equipo
+          </h1>
+          <p class="mt-5 text-lg text-label-2">
+            Heeey es un servidor MCP alojado sobre un lienzo de Excalidraw multijugador. Pide a Claude, a Cursor o a cualquier cliente MCP
+            un diagrama de arquitectura y míralo aparecer en una pizarra que todos pueden abrir, editar y conservar.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a href="/app?settings=account&amp;lang=es-ES" class="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+              Consigue tu clave de API gratis
+            </a>
+            <a href="/docs/mcp/getting-started?lang=es-ES" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
+              Leer la guía de configuración
+            </a>
+          </div>
+          <p class="mt-3 text-sm text-label-3">Inicia sesión con un magic link y crea una clave en Ajustes → Integraciones.</p>
+        </div>
+
+        <div class="mt-12 overflow-hidden rounded-3xl bg-surface shadow-card">
+          <div class="flex items-center gap-2 border-b border-separator px-5 py-3 text-sm text-label-3">
+            <span class="h-2.5 w-2.5 rounded-full bg-fill-2"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-fill-2"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-fill-2"></span>
+            <span class="ml-2">Terminal</span>
+          </div>
+          <pre class="overflow-x-auto px-5 py-5 font-mono text-sm leading-relaxed"><code><span class="text-label-3"># Claude Code: un comando, nada que instalar ni ejecutar en local</span>
+claude mcp add --transport http heeey https://www.heeey.click/api/mcp \
+  --header "Authorization: Bearer hk_YOUR_KEY"
+
+<span class="text-label-3"># y luego solo tienes que pedirlo</span>
+<span class="text-accent-text">&gt;</span> Dibuja nuestro flujo de pago como un diagrama en heeey</code></pre>
+        </div>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">¿Cómo funciona el servidor MCP de Heeey?</h2>
+          <p class="mt-3 max-w-2xl text-lg text-label-2">
+            Tu agente llama a herramientas mediante Streamable HTTP; Heeey escribe en la pizarra y difunde cada cambio a quien la tenga abierta.
+          </p>
+          <ol class="mt-10 grid gap-6 sm:grid-cols-3">
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">1</span>
+              <h3 class="mt-2 text-lg font-semibold">Conéctalo una vez</h3>
+              <p class="mt-2 text-label-2">Añade la URL del servidor remoto y tu clave de API a cualquier cliente MCP. Sin proceso de Node ni servidor de lienzo local.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">2</span>
+              <h3 class="mt-2 text-lg font-semibold">Describe, no coloques</h3>
+              <p class="mt-2 text-label-2"><code class="font-mono text-callout">create_diagram</code> recibe nodos y conexiones. Heeey ajusta el tamaño de las cajas, las ordena por capas y traza las flechas alrededor de las formas.</p>
+            </li>
+            <li class="rounded-2xl bg-app p-6">
+              <span class="text-sm font-semibold text-accent-text">3</span>
+              <h3 class="mt-2 text-lg font-semibold">Comparte el enlace</h3>
+              <p class="mt-2 text-label-2">Cada resultado incluye la URL de la pizarra. Tu equipo ve aparecer las formas en tiempo real y puede seguir editando a mano.</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">¿Qué herramientas recibe el agente?</h2>
+        <p class="mt-3 max-w-2xl text-lg text-label-2">
+          Trece herramientas para leer, dibujar y organizar pizarras. Las lecturas devuelven una escena compacta (etiquetas, conexiones, coordenadas redondeadas) para ahorrar contexto.
+        </p>
+        <dl class="mt-10 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div>
+            <dt class="font-mono text-callout font-semibold">create_diagram · layout_board</dt>
+            <dd class="mt-1 text-label-2">Diagramas de flujo, arquitecturas, organigramas y mapas mentales con disposición automática, u ordena una pizarra desordenada.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">add_elements · delete_elements</dt>
+            <dd class="mt-1 text-label-2">Dibuja formas, texto y flechas conectadas a partir de especificaciones breves con ids estables, y actualízalas después.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">get_board · list_boards · search_boards</dt>
+            <dd class="mt-1 text-label-2">Lee lo que hay en una pizarra o encuentra una por cualquier texto escrito en su lienzo.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">create_board · rename_board · trash_board</dt>
+            <dd class="mt-1 text-label-2">Gestiona pizarras; las que se envían a la papelera se pueden restaurar desde la app.</dd>
+          </div>
+          <div>
+            <dt class="font-mono text-callout font-semibold">list_folders · create_folder · move_board</dt>
+            <dd class="mt-1 text-label-2">Mantén los diagramas del agente organizados junto a los tuyos.</dd>
+          </div>
+          <div>
+            <dt class="font-semibold">Y una API REST</dt>
+            <dd class="mt-1 text-label-2">La misma clave funciona con <a href="/docs/api/overview?lang=es-ES" class="text-accent-text hover:underline">/api/v1</a> para scripts y CI.</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="border-t border-separator bg-surface">
+        <div class="mx-auto max-w-3xl px-4 py-16 sm:px-6">
+          <h2 class="text-3xl font-bold tracking-tight">Preguntas frecuentes</h2>
+          <div class="mt-8 divide-y divide-separator">
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">¿El servidor MCP de Heeey es gratis?</h3>
+              <p class="mt-2 text-label-2">Sí. Crea una cuenta con tu correo, genera una clave de API y conecta tu agente sin coste.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">¿Con qué clientes MCP funciona?</h3>
+              <p class="mt-2 text-label-2">Cualquier cliente que admita servidores MCP remotos mediante Streamable HTTP con una cabecera personalizada, incluidos Claude Code y Cursor. La <a href="/docs/mcp/getting-started?lang=es-ES" class="text-accent-text hover:underline">guía de configuración</a> tiene configuraciones listas para copiar y pegar.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">¿En qué se diferencia de un servidor MCP de Excalidraw local?</h3>
+              <p class="mt-2 text-label-2">Los servidores locales dibujan en un lienzo que vive en tu equipo. Heeey está alojado: las pizarras se guardan en tu cuenta, tienen una URL para compartir y varias personas (y agentes) pueden trabajar en la misma a la vez.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">¿Puedo controlar lo que puede hacer el agente?</h3>
+              <p class="mt-2 text-label-2">Sí. Las claves de API tienen alcance de lectura o de lectura y escritura, y se pueden revocar en cualquier momento. Consulta <a href="/docs/mcp/auth-and-permissions?lang=es-ES" class="text-accent-text hover:underline">autenticación y permisos</a>.</p>
+            </div>
+            <div class="py-6">
+              <h3 class="text-lg font-semibold">¿Hace falta una cuenta para ver el diagrama?</h3>
+              <p class="mt-2 text-label-2">No. Cualquiera con el enlace de la pizarra puede abrirla, en modo «puede editar» o «solo lectura».</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mx-auto max-w-5xl px-4 py-20 text-center sm:px-6">
+        <h2 class="text-3xl font-bold tracking-tight">Dale una pizarra a tu agente</h2>
+        <p class="mx-auto mt-3 max-w-xl text-lg text-label-2">Inicia sesión, crea una clave y tu próximo diagrama estará a un prompt de distancia.</p>
+        <a href="/app?settings=account&amp;lang=es-ES" class="mt-8 inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
+          Consigue tu clave de API gratis
+        </a>
+      </section>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — pizarra colaborativa</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/docs/mcp/overview?lang=es-ES" class="hover:text-label">Docs de MCP</a>
+          <a href="/es" class="hover:text-label">Pizarra online</a>
+          <a href="/es/terminos" class="hover:text-label">Términos de uso</a>
+          <a href="/es/privacidad" class="hover:text-label">Privacidad</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+      <nav aria-label="Idioma" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/pt-br/mcp" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="hover:text-label">Português</a>
+        <a href="/mcp" lang="en-US" hreflang="en" data-locale="en-US" class="hover:text-label">English</a>
+        <a href="/es/mcp" lang="es-ES" hreflang="es" data-locale="es-ES" class="font-medium text-label" aria-current="page">Español</a>
+      </nav>
+    </footer>
+
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

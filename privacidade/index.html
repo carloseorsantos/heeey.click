@@ -6,6 +6,10 @@
     <title>Política de privacidade — Heeey</title>
     <meta name="description" content="Quais dados o Heeey coleta, por que, com quem compartilha e como exercer seus direitos pela LGPD e pelo GDPR." />
     <link rel="canonical" href="https://www.heeey.click/privacidade" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/privacidade" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/en/privacy" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es/privacidad" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/privacidade" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
@@ -17,6 +21,15 @@
         }
       } catch (e) {}
     </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/privacidade', 'en-US': '/en/privacy', 'es-ES': '/es/privacidad' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
   </head>
   <body class="bg-app text-label antialiased">
     <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Pular para o conteúdo</a>
@@ -26,7 +39,7 @@
           <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
           Heeey
         </a>
-        <a href="/app" class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-fill">Abrir o app</a>
+        <a href="/app?lang=pt-BR" class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-fill">Abrir o app</a>
       </nav>
     </header>
 
@@ -125,6 +138,11 @@
           <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
         </div>
       </div>
+      <nav aria-label="Idioma" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/privacidade" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="font-medium text-label" aria-current="page">Português</a>
+        <a href="/en/privacy" lang="en-US" hreflang="en" data-locale="en-US" class="hover:text-label">English</a>
+        <a href="/es/privacidad" lang="es-ES" hreflang="es" data-locale="es-ES" class="hover:text-label">Español</a>
+      </nav>
     </footer>
 
     <script type="module" src="/src/landing/main.ts"></script>

@@ -1,7 +1,9 @@
 {
   "redirects": [
     { "source": "/lousa-online", "destination": "/", "permanent": true },
-    { "source": "/whiteboard-mcp", "destination": "/mcp", "permanent": true }
+    { "source": "/whiteboard-mcp", "destination": "/mcp", "permanent": true },
+    { "source": "/en/mcp", "destination": "/mcp", "permanent": true },
+    { "source": "/pt-br", "destination": "/", "permanent": true }
   ],
   "headers": [
     {
@@ -14,6 +16,14 @@
     { "source": "/mcp", "destination": "/mcp/index.html" },
     { "source": "/termos", "destination": "/termos/index.html" },
     { "source": "/privacidade", "destination": "/privacidade/index.html" },
+    { "source": "/en", "destination": "/en/index.html" },
+    { "source": "/en/terms", "destination": "/en/terms/index.html" },
+    { "source": "/en/privacy", "destination": "/en/privacy/index.html" },
+    { "source": "/es", "destination": "/es/index.html" },
+    { "source": "/es/mcp", "destination": "/es/mcp/index.html" },
+    { "source": "/es/terminos", "destination": "/es/terminos/index.html" },
+    { "source": "/es/privacidad", "destination": "/es/privacidad/index.html" },
+    { "source": "/pt-br/mcp", "destination": "/pt-br/mcp/index.html" },
     { "source": "/((?!api/).*)", "destination": "/app/index.html" }
   ]
 }

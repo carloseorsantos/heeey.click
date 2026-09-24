@@ -1,0 +1,2440 @@
+# Heeey (heeey.click) — Documentación completa para LLMs
+
+> Exportación de toda la documentación técnica de la pizarra colaborativa Heeey, en español.
+
+
+
+================================================================================
+FILE: docs/es/README.md
+================================================================================
+
+# Documentación de Heeey (heeey.click)
+
+> Pizarra interactiva y colaborativa en tiempo real, con persistencia en la nube, API REST pública y servidor MCP para agentes de IA.
+
+Te damos la bienvenida a la documentación oficial de **Heeey**. Inspirada en la arquitectura y la documentación del ecosistema Excalidraw (`https://plus.excalidraw.com/docs`), describe todas las funciones, herramientas de dibujo, la colaboración multijugador, la API REST v1, el servidor MCP (*Model Context Protocol*) y el modelo de datos de Heeey.
+
+---
+
+## 🧭 Navegación rápida
+
+### 🎨 [Funciones y pizarra](features/whiteboard-editor.md)
+Descubre el lienzo vectorial basado en `@excalidraw/excalidraw` 0.18, los temas claro y oscuro, las herramientas de dibujo, formas, texto vinculado, flechas inteligentes y atajos.
+
+### 👥 [Colaboración y tiempo real](features/collaboration-realtime.md)
+Entiende cómo funciona el multijugador con Supabase Realtime (Broadcast y Presence), los cursores en directo, los nombres y colores de los colaboradores, el modo lectura frente a edición y los enlaces para compartir.
+
+### 📁 [Organización y panel](features/folders-and-organization.md)
+Aprende a gestionar pizarras, carpetas anidadas, la búsqueda global con texto resaltado, las plantillas (Lluvia de ideas, Diagrama de flujo, Wireframe) y la papelera que protege contra borrados accidentales.
+
+### 🕒 [Historial de versiones](features/version-history.md)
+Descubre cómo las instantáneas automáticas cada 10 minutos, la retención de 30 días y las instantáneas previas a cada restauración permiten recuperar estados anteriores sin perder nada.
+
+### 🌍 [Internacionalización (i18n)](features/i18n.md)
+Soporte nativo para portugués (`pt-BR`), inglés (`en-US`) y español (`es-ES`) en la app, en las páginas del sitio y en esta documentación, con detección del idioma del navegador, plurales ICU y sincronización del idioma de Excalidraw.
+
+### 🧩 [Bibliotecas personales](features/libraries.md)
+Persistencia en la nube de bibliotecas de componentes reutilizables para usuarios con sesión iniciada, caché local para invitados y migración automática en el primer inicio de sesión.
+
+### 🖼️ [Medios y optimización de imágenes](features/media-and-images.md)
+Proceso automático de compresión WebP/JPEG en el cliente (máx. 1600 px, ~150 KB), subida asíncrona a Supabase Storage (`board-media`) y una alternativa elegante sin conexión.
+
+### 🔍 [Búsqueda global en el lienzo](features/search.md)
+Búsqueda de texto completo en PostgreSQL con `unaccent` e índices GIN, en los títulos y en todos los textos dibujados en las pizarras, con fragmentos resaltados.
+
+### 🔌 [API REST v1](api/overview.md)
+Automatiza la creación, lectura y edición de pizarras y carpetas. Autenticación con clave personal (`hk_...`), formato abreviado de elementos, paginación y difusión en tiempo real.
+
+### 🤖 [Servidor MCP para IA](mcp/overview.md)
+Conecta Claude Code, Claude Desktop, Cursor y otros agentes de IA mediante Streamable HTTP (`/api/mcp`). Crea diagramas con disposición automática por capas (Dagre / Sugiyama) y organiza pizarras de forma programática.
+
+---
+
+## ⚡ ¿Qué es Heeey?
+
+Heeey es una aplicación web moderna de colaboración visual pensada para ser rápida, sencilla y abierta:
+
+- **Núcleo de pizarra**: usa el motor oficial `@excalidraw/excalidraw` 0.18.x, con su estética dibujada a mano, exportación SVG/PNG con total fidelidad y soporte completo de bibliotecas de elementos.
+- **Multijugador ultrarrápido**: Realtime Broadcast y Presence sobre el canal `heeey:room:{boardId}`, con una latencia mínima en los cambios del lienzo y los cursores en directo.
+- **Acceso sin complicaciones**: acceso híbrido — los invitados pueden crear pizarras al instante; los usuarios registrados inician sesión sin contraseña mediante un Magic Link (Email OTP) y heredan automáticamente sus pizarras de invitado.
+- **Programable y pensado para agentes**: toda la plataforma admite de primera mano la automatización mediante la API REST y el protocolo MCP, de modo que los agentes LLM pueden leer, entender, generar y organizar diagramas complejos en segundos.
+- **Totalmente internacionalizado**: soporte nativo y verificado con pruebas para portugués (`pt-BR`), inglés (`en-US`) y español (`es-ES`).
+
+---
+
+## 📖 Índice completo de documentos
+
+1. **Visión general y primeros pasos**:
+   - [Guía rápida general (Primeros pasos)](getting-started.md)
+2. **Funciones de la pizarra y de la aplicación**:
+   - [Lienzo y herramientas de dibujo](features/whiteboard-editor.md)
+   - [Colaboración y tiempo real](features/collaboration-realtime.md)
+   - [Carpetas, organización y papelera](features/folders-and-organization.md)
+   - [Historial de versiones y restauración](features/version-history.md)
+   - [Internacionalización (i18n)](features/i18n.md)
+   - [Bibliotecas de componentes](features/libraries.md)
+   - [Imágenes y optimización de medios](features/media-and-images.md)
+   - [Búsqueda global en el texto del lienzo](features/search.md)
+3. **API REST pública (`/api/v1`)**:
+   - [Visión general de la API](api/overview.md)
+   - [Primeros pasos con la API (Inicio rápido)](api/getting-started.md)
+   - [Autenticación y alcances de las claves](api/authentication.md)
+   - [Paginación de resultados](api/pagination.md)
+   - [Tasas y límites operativos](api/rate-limiting.md)
+   - [Gestión de errores](api/error-handling.md)
+   - [Esquema del contenido de la escena (Element Spec)](api/scene-content-schema.md)
+   - [Referencia completa de endpoints](api/endpoints.md)
+4. **Servidor MCP (Model Context Protocol)**:
+   - [Visión general de MCP](mcp/overview.md)
+   - [Configurar agentes (Claude Code, Desktop, Cursor)](mcp/getting-started.md)
+   - [Autenticación y permisos MCP](mcp/auth-and-permissions.md)
+   - [Catálogo completo de las 13 herramientas MCP](mcp/tools.md)
+   - [Motor de disposición automática de diagramas](mcp/diagram-layout.md)
+5. **Descubrimiento por agentes y modelos de lenguaje**:
+   - [Índice resumido para LLMs (`llms.txt`)](llms.txt)
+   - [Volcado de texto completo para LLMs (`llms-full.txt`)](llms-full.txt)
+
+
+================================================================================
+FILE: docs/es/getting-started.md
+================================================================================
+
+# Primeros pasos con Heeey (Inicio rápido)
+
+Esta guía explica cómo empezar a usar **Heeey**, desde tu primera visita en el navegador hasta la automatización programática mediante la API y agentes de inteligencia artificial.
+
+---
+
+## 🚀 Primera visita: crea tu primera pizarra
+
+Heeey está pensado para no poner trabas: no necesitas crear una cuenta ni rellenar formularios para empezar a dibujar.
+
+1. Entra en [heeey.click](https://heeey.click).
+2. Haz clic en **«Pizarra en blanco»** o elige una de las plantillas disponibles:
+   - **Lluvia de ideas**: notas adhesivas y tarjetas temáticas para idear rápido.
+   - **Diagrama de flujo**: estructura básica con bloques de decisión y flechas dirigidas.
+   - **Wireframe**: pantallas y componentes básicos para prototipar.
+3. Irás a la URL `/b/<id-de-la-pizarra>`.
+4. ¡Empieza a dibujar enseguida! Tu trabajo se guarda localmente en tiempo real y se sincroniza con la nube.
+
+---
+
+## 👥 Colabora con otras personas
+
+Para invitar a tus compañeros a la misma pizarra:
+
+1. En la barra superior de la pizarra, haz clic en el botón **«Compartir»**.
+2. Elige el nivel de permiso:
+   - **Puede editar** (`edit`): cualquiera con el enlace puede dibujar, añadir notas y cambiar el contenido.
+   - **Solo lectura** (`view`): cualquiera con el enlace puede ver la pizarra y seguir los cursores en directo, pero no puede modificar el lienzo.
+3. Haz clic en **«Copiar enlace»** y envíalo a tu equipo.
+4. Cuando otras personas abran el enlace, verás sus cursores en tiempo real, cada uno con su nombre y su color identificativo.
+
+---
+
+## 🔐 Conecta tu cuenta (Magic Link)
+
+Aunque se puede usar de forma anónima, iniciar sesión con tu cuenta tiene ventajas importantes:
+
+- **Tus pizarras en cualquier dispositivo**: abre tu panel desde cualquier navegador.
+- **Las pizarras de invitado pasan a tu cuenta**: las pizarras que creaste como invitado en el navegador se transfieren automáticamente a tu cuenta al iniciar sesión.
+- **Bibliotecas en la nube**: los elementos guardados en tu biblioteca de componentes están disponibles en todas tus pizarras.
+- **Creación de claves de API**: habilita integraciones con la API REST pública y el servidor MCP para IA.
+
+### Cómo iniciar sesión:
+1. En el panel o en el menú superior de la pizarra, haz clic en **«Iniciar sesión»**.
+2. Escribe tu dirección de correo electrónico.
+3. Recibirás al instante en tu bandeja de entrada un código OTP de 6 dígitos.
+4. Escribe el código en pantalla para confirmar. ¡Listo! No hay contraseñas que recordar.
+
+---
+
+## 🤖 Automatización en 3 minutos: Claude Code y MCP
+
+Si usas **Claude Code**, **Cursor** u otro agente compatible con MCP:
+
+1. Abre el panel con tu cuenta iniciada.
+2. Haz clic en el icono de la llave (**Claves de API**).
+3. Escribe un nombre (p. ej. `claude-code`) y haz clic en **«Crear»**.
+4. Copia la clave generada (`hk_...`). La app ya muestra el comando listo para tu terminal:
+
+```bash
+claude mcp add --transport http heeey https://heeey.click/api/mcp --header "Authorization: Bearer hk_TU_TOKEN_AQUI"
+```
+
+5. Abre la terminal y ejecuta el comando anterior.
+6. ¡Ahora tu asistente de IA puede crear diagramas completos, buscar en tus pizarras y organizarlas directamente desde el prompt!
+
+---
+
+## 💻 Ejemplo rápido con cURL (API REST)
+
+También puedes crear pizarras desde scripts o automatizaciones de CI/CD:
+
+```bash
+curl -X POST https://heeey.click/api/v1/boards \
+  -H "Authorization: Bearer hk_TU_TOKEN_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Flujo de aprobación",
+    "elements": [
+      { "id": "req", "type": "rectangle", "x": 100, "y": 100, "label": "Solicitud enviada", "backgroundColor": "#a5d8ff" },
+      { "id": "dec", "type": "diamond", "x": 380, "y": 85, "label": "¿Aprobado?", "backgroundColor": "#ffec99" },
+      { "type": "arrow", "start": { "id": "req" }, "end": { "id": "dec" } }
+    ]
+  }'
+```
+
+Heeey responde con los datos de la pizarra creada y el enlace directo (`url`) para abrirla en el navegador.
+
+
+================================================================================
+FILE: docs/es/features/whiteboard-editor.md
+================================================================================
+
+# Pizarra y herramientas de dibujo
+
+Heeey está construido en torno a la versión oficial del componente `@excalidraw/excalidraw` (0.18.x) y ofrece un lienzo vectorial infinito con su conocida estética orgánica y dibujada a mano (*hand-drawn*).
+
+---
+
+## 🎨 Herramientas y formas principales
+
+La barra de herramientas superior permite crear y editar elementos vectoriales de forma nativa:
+
+| Herramienta | Atajo | Descripción |
+|---|---|---|
+| **Selección** | `V` o `1` | Mueve, redimensiona, agrupa y gira elementos existentes. |
+| **Rectángulo** | `R` o `2` | Dibuja bloques, tarjetas y paneles con esquinas rectas o redondeadas. |
+| **Rombo** | `D` o `3` | Ideal para decisiones en diagramas de flujo y nodos condicionales. |
+| **Elipse / círculo** | `E` o `4` | Para inicios y finales de flujos, anotaciones circulares y nodos de redes. |
+| **Flecha conectada** | `A` o `5` | Se engancha magnéticamente a los bordes de las formas y se ajusta sola cuando la forma se mueve. |
+| **Línea** | `L` o `6` | Segmentos rectos o polilíneas para separadores y gráficos. |
+| **Dibujo libre (lápiz)** | `P` o `7` | Escritura a mano alzada que responde a la velocidad del trazo. |
+| **Texto** | `T` o `8` | Texto suelto o texto vinculado a formas (*bound text container*). |
+| **Imagen** | `9` | Inserta imágenes (optimizadas automáticamente a WebP). |
+| **Goma** | `E` o `0` | Borra elementos al hacer clic o arrastrar sobre ellos. |
+| **Puntero láser** | `K` | Un puntero láser temporal que todos los participantes de la sesión ven en tiempo real. |
+| **Marco (Frame)** | `F` | Agrupa elementos de forma lógica para exportarlos juntos o presentar. |
+
+---
+
+## 🔤 Texto vinculado a formas (Bound Text)
+
+El texto contenido es una de las funciones más prácticas de Heeey:
+- Al hacer doble clic en cualquier forma cerrada (rectángulo, elipse, rombo), el texto que escribas se centra automáticamente dentro de ella.
+- Si el elemento se mueve o se redimensiona, el texto acompaña a la forma.
+- Al eliminar una forma, el texto vinculado a ella se elimina automáticamente, para que no queden elementos huérfanos en el lienzo.
+- A nivel técnico, Excalidraw crea un elemento de tipo `text` con `containerId` apuntando al `id` de la forma, y la forma registra el `id` del texto en su array `boundElements`.
+
+---
+
+## 📐 Conexión inteligente de flechas
+
+Las flechas de Heeey se enganchan de verdad a las formas:
+- Al dibujar una flecha hacia una forma, sus puntos de anclaje se iluminan.
+- Al conectarla, la flecha rellena sus propiedades `startBinding` y `endBinding` con `{ elementId, focus, gap }`.
+- Si cambias de sitio la forma conectada, la flecha recalcula su curvatura y su ángulo para mantener la conexión.
+- También se admiten etiquetas en las flechas, centradas en el punto medio del trazo.
+
+---
+
+## 🌓 Modos claro y oscuro
+
+Heeey sigue la preferencia del sistema del usuario o el cambio manual:
+- Cambia el tema con el botón del panel o desde el menú de preferencias.
+- En modo oscuro, el lienzo invierte suavemente los colores de fondo y los trazos oscuros ganan contraste para verlos cómodamente de noche.
+- La paleta de exportación respeta las preferencias de fondo configuradas en el lienzo.
+
+---
+
+## 💾 Exportación y descarga
+
+Puedes exportar tus diagramas en cualquier momento, sin marcas de agua:
+- **PNG**: imagen de mapa de bits de alta resolución, ideal para presentaciones y para compartir en Slack/Discord.
+- **SVG**: gráfico vectorial escalable sin límite, ideal para insertarlo en la web o abrirlo en herramientas como Figma o Illustrator.
+- El diálogo de exportación permite incluir el fondo del lienzo o generar un archivo con transparencia.
+
+
+================================================================================
+FILE: docs/es/features/collaboration-realtime.md
+================================================================================
+
+# Colaboración y tiempo real (multijugador)
+
+Heeey usa la infraestructura de **Supabase Realtime** para ofrecer una experiencia multijugador de baja latencia y muy resistente, combinando canales de **Broadcast** y **Presence** con una sincronización periódica con la base de datos.
+
+---
+
+## ⚡ Cómo funciona la sincronización
+
+La colaboración en tiempo real funciona sobre el canal de la sala:
+```
+heeey:room:{boardId}
+```
+
+Ningún elemento tiene que pasar por colas lentas ni por sondeos. Cuando un colaborador mueve el cursor o cambia elementos:
+
+```
+[Cliente A] --(Broadcast por WebSocket)--> [Supabase Realtime] --(Fan-out)--> [Cliente B, Cliente C, ...]
+```
+
+### 1. Difusión de elementos (`canvas-update`)
+- Mientras un usuario dibuja o mueve elementos, los cambios se envían mediante el evento `canvas-update`.
+- El payload incluye los elementos modificados, los metadatos del color de fondo de la escena y una marca de tiempo.
+- **Reconciliación de versiones**: cada elemento tiene campos de control de versión (`version`, `versionNonce`). El cliente local compara los elementos recibidos con los del lienzo y solo aplica las actualizaciones con un número de versión estrictamente mayor o que resuelven los empates de forma determinista.
+
+### 2. Sincronización de presencia y cursores (`cursor-update` y Presence)
+- Las posiciones del ratón y del puntero láser se transmiten con alta frecuencia sin ensuciar el historial de dibujo.
+- Cada participante tiene:
+  - Un nombre visible en el cursor.
+  - Un color único para el avatar y el halo del cursor (derivado de forma coherente de la paleta de 12 tonos de Heeey).
+  - El estado del puntero láser cuando está activo.
+  - Los elementos que tiene seleccionados, resaltados en tiempo real.
+- Cuando se cierra una pestaña o se cae la conexión, Supabase Presence retira el cursor automáticamente a los pocos segundos.
+
+---
+
+## 🔒 Niveles de acceso y permisos
+
+Cada pizarra tiene un campo `access_level`:
+
+| Nivel de acceso | Valor en la base de datos | Descripción |
+|---|---|---|
+| **Puede editar** | `'edit'` | Cualquier visitante con el enlace puede interactuar, dibujar y añadir notas. |
+| **Solo lectura** | `'view'` | Los visitantes ven los cambios y los cursores de los demás en tiempo real, pero el lienzo queda bloqueado para ediciones locales. La persona propietaria de la pizarra conserva siempre todos los permisos de edición. |
+
+### Cambiar el nivel de acceso:
+1. En la cabecera de la pizarra, abre el diálogo **Compartir**.
+2. Alterna entre **«Puede editar»** y **«Solo lectura»**.
+3. El cambio llega al instante a todos los visitantes conectados mediante un mensaje `meta-update`.
+
+---
+
+## 🛡️ Guardado automático y persistencia local
+
+Heeey usa una estrategia híbrida por capas:
+1. **Caché local inmediata (`localStorage`)**: todos los cambios locales se guardan al instante en el almacenamiento del navegador. Si se cae la conexión, no se pierde nada.
+2. **Guardado automático con debounce en la base de datos (`PostgreSQL`)**: los cambios consolidados se envían a Supabase con un debounce inteligente (unos 1,5 segundos de inactividad después del último trazo).
+3. **Indicador del estado de sincronización**:
+   - 🟢 **Guardado**: el estado en la nube coincide con lo que ves en pantalla.
+   - 🟡 **Guardando…**: se están enviando cambios pendientes a la base de datos.
+   - 🟠 **Sin conexión**: conexión perdida; los cambios se conservan de forma segura en la caché local.
+   - 🔴 **Error**: fallo temporal de red; se lanzará un nuevo intento automáticamente.
+
+---
+
+## 👤 Personalización de los colaboradores
+
+Los invitados pueden personalizar cómo aparecen en cualquier momento:
+- Haz clic en tu avatar identificativo en la esquina superior derecha.
+- Elige un apodo (*nickname*) y tu color favorito de la paleta.
+- Tu elección se recuerda en el navegador y se aplica automáticamente en todas las pizarras que visites después.
+
+
+================================================================================
+FILE: docs/es/features/folders-and-organization.md
+================================================================================
+
+# Carpetas, organización y papelera
+
+El panel de Heeey ofrece todo lo necesario para estructurar, clasificar y proteger tus pizarras de trabajo.
+
+---
+
+## 📁 Carpetas anidadas
+
+Para mantener organizados proyectos, equipos o asignaturas, puedes crear árboles de carpetas de cualquier profundidad:
+
+- **Crear carpetas**: en el panel, haz clic en **«Nueva carpeta»**, escribe el nombre y elige si va en el nivel superior o dentro de una carpeta existente.
+- **Navegación con migas de pan**: la ruta visual completa (p. ej. `Inicio > Design System > Componentes web`) te permite saltar a cualquier nivel intermedio con un clic.
+- **Mover pizarras**:
+  - En el menú de tres puntos de cualquier tarjeta de pizarra, elige **«Mover a carpeta»**.
+  - Se muestra el árbol completo para que puedas mover la pizarra a cualquier carpeta o devolverla al nivel superior.
+- **Eliminar carpetas**:
+  - Al eliminar una carpeta que contiene subcarpetas, todas las subcarpetas se eliminan de forma recursiva.
+  - **Tu contenido está a salvo**: las pizarras que estaban dentro de la carpeta eliminada **no se borran**; vuelven al nivel superior de tu panel (`folder_id = null`).
+
+---
+
+## 🗑️ Papelera (borrado lógico) y protección contra borrados accidentales
+
+Heeey borra en dos pasos:
+
+### 1. Mover a la papelera
+- Mover una pizarra a la papelera establece `deleted_at = now()`.
+- La pizarra desaparece al instante de las listas activas, de las carpetas y de las búsquedas por defecto.
+- Si alguien tiene la pizarra abierta cuando se envía a la papelera, pasa automáticamente al modo de solo lectura con un aviso en la parte superior.
+
+### 2. Restaurar
+- En cualquier momento, abre la pestaña **«Papelera»** del panel.
+- Haz clic en el botón de restaurar de la tarjeta para devolver la pizarra a su carpeta original.
+- Además, justo después de cualquier borrado accidental aparece un aviso con la opción *Deshacer*.
+
+### 3. Eliminación definitiva
+- Solo la persona propietaria con sesión iniciada puede eliminar definitivamente una pizarra de la papelera.
+- La eliminación definitiva borra:
+  - El registro de la pizarra en la tabla `boards`.
+  - Todas las imágenes asociadas en el bucket `board-media` de Supabase Storage.
+  - Todas las versiones históricas de `board_versions`.
+
+---
+
+## 🖼️ Miniaturas inteligentes
+
+Para que el panel cargue al instante incluso con decenas de pizarras complejas:
+- Mientras dibujas, se genera en segundo plano en el cliente una miniatura rasterizada en **WebP** (`maxWidthOrHeight = 480px`, calidad 0.7) cada 20 segundos de actividad.
+- La cadena codificada en base64 se guarda en la columna `thumbnail` de la tabla `boards`.
+- El panel solo descarga los metadatos y las miniaturas compactas (`fetchBoardSummaries`), sin tener que descargar los elementos en bruto de decenas de escenas completas.
+- En el modo oscuro del panel, un filtro CSS invierte con armonía las miniaturas claras sin procesamiento gráfico adicional.
+
+---
+
+## 📑 Plantillas iniciales
+
+Al crear una pizarra nueva, puedes partir de plantillas listas para usar:
+
+1. **Lluvia de ideas**:
+   - Pizarras temáticas con notas adhesivas de colores agrupadas por ideas, retos y próximos pasos.
+2. **Diagrama de flujo**:
+   - Nodos de proceso ya conectados, con bloques de inicio y fin y un rombo de decisión.
+3. **Wireframe**:
+   - Elementos estructurales de interfaz: barra de navegación, cajas de contenido y botones interactivos.
+
+
+================================================================================
+FILE: docs/es/features/version-history.md
+================================================================================
+
+# Historial de versiones y restauración
+
+Heeey incluye un sistema integrado de control de versiones point-in-time que protege el trabajo de tu equipo frente a ediciones no deseadas, desórdenes accidentales o pérdidas de datos.
+
+---
+
+## 🕒 Cómo funcionan las instantáneas
+
+La base de datos guarda instantáneas de la pizarra en la tabla `board_versions` en dos situaciones:
+
+1. **Instantáneas automáticas (`reason: 'auto'`)**:
+   - El servidor las genera en segundo plano siempre que la pizarra se está editando.
+   - El servidor respeta un intervalo mínimo de **10 minutos** entre instantáneas automáticas consecutivas para no acumular demasiados datos en sesiones largas.
+2. **Instantáneas previas a la restauración (`reason: 'before_restore'`)**:
+   - Antes de restaurar cualquier versión antigua, el estado actual de la pizarra se archiva al instante en el historial.
+   - Esto significa que restaurar una versión **nunca es destructivo**; siempre puedes deshacer la restauración y volver al momento exacto anterior.
+
+---
+
+## 🗄️ Política de retención
+
+- **Capacidad**: hasta las **30** versiones más recientes por pizarra.
+- **Validez**: las versiones con más de **30 días** se eliminan automáticamente mediante disparadores de la base de datos.
+- Al guardar la versión número 31, el disparador SQL elimina de forma transparente la versión más antigua de esa pizarra.
+
+---
+
+## 🔄 Algoritmo de reconciliación sin conflictos (`buildRestoredElements`)
+
+Un problema habitual en las aplicaciones colaborativas al restaurar versiones antiguas es el conflicto con los colaboradores que siguen dibujando: los elementos antiguos, con un número de versión bajo, serían ignorados por los clientes conectados.
+
+Heeey lo resuelve con un algoritmo determinista de incremento de versiones:
+
+```typescript
+export function buildRestoredElements(
+  currentElements: readonly any[],
+  versionElements: readonly any[],
+  now: number = Date.now(),
+  randomNonce: () => number = () => Math.floor(Math.random() * 2 ** 31)
+): any[] {
+  // 1. Cada elemento de la versión histórica recibe un número de 'version'
+  // estrictamente mayor que el que tiene ahora en el lienzo.
+  // 2. Los elementos que existen en el lienzo actual pero NO existían en la versión restaurada
+  // se marcan con isDeleted: true y una versión incrementada.
+}
+```
+
+### Ventajas del algoritmo:
+- **Propagación inmediata**: la versión restaurada gana la reconciliación de Excalidraw en todos los navegadores conectados al momento.
+- **Sin restos**: los dibujos hechos después del punto histórico desaparecen del lienzo de forma limpia.
+- **Difusión en tiempo real**: se envía un mensaje `canvas-update` por el canal de Supabase que actualiza en directo la pantalla de todos los participantes.
+
+---
+
+## 🖥️ Cómo acceder al historial
+
+1. Con la pizarra abierta, haz clic en el icono del reloj (**Historial de versiones**) de la cabecera.
+2. Aparece la lista de puntos de restauración con fecha, hora, número de elementos y una miniatura.
+3. Haz clic en una versión para inspeccionarla.
+4. Haz clic en **«Restaurar esta versión»**. El lienzo se actualiza al instante.
+
+
+================================================================================
+FILE: docs/es/features/i18n.md
+================================================================================
+
+# Internacionalización (i18n)
+
+**Heeey** está construido con una arquitectura de internacionalización nativa y fuertemente tipada, con soporte completo para varios idiomas en la interfaz de la aplicación, en el editor Excalidraw, en las páginas del sitio y en esta documentación.
+
+---
+
+## 🌍 Idiomas disponibles
+
+| Idioma | Código (`Locale`) | Código de Excalidraw (`excalidrawLangCode`) | Estado |
+|---|---|---|---|
+| **Português (Brasil)** | `pt-BR` | `pt-BR` | Idioma principal y de referencia |
+| **English (US)** | `en-US` | `en` | Totalmente traducido |
+| **Español (España)** | `es-ES` | `es-ES` | Totalmente traducido |
+
+---
+
+## 🧠 Arquitectura del sistema (`src/i18n/`)
+
+La capa de i18n de Heeey está hecha a medida para ser muy ligera y reactiva, sin dependencias externas pesadas:
+
+```
+src/i18n/
+├── index.tsx          # Provider de React, hook useI18n, detector y formateador ICU
+└── locales/
+    ├── pt-BR.ts       # Diccionario de mensajes en portugués (base de los tipos)
+    ├── en-US.ts       # Diccionario de mensajes en inglés
+    └── es-ES.ts       # Diccionario de mensajes en español
+```
+
+### 1. Tipado estricto en tiempo de compilación
+- TypeScript extrae de forma recursiva todas las claves anidadas del diccionario `ptBR` y genera el tipo unión `MessageKey` (p. ej. `'dashboard.newBoard'`, `'sync.saving'`, `'auth.invalidEmail'`).
+- Si algún componente usa una clave que no existe o tiene una errata, la compilación falla de inmediato.
+- `en-US.ts` y `es-ES.ts` implementan la interfaz `Messages`, así que no puede faltar ninguna traducción.
+
+### 2. Plurales al estilo ICU
+Los mensajes dinámicos admiten reglas de plural complejas mediante el formateador `formatMessage`, que usa la API nativa `Intl.PluralRules`:
+
+```typescript
+// Ejemplo de es-ES.ts:
+elements: '{count, plural, =0 {sin elementos} one {# elemento} other {# elementos}}',
+othersOnline: '{count, plural, =0 {nadie más en línea} one {# persona más en línea} other {# personas más en línea}}',
+```
+
+### 3. Interpolación de parámetros
+Sustitución sencilla de variables entre llaves:
+```typescript
+t('dashboard.movedToTrash', { title: 'Plan' });
+// "“Plan” foi para a lixeira", "“Plan” moved to the trash" o "«Plan» movida a la papelera"
+```
+
+---
+
+## 🔄 Detección y persistencia del idioma
+
+Heeey elige el idioma del usuario en cuatro pasos:
+
+1. **Parámetro `?lang=` en la URL**:
+   - Los enlaces de las páginas del sitio (por ejemplo `/en` o `/es`) abren la app con `?lang=en-US` o `?lang=es-ES`, para que la app siga en el idioma de la página. La elección se guarda y el parámetro se quita de la barra de direcciones.
+2. **Preferencia guardada (`localStorage`)**:
+   - Si el usuario ya eligió un idioma en **Ajustes → Apariencia → Idioma**, se lee la clave `heeey_locale` del navegador.
+3. **Detección del navegador (`navigator.languages`)**:
+   - En la primera visita se revisa la lista ordenada de idiomas preferidos del navegador: `pt*` recibe `pt-BR`, `en*` recibe `en-US` y `es*` recibe `es-ES`.
+4. **Valor por defecto**:
+   - Para cualquier otro idioma, se usa `pt-BR`.
+
+---
+
+## 🌐 Páginas del sitio y documentación
+
+Las páginas estáticas son archivos HTML independientes para cada idioma, para que los buscadores indexen el contenido completo de cada versión:
+
+| Página | pt-BR | en-US | es-ES |
+|---|---|---|---|
+| Página de inicio | `/` | `/en` | `/es` |
+| Servidor MCP | `/pt-br/mcp` | `/mcp` | `/es/mcp` |
+| Términos de uso | `/termos` | `/en/terms` | `/es/terminos` |
+| Privacidad | `/privacidade` | `/en/privacy` | `/es/privacidad` |
+
+- Cada página declara sus versiones alternativas con `<link rel="alternate" hreflang="...">` y tiene un selector de idioma en el pie.
+- Quien ya eligió un idioma (clave `heeey_locale`) va automáticamente a la versión correspondiente. Los buscadores no tienen esa preferencia y siempre reciben la página solicitada.
+- La documentación sigue el idioma de la app: los archivos originales están en `docs/`, y las traducciones en `docs/en/` y `docs/es/`, con la misma estructura.
+
+---
+
+## 🎨 Sincronización con el lienzo de Excalidraw
+
+El motor de Excalidraw incluye sus propias traducciones (herramientas, diálogos de exportación, paleta de colores y atajos).
+
+Heeey pasa el idioma seleccionado directamente a la propiedad `langCode` del componente Excalidraw mediante `excalidrawLangCode`:
+- Cuando el usuario cambia el idioma en Heeey, los botones, menús contextuales y diálogos del lienzo cambian de idioma al instante y la experiencia se mantiene uniforme.
+
+---
+
+## 📅 Formato de fechas y números
+
+Todas las fechas de las tarjetas de pizarras y del historial de versiones se adaptan al idioma activo:
+- En `pt-BR`: `"editado há 5 minutos"`, `"23 de setembro de 2026"`.
+- En `en-US`: `"edited 5 minutes ago"`, `"September 23, 2026"`.
+- En `es-ES`: `"editada hace 5 minutos"`, `"23 de septiembre de 2026"`.
+
+---
+
+## 🛠️ Cómo añadir un idioma nuevo
+
+Para añadir un idioma nuevo (por ejemplo francés, `fr-FR`):
+
+1. Crea `src/i18n/locales/fr-FR.ts` implementando la interfaz `Messages`.
+2. Añade `'fr-FR'` al tipo `Locale`, una entrada al array `LOCALES` y el diccionario al mapa `DICTIONARIES` en `src/i18n/index.tsx`:
+   ```typescript
+   { id: 'fr-FR', label: 'Français', excalidrawLangCode: 'fr-FR' },
+   ```
+3. Enseña a `toLocale` a reconocer `fr*` y añade las URL de las páginas estáticas en `STATIC_PAGES`.
+4. Traduce las páginas HTML estáticas y la documentación (`docs/fr/`, títulos en `DOC_TRANSLATIONS`).
+5. Las pruebas automáticas de `src/__tests__/i18n.test.ts` y `src/__tests__/docs.test.ts` comprueban que estén todos los mensajes y todos los documentos traducidos.
+
+
+================================================================================
+FILE: docs/es/features/libraries.md
+================================================================================
+
+# Bibliotecas de componentes
+
+Heeey se integra a fondo con el ecosistema de bibliotecas de Excalidraw, lo que te permite guardar iconos, diagramas de arquitectura, wireframes y bloques gráficos reutilizables para agilizar tu trabajo.
+
+---
+
+## 📦 ¿Qué son las bibliotecas?
+
+En Excalidraw, una biblioteca es una colección de elementos formados por uno o varios elementos gráficos prefabricados (por ejemplo, iconos de servicios de AWS, símbolos UML, botones de interfaz o ilustraciones).
+
+En Heeey puedes:
+- Guardar cualquier selección de elementos del lienzo directamente en tu biblioteca personal.
+- Explorar la biblioteca pública oficial de Excalidraw e instalar paquetes listos con un clic.
+- Arrastrar elementos de tu biblioteca directamente a cualquier pizarra.
+
+---
+
+## ☁️ Persistencia en la nube frente a caché local
+
+Heeey implementa un adaptador a medida (`createLibraryAdapter` mediante `useHandleLibrary`):
+
+| Contexto del usuario | Dónde se guardan los elementos | Comportamiento |
+|---|---|---|
+| **Usuario con sesión iniciada** | Tabla `user_libraries` en Supabase + caché local | Sincronización automática en la nube. Tu biblioteca personal te acompaña en cualquier navegador u ordenador. Si estás sin conexión temporalmente, la caché local permite seguir leyendo y escribiendo sin errores. |
+| **Invitado / sin sesión** | `localStorage` (`heeey_library`) | Se guarda de forma segura en el navegador actual del dispositivo. |
+
+---
+
+## 🔄 Migración automática en el primer inicio de sesión
+
+Si usaste Heeey como invitado y creaste una biblioteca de elementos personalizada, no tienes que exportarla a mano:
+
+- Cuando inicias sesión en tu cuenta por primera vez (mediante Magic Link), se ejecuta el adaptador de migración (`createGuestLibraryMigration`).
+- Lee automáticamente los elementos de `localStorage` y los envía a tu cuenta en la tabla `user_libraries`.
+- La caché temporal de invitado se borra de forma segura y tus elementos pasan a estar disponibles en la nube.
+
+
+================================================================================
+FILE: docs/es/features/media-and-images.md
+================================================================================
+
+# Imágenes y optimización de medios
+
+Pegar o arrastrar capturas de pantalla y fotos pesadas directamente en una pizarra interactiva puede empeorar mucho el rendimiento de dibujo y el consumo de ancho de banda de todos los colaboradores. Heeey tiene un proceso especializado y automático de tratamiento de medios en el cliente.
+
+---
+
+## ⚡ Proceso de optimización automática
+
+Cada vez que se **pega** (`Ctrl+V` / `Cmd+V`) o se **arrastra** (*drag & drop*) una imagen al lienzo:
+
+```
+[Imagen original]
+       │
+       ▼ (Interceptada en el navegador)
+[Redimensionado proporcional: máx. 1600px]
+       │
+       ▼ (Compresión con Canvas 2D)
+[Conversión a WebP / Calidad 0.8 (Objetivo < 150 KB)]
+       │
+       ├───► Éxito ─────► Subida asíncrona a Supabase Storage: board-media/{boardId}/{fileId}.webp
+       │
+       └───► Alternativa ► Conserva un DataURL en base64 localmente si no hay conexión o el almacenamiento no está disponible
+```
+
+---
+
+## 📊 Reglas de tamaño y compresión
+
+1. **Límite de tamaño (`MAX_IMAGE_DIMENSION`)**:
+   - Ninguna imagen se añade a la pizarra con un ancho o alto superior a **1600px**. Se mantiene estrictamente la proporción original.
+2. **Compresión a WebP**:
+   - Las imágenes se codifican de forma nativa en **WebP** con calidad `0.8`, lo que suele dar archivos de menos de **150 KB** (entre un 70 % y un 90 % menos que los PNG en bruto de pantallas Retina).
+   - Si el navegador no puede exportar WebP desde el elemento Canvas, el proceso recurre automáticamente a **JPEG** con un fondo blanco (para que las zonas transparentes no se vuelvan negras).
+3. **Colocación inteligente en el lienzo**:
+   - La imagen se inserta centrada en la vista actual del usuario (`viewportCoordsToSceneCoords`).
+   - Las imágenes muy anchas reciben una escala inicial de visualización por defecto (máx. 600px) para no tapar los elementos ya dibujados.
+
+---
+
+## 🗄️ Almacenamiento en Supabase (`board-media`)
+
+- Las imágenes optimizadas se guardan en el bucket público `board-media` de Supabase Storage en la ruta:
+  ```
+  board-media/{boardId}/{fileId}.webp
+  ```
+- **Políticas de acceso RLS del almacenamiento**:
+  - Lectura pública para cualquier visitante que tenga el enlace de la pizarra.
+  - Subida permitida a cualquiera con permiso de edición en la pizarra.
+  - Eliminación permitida solo a la persona propietaria de la pizarra, durante la eliminación definitiva.
+- **Alternativa resistente**: si el bucket no está configurado o se cae la conexión, Heeey guarda la imagen como DataURL en base64 directamente en los metadatos de la pizarra, para que el usuario nunca pierda su trabajo.
+
+
+================================================================================
+FILE: docs/es/features/search.md
+================================================================================
+
+# Búsqueda global en el texto del lienzo
+
+Heeey tiene una búsqueda rápida de texto completo (*full-text search*) que encuentra pizarras no solo por el título, sino por **cualquier texto o etiqueta escrita dentro del lienzo**.
+
+---
+
+## 🔍 Cómo funciona la búsqueda
+
+Puedes buscar:
+- En el **panel**: desde la barra de búsqueda superior o con el atajo.
+- Dentro de una **pizarra**: desde el diálogo de búsqueda de pizarras (`BoardSearchModal`), para cambiar de pizarra sin volver al panel.
+
+---
+
+## 🧠 Características técnicas
+
+1. **Sin distinguir acentos ni mayúsculas**:
+   - Gracias a la extensión `unaccent` de PostgreSQL y a la normalización NFD, buscar `reunion`, `Reunión`, `REUNIÓN` o `reunión` devuelve exactamente los mismos resultados.
+2. **Indexación automática del texto del lienzo (`tsvector` y GIN)**:
+   - Cada vez que se guarda una pizarra, un disparador de la base de datos extrae todos los elementos de tipo `text` (incluidas las etiquetas de formas y flechas).
+   - El título recibe el peso **A** (máxima relevancia) y el contenido de los elementos, el peso **B**.
+   - Un índice GIN (`idx_boards_search`) responde en milisegundos incluso con grandes volúmenes de datos.
+3. **Búsqueda local y remota**:
+   - **Remota**: los usuarios con sesión iniciada buscan en el servidor mediante la función RPC `search_boards`.
+   - **Local**: los invitados buscan en las pizarras guardadas en la caché del navegador mediante la función `searchLoadedBoards`.
+4. **Fragmentos de vista previa con resaltado**:
+   - El resultado no muestra solo el nombre de la pizarra: recorta un fragmento de contexto de hasta 40 caracteres alrededor de la primera coincidencia, conserva los acentos originales y resalta el término encontrado.
+5. **Búsqueda semántica con Jev (Vercel AI Gateway)**:
+   - Cuando la búsqueda por palabras devuelve menos de 3 resultados, la app llama a `POST /api/ai-search` para encontrar pizarras **relacionadas por su significado** (p. ej. `planificación T3` encuentra «Hoja de ruta julio–septiembre»). Estos resultados aparecen con la etiqueta **Relacionadas**.
+   - La función lee hasta 40 pizarras recientes del usuario mediante la RPC `search_candidates` (título + 600 caracteres del lienzo, con la sesión del propio usuario) y hace **una sola** llamada al modelo `typesafe-ai/jev` en el endpoint `/v1/evaluate` del AI Gateway, con una pregunta de sí o no por pizarra. Se incluyen las pizarras con una probabilidad superior a 0,5, hasta 8 resultados.
+   - Retención cero de datos: define `AI_GATEWAY_ZDR=true` para que el gateway rechace los proveedores que guardan datos. Requiere el plan Pro o Enterprise de Vercel; en Hobby, activarlo hace que todas las llamadas fallen con un 403.
+   - **Credenciales**: en producción la función usa el token OIDC del proyecto en Vercel (sin clave). En local, ejecuta `vercel link` y `vercel env pull` (el token OIDC dura 12 h) o define `AI_GATEWAY_API_KEY`. Sin credenciales, la búsqueda semántica se desactiva sin avisar y la búsqueda por palabras sigue funcionando con normalidad.
+   - `vite dev` no sirve las funciones de `api/`; para probar en local, usa `vercel dev`.
+
+
+================================================================================
+FILE: docs/es/api/overview.md
+================================================================================
+
+# Visión general de la API REST v1
+
+La API pública de **Heeey** (`/api/v1`) te permite crear, leer, actualizar, mover y buscar pizarras y carpetas de forma programática.
+
+La API está pensada para ser ligera y cómoda para desarrolladores y agentes autónomos, y se ejecuta directamente en el edge (*Edge Runtime* en Vercel).
+
+---
+
+## 🌐 Datos de integración
+
+- **URL base de producción**: `https://heeey.click/api/v1`
+- **Entorno local**: `http://localhost:5173/api/v1`
+- **Formato de datos**: JSON UTF-8
+- **Autenticación**: token Bearer en la cabecera HTTP `Authorization`
+- **CORS**: habilitado para todos los orígenes (`*`), lo que permite peticiones directas desde herramientas del navegador, webhooks y CLIs.
+
+---
+
+## ⚡ Principios de diseño de la API
+
+1. **Seguridad en la base de datos (cero secretos en el edge)**:
+   - La función edge (`apiHandler.ts`) no guarda claves maestras ni secretos de superusuario.
+   - Cada petición se autentica directamente en PostgreSQL mediante un hash criptográfico SHA-256 (`api_authenticate`). El contexto del usuario (`auth.uid()`) se aplica a nivel de transacción, de modo que las políticas de Row Level Security (RLS) protegen cada operación.
+2. **Actualización en tiempo real (live broadcast)**:
+   - Cada vez que cambias o añades elementos a una pizarra con `POST` o `PATCH`, el servidor envía un mensaje de broadcast de Supabase Realtime por el canal `heeey:room:{boardId}`.
+   - ¡Quien tenga la pizarra abierta en el navegador verá aparecer los nuevos elementos en directo sin recargar la página!
+3. **Enlaces listos para usar (`url`)**:
+   - Todas las respuestas de pizarras incluyen la propiedad `url` ya formateada (p. ej. `https://heeey.click/b/550e8400-e29b-41d4-a716-446655440000`), para que scripts y bots puedan entregar el enlace directo al usuario final.
+4. **Formato abreviado de elementos (Element Skeleton)**:
+   - No necesitas construir objetos enormes con decenas de propiedades internas de Excalidraw. La API acepta especificaciones sencillas (`label`, `shape`, `start`, `end`) y genera automáticamente los elementos completos.
+
+---
+
+## 🧭 Resumen de recursos de la API
+
+| Recurso | Método | Ruta | Descripción |
+|---|---|---|---|
+| **Índice de la API** | `GET` | `/api/v1` | Devuelve el catálogo de rutas y formatos aceptados. |
+| **Pizarras** | `GET` | `/api/v1/boards` | Lista las pizarras del usuario (con paginación y filtro por carpeta). |
+| **Crear pizarra** | `POST` | `/api/v1/boards` | Crea una pizarra nueva, con o sin elementos iniciales. |
+| **Obtener pizarra** | `GET` | `/api/v1/boards/:id` | Devuelve los metadatos y todos los elementos de la escena. |
+| **Actualizar pizarra** | `PATCH` | `/api/v1/boards/:id` | Actualiza el título, añade o modifica elementos o los elimina por ID. |
+| **Papelera** | `DELETE` | `/api/v1/boards/:id` | Mueve la pizarra a la papelera (*soft delete*). |
+| **Mover pizarra** | `POST` | `/api/v1/boards/:id/move` | Coloca la pizarra en una carpeta (o en el nivel superior con `null`). |
+| **Búsqueda global** | `GET` | `/api/v1/search?q=` | Búsqueda de texto completo en títulos y en el texto dibujado en las pizarras. |
+| **Listar carpetas** | `GET` | `/api/v1/folders` | Lista todas las carpetas del usuario. |
+| **Crear carpeta** | `POST` | `/api/v1/folders` | Crea una carpeta en el nivel superior o dentro de otra carpeta. |
+
+
+================================================================================
+FILE: docs/es/api/getting-started.md
+================================================================================
+
+# Primeros pasos con la API
+
+> Crea tu primera pizarra en Heeey de forma programática en menos de 3 minutos.
+
+La API REST v1 de **Heeey** te permite crear, consultar, actualizar y organizar pizarras y diagramas directamente desde código, scripts de automatización, webhooks o agentes autónomos.
+
+---
+
+## ⚡ Paso 1: crea tu clave de API
+
+Todas las llamadas a la API se autentican con una **clave personal de API** vinculada a tu cuenta:
+
+1. Entra en [heeey.click](https://heeey.click) e inicia sesión en tu cuenta (mediante Magic Link).
+2. En el panel, haz clic en el icono de la llave (**Claves de API**) de la cabecera.
+3. Haz clic en **«Nueva clave»**:
+   - Ponle un nombre a la clave (p. ej. `script-prueba`).
+   - Marca los alcances de **Lectura** (`read`) y **Escritura** (`write`).
+4. Copia la clave generada (`hk_...`). Solo se muestra una vez.
+
+---
+
+## 🚀 Paso 2: crea tu primera pizarra
+
+Envía una petición `POST` a `/api/v1/boards` con el título de la pizarra y algunas formas básicas.
+
+Puedes usar el formato abreviado de elementos (**Element Spec**), indicando solo el tipo, las coordenadas y el texto (`label`):
+
+```bash
+curl -X POST https://heeey.click/api/v1/boards \
+  -H "Authorization: Bearer hk_TU_CLAVE_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Primer flujo con la API",
+    "elements": [
+      {
+        "id": "step-1",
+        "type": "rectangle",
+        "x": 100,
+        "y": 150,
+        "label": "Inicio del proceso",
+        "backgroundColor": "#a5d8ff",
+        "strokeColor": "#1971c2"
+      },
+      {
+        "id": "step-2",
+        "type": "diamond",
+        "x": 380,
+        "y": 135,
+        "label": "¿Aprobado?",
+        "backgroundColor": "#ffec99",
+        "strokeColor": "#f08c00"
+      },
+      {
+        "type": "arrow",
+        "start": { "id": "step-1" },
+        "end": { "id": "step-2" },
+        "label": "envía"
+      }
+    ]
+  }'
+```
+
+### Respuesta correcta (`201 Created`):
+```json
+{
+  "board": {
+    "id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "title": "Primer flujo con la API",
+    "folder_id": null,
+    "access_level": "edit",
+    "created_at": "2026-09-23T14:00:00Z",
+    "updated_at": "2026-09-23T14:00:00Z",
+    "deleted_at": null,
+    "element_count": 5,
+    "url": "https://heeey.click/b/e67e3a1e-8e89-4089-a5f1-382a39281a92"
+  }
+}
+```
+
+> **Consejo**: copia el enlace devuelto en `url` y ábrelo en el navegador para ver la pizarra dibujada con sus colores y sus conexiones magnéticas perfectamente colocadas.
+
+---
+
+## 👁️ Paso 3: consulta los datos de la pizarra
+
+Para leer el estado actual de la pizarra que has creado:
+
+```bash
+curl -X GET https://heeey.click/api/v1/boards/e67e3a1e-8e89-4089-a5f1-382a39281a92 \
+  -H "Authorization: Bearer hk_TU_CLAVE_AQUI"
+```
+
+La respuesta contiene los metadatos de la pizarra y el array completo `elements` con todos los objetos vectoriales de Excalidraw listos para dibujar.
+
+---
+
+## 🔴 Paso 4: actualización en directo
+
+Deja la pizarra abierta en una pestaña del navegador y ejecuta la llamada `PATCH` siguiente para añadir un paso nuevo al flujo:
+
+```bash
+curl -X PATCH https://heeey.click/api/v1/boards/e67e3a1e-8e89-4089-a5f1-382a39281a92 \
+  -H "Authorization: Bearer hk_TU_CLAVE_AQUI" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "elements": [
+      {
+        "id": "step-3",
+        "type": "rectangle",
+        "x": 650,
+        "y": 150,
+        "label": "En producción",
+        "backgroundColor": "#b2f2bb",
+        "strokeColor": "#2f9e44"
+      },
+      {
+        "type": "arrow",
+        "start": { "id": "step-2" },
+        "end": { "id": "step-3" },
+        "label": "sí"
+      }
+    ]
+  }'
+```
+
+Mira la pestaña del navegador: ¡el nuevo bloque y la flecha aparecen en pantalla al instante, sin recargar la página! Heeey difunde los cambios automáticamente por el canal de Supabase Realtime.
+
+---
+
+## 📚 Próximos pasos
+
+- Conoce el formato detallado de formas, etiquetas y flechas en el [Esquema del contenido de la escena](scene-content-schema.md).
+- Consulta todos los métodos disponibles en la [Referencia de endpoints](endpoints.md).
+- Aprende a paginar resultados en [Paginación](pagination.md).
+- Revisa los límites de tamaño del payload en [Tasas y límites operativos](rate-limiting.md).
+
+
+================================================================================
+FILE: docs/es/api/authentication.md
+================================================================================
+
+# Autenticación y claves de API
+
+Heeey usa **claves personales de API** (*Personal API Keys*) para autorizar las peticiones a la API REST (`/api/v1`) y al servidor MCP (`/api/mcp`).
+
+---
+
+## 🔑 Cómo obtener una clave de API
+
+1. Entra en [heeey.click](https://heeey.click) e inicia sesión en tu cuenta (mediante Magic Link).
+2. En el panel, haz clic en el icono de la llave (**Claves de API**) de la cabecera.
+3. Haz clic en **«Nueva clave»**:
+   - Ponle un nombre identificativo (p. ej. `script-copia`, `claude-code`, `github-actions`).
+   - Elige los alcances que necesitas:
+     - **Lectura (`read`)**: permite listar pizarras y carpetas y leer el contenido de las escenas.
+     - **Escritura (`write`)**: permite crear, modificar, mover y enviar pizarras a la papelera.
+4. **Guarda tu clave en un lugar seguro**: la clave completa, con el formato `hk_<prefijo>_<secreto>`, se muestra **una sola vez**, al crearla.
+
+---
+
+## 🔒 Formato de la clave y almacenamiento seguro
+
+- **Formato**: `hk_` seguido de un prefijo hexadecimal de 8 caracteres y un secreto criptográfico de 40 caracteres generado con `gen_random_bytes(24)`.
+  Ejemplo: `hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4`
+- **Almacenamiento en la base de datos**: el secreto en claro **nunca** se guarda en la base de datos. Supabase solo almacena:
+  - El `prefix` (p. ej. `hk_1a2b3c4d`), que se muestra en la interfaz para que sepas qué clave es cuál.
+  - El `key_hash`: un resumen criptográfico calculado con `sha256(clave)`.
+- **Límite por cuenta**: cada usuario puede tener hasta **20 claves activas a la vez**.
+
+---
+
+## 📤 Enviar la clave en las peticiones
+
+Puedes enviar la clave en la cabecera estándar `Authorization` o en la cabecera personalizada `X-API-Key`:
+
+### Opción 1: cabecera Authorization Bearer (recomendada)
+```http
+GET /api/v1/boards HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+```
+
+### Opción 2: cabecera X-API-Key
+```http
+GET /api/v1/boards HTTP/1.1
+Host: heeey.click
+X-API-Key: hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+```
+
+---
+
+## 🚫 Revocar una clave
+
+Si tu clave se ha filtrado o quieres desactivar una integración antigua:
+1. Abre el diálogo **Claves de API** en el panel.
+2. Busca la clave por su prefijo o su nombre.
+3. Haz clic en **«Revocar»**.
+4. La clave se marca con `revoked_at = now()` y deja de funcionar al instante. La revocación es definitiva y no se puede deshacer.
+
+
+================================================================================
+FILE: docs/es/api/pagination.md
+================================================================================
+
+# Paginación en la API
+
+Al listar colecciones grandes (como pizarras o resultados de búsqueda), Heeey usa el modelo estándar de paginación por **desplazamiento y límite** (*Offset & Limit*).
+
+---
+
+## 🧭 Parámetros de paginación
+
+Los endpoints que admiten paginación aceptan estos parámetros de consulta en la URL (*query parameters*):
+
+| Parámetro | Tipo | Por defecto | Mínimo | Máximo | Descripción |
+|---|---|---|---|---|---|
+| `limit` | `integer` | `50` | `1` | `200` | Número máximo de registros que se devuelven en la página actual. |
+| `offset` | `integer` | `0` | `0` | — | Número de registros que se saltan desde el principio de la ordenación. |
+
+> **Nota de seguridad**: si envías un `limit` mayor que 200 o menor que 1, la base de datos de Heeey lo ajusta automáticamente al rango permitido (`least(greatest(limit, 1), 200)`) sin devolver un error.
+
+---
+
+## 📋 Endpoints que admiten paginación
+
+### 1. `GET /api/v1/boards`
+Lista las pizarras del usuario de la clave de API, de la editada más recientemente a la más antigua (`updated_at desc`).
+
+```http
+GET /api/v1/boards?limit=25&offset=50 HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_...
+```
+
+**Filtros que se pueden combinar con la paginación:**
+- `folder_id=<uuid>`: pagina solo las pizarras de la carpeta indicada.
+- `include_trashed=true`: incluye las pizarras de la papelera.
+
+### 2. `GET /api/v1/search`
+Búsqueda de texto en los títulos y en el contenido dibujado en el lienzo. Acepta:
+- `limit`: número máximo de resultados (por defecto: `20`).
+- Los resultados se ordenan por puntuación de relevancia (`rank desc`).
+
+```http
+GET /api/v1/search?q=kubernetes&limit=10 HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_...
+```
+
+---
+
+## 💻 Ejemplos de implementación
+
+### Ejemplo 1: cURL
+
+Para obtener las 3 primeras páginas de 50 pizarras:
+
+```bash
+# Página 1 (pizarras 0 a 49)
+curl "https://heeey.click/api/v1/boards?limit=50&offset=0" \
+  -H "Authorization: Bearer hk_..."
+
+# Página 2 (pizarras 50 a 99)
+curl "https://heeey.click/api/v1/boards?limit=50&offset=50" \
+  -H "Authorization: Bearer hk_..."
+
+# Página 3 (pizarras 100 a 149)
+curl "https://heeey.click/api/v1/boards?limit=50&offset=100" \
+  -H "Authorization: Bearer hk_..."
+```
+
+---
+
+### Ejemplo 2: TypeScript / JavaScript (recorrer todas las páginas)
+
+```typescript
+interface BoardSummary {
+  id: string;
+  title: string;
+  url: string;
+  updated_at: string;
+}
+
+async function fetchAllBoards(apiKey: string): Promise<BoardSummary[]> {
+  const allBoards: BoardSummary[] = [];
+  const pageSize = 100;
+  let offset = 0;
+
+  while (true) {
+    const response = await fetch(
+      `https://heeey.click/api/v1/boards?limit=${pageSize}&offset=${offset}`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Fallo en la API: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const boards: BoardSummary[] = data.boards || [];
+    allBoards.push(...boards);
+
+    // Si la página trae menos elementos que el límite, hemos llegado al final
+    if (boards.length < pageSize) {
+      break;
+    }
+
+    offset += pageSize;
+  }
+
+  return allBoards;
+}
+```
+
+---
+
+### Ejemplo 3: Python
+
+```python
+import requests
+
+API_KEY = "hk_..."
+BASE_URL = "https://heeey.click/api/v1/boards"
+
+def get_all_boards():
+    boards = []
+    limit = 50
+    offset = 0
+
+    while True:
+        resp = requests.get(
+            BASE_URL,
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            params={"limit": limit, "offset": offset}
+        )
+        resp.raise_for_status()
+        batch = resp.json().get("boards", [])
+        boards.extend(batch)
+
+        if len(batch) < limit:
+            break
+        offset += limit
+
+    return boards
+```
+
+---
+
+## 🎯 Buenas prácticas
+
+1. **Evita desplazamientos enormes**: en cuentas con miles de pizarras, combina la paginación con el filtro `folder_id` para mantener las consultas en rangos pequeños.
+2. **Condición de parada**: la API no devuelve un recuento total (para mantener la latencia mínima), así que la forma correcta de terminar el bucle es comprobar si el número de elementos devueltos en `boards` es estrictamente menor que el `limit` solicitado.
+
+
+================================================================================
+FILE: docs/es/api/rate-limiting.md
+================================================================================
+
+# Tasas y límites operativos (Rate Limiting)
+
+Para garantizar la estabilidad, una latencia baja y un uso equilibrado de los recursos entre todos los usuarios e integraciones, Heeey establece límites operativos para la API REST (`/api/v1`) y el servidor MCP (`/api/mcp`).
+
+---
+
+## 🛑 Límites estructurales de datos
+
+| Ámbito | Límite | Código de error | Detalles |
+|---|---|---|---|
+| **Elementos por llamada (`elements`)** | Máx. **5.000 elementos** | `400 Bad Request` (`invalid_request`) | Lo comprueba la función de base de datos `api_check_elements`. Evita payloads excesivos que sobrecarguen el lienzo en los navegadores de los clientes conectados. |
+| **Nodos por diagrama (`create_diagram`)** | Máx. **300 nodos** | `400 Bad Request` (`invalid_request`) | El motor de disposición Dagre coloca hasta 300 nodos con rapidez y traza las flechas sin colisiones. |
+| **Claves de API activas por usuario** | Máx. **20 claves** | `400 Bad Request` (`invalid_request`) | Cada cuenta puede tener hasta 20 claves activas a la vez. Revoca las claves antiguas antes de crear otras si llegas al límite. |
+| **Tamaño máximo de las imágenes** | **1.600 px** (ancho/alto) | Redimensionado automático | Las imágenes arrastradas o pegadas se redimensionan en el cliente antes de subirlas a Supabase Storage (`board-media`). |
+| **Tamaño objetivo de los medios optimizados** | **< 150 KB** por imagen | Compresión automática | El proceso convierte a WebP (calidad 0.8) con gran fidelidad y un consumo de ancho de banda muy bajo. |
+| **Tiempo máximo de ejecución (Edge)** | **25 segundos** | `504 Gateway Timeout` | Las funciones edge (`api/v1.ts` y `api/mcp.ts`) se ejecutan en Vercel Edge Runtime y suelen responder en menos de 100 ms. |
+
+---
+
+## 🚦 Límites de concurrencia y de red
+
+1. **Peticiones simultáneas**:
+   - La arquitectura serverless de Vercel Edge escala automáticamente para atender picos de peticiones concurrentes.
+   - Las actualizaciones simultáneas (`PATCH /boards/:id` o llamadas MCP) se serializan mediante transacciones de PostgreSQL con bloqueo de fila (`for update`), lo que evita corromper el estado.
+
+2. **Cuotas de la base de datos de Supabase**:
+   - Las funciones de la API se conectan directamente a PostgreSQL mediante llamadas RPC autenticadas.
+   - Si el pool de conexiones de la base de datos se satura, la API responde con el estado `500 Server Error`.
+
+---
+
+## 💡 Recomendaciones y buenas prácticas
+
+### 1. Agrupa las actualizaciones de elementos (batching)
+En lugar de enviar 50 peticiones separadas con un elemento cada una mediante `PATCH /api/v1/boards/:id`, envía un único array con los 50 elementos. Así reduces la sobrecarga de red y se envía una sola notificación en tiempo real a los colaboradores.
+
+### 2. Reintentos con espera exponencial
+Si tu integración recibe un error temporal de red o un estado 500/504, reintenta con una espera cada vez mayor:
+
+```typescript
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3, delay = 500) {
+  try {
+    const res = await fetch(url, options);
+    if (res.status >= 500 && retries > 0) {
+      await new Promise((r) => setTimeout(r, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    return res;
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((r) => setTimeout(r, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw err;
+  }
+}
+```
+
+### 3. Usa `originBeside` y reutiliza nodos
+Al generar diagramas en pizarras existentes mediante MCP, reutiliza los ID de los nodos existentes para actualizarlos en su sitio, o deja que el motor de disposición calcule las distancias sin sobrecargar la memoria del lienzo.
+
+
+================================================================================
+FILE: docs/es/api/error-handling.md
+================================================================================
+
+# Gestión de errores en la API
+
+La API de Heeey sigue las convenciones REST tradicionales y usa códigos de estado HTTP estándar para indicar si una petición ha tenido éxito o ha fallado.
+
+---
+
+## 📋 Formato de error estándar
+
+Todas las respuestas de error devuelven un objeto JSON con la misma forma:
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "elements deve ser uma lista de objetos com type."
+  }
+}
+```
+
+Donde:
+- **`code`**: identificador programático estable del tipo de error (adecuado para comprobaciones con `switch/case` en tu código).
+- **`message`**: descripción legible que explica el motivo concreto del fallo.
+
+> **Nota**: por ahora, los mensajes de error se devuelven en portugués. Usa `code`, que nunca cambia, para tomar decisiones en tu código, y no `message`.
+
+---
+
+## 🚦 Códigos de estado HTTP
+
+| Estado HTTP | Código (`code`) | Causa / descripción |
+|---|---|---|
+| **`400 Bad Request`** | `invalid_request` o `invalid_json` | Faltan parámetros obligatorios, JSON mal formado, UUID no válidos o tipo de elemento inexistente. |
+| **`401 Unauthorized`** | `unauthorized` | Falta la cabecera `Authorization`, o la clave está mal formada, revocada o no existe. |
+| **`403 Forbidden`** | `forbidden` | La clave de API no tiene alcance suficiente (p. ej. una clave de solo lectura que intenta hacer `POST`, `PATCH` o `DELETE`). |
+| **`404 Not Found`** | `not_found` | La pizarra, la carpeta o la ruta solicitada no existe o no pertenece a la cuenta asociada a la clave. |
+| **`409 Conflict`** | `conflict` | Conflicto con el estado del recurso (p. ej. intentar editar o añadir elementos a una pizarra que ya está en la papelera). |
+| **`500 Internal Server Error`** | `server_error` | Error inesperado al procesar en la base de datos o en la función edge. |
+
+---
+
+## 🛡️ Ejemplos de respuestas de error habituales
+
+### 1. Clave ausente o no válida (401)
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "unauthorized",
+    "message": "Envie sua chave de API em Authorization: Bearer <chave>."
+  }
+}
+```
+
+### 2. Alcance insuficiente (403)
+```http
+HTTP/1.1 403 Forbidden
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "forbidden",
+    "message": "Esta chave de API não tem permissão de escrita."
+  }
+}
+```
+
+### 3. Modificar una pizarra de la papelera (409)
+```http
+HTTP/1.1 409 Conflict
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "conflict",
+    "message": "Quadro na lixeira é somente leitura."
+  }
+}
+```
+
+### 4. Payload no válido (400)
+```http
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "id deve ser um UUID."
+  }
+}
+```
+
+
+================================================================================
+FILE: docs/es/api/scene-content-schema.md
+================================================================================
+
+# Esquema del contenido de la escena (Element Spec)
+
+Heeey está pensado para que ni tú ni los modelos de IA tengáis que construir objetos extensos con las decenas de propiedades internas del formato nativo de Excalidraw. La API y las herramientas MCP aceptan una especificación sencilla (**Element Spec**) y completan automáticamente posiciones, fuentes, cajas delimitadoras y conexiones magnéticas.
+
+Los elementos nativos completos de Excalidraw siguen siendo 100 % compatibles y pasan directamente por el conversor.
+
+---
+
+## 🧩 El formato abreviado (Element Spec)
+
+Cualquier elemento del array `elements` puede describirse con estos campos esenciales:
+
+```typescript
+interface ElementSpec {
+  /** Identificador estable del elemento (opcional; se genera automáticamente si se omite) */
+  id?: string;
+  /** Tipo de forma o de trazo */
+  type: 'rectangle' | 'ellipse' | 'diamond' | 'text' | 'arrow' | 'line' | 'frame';
+  /** Coordenadas en el lienzo, en píxeles */
+  x?: number;
+  y?: number;
+  /** Dimensiones (opcionales; se calculan a partir de la etiqueta si se omiten) */
+  width?: number;
+  height?: number;
+  /** Etiqueta que se muestra dentro de la forma o sobre la flecha */
+  label?: string | { text: string; fontSize?: number };
+  /** Contenido de texto directo (obligatorio para type: "text") */
+  text?: string;
+  fontSize?: number;
+  /** Colores en formato CSS (#hex, rgb, etc.) */
+  strokeColor?: string;
+  backgroundColor?: string;
+  /** Extremos conectados de las flechas (apuntan al id de la forma de origen/destino) */
+  start?: { id: string };
+  end?: { id: string };
+  /** Puntos relativos para flechas y líneas manuales: [[0, 0], [200, 50]] */
+  points?: [number, number][];
+}
+```
+
+---
+
+## 🎨 Ejemplos prácticos por tipo de elemento
+
+### 1. Formas con texto interior centrado (`rectangle`, `ellipse`, `diamond`)
+Basta con pasar la propiedad `label`. El servidor crea la forma y un elemento de texto vinculado (`boundElements` y `containerId`) perfectamente centrado:
+
+```json
+{
+  "id": "node-auth",
+  "type": "rectangle",
+  "x": 100,
+  "y": 150,
+  "label": "Servicio de autenticación",
+  "backgroundColor": "#a5d8ff",
+  "strokeColor": "#1971c2"
+}
+```
+
+Para una decisión condicional en un diagrama de flujo:
+```json
+{
+  "id": "node-check",
+  "type": "diamond",
+  "x": 380,
+  "y": 130,
+  "label": "¿Token válido?",
+  "backgroundColor": "#ffec99"
+}
+```
+
+### 2. Flechas conectadas y magnéticas (`arrow`)
+Para unir dos formas, usa las propiedades `start` y `end` con los ID correspondientes. Heeey calcula el centro de las formas, orienta los puntos de la flecha y aplica la separación correcta de los bordes (`gap: 8px`):
+
+```json
+{
+  "id": "arrow-auth-check",
+  "type": "arrow",
+  "start": { "id": "node-auth" },
+  "end": { "id": "node-check" },
+  "label": "valida el token"
+}
+```
+
+> **Consejo**: las flechas pueden conectarse a formas enviadas en la misma petición o a formas que **ya estaban en la pizarra**.
+
+### 3. Texto suelto (`text`)
+Para cabeceras, títulos o anotaciones libres:
+
+```json
+{
+  "type": "text",
+  "x": 100,
+  "y": 50,
+  "text": "Arquitectura del sistema v2",
+  "fontSize": 24,
+  "strokeColor": "#1e1e1e"
+}
+```
+
+### 4. Marcos / paneles de agrupación (`frame`)
+Para delimitar áreas funcionales o secciones de un diagrama:
+
+```json
+{
+  "id": "frame-backend",
+  "type": "frame",
+  "x": 50,
+  "y": 80,
+  "width": 600,
+  "height": 400,
+  "label": "Zona segura / VPC"
+}
+```
+
+---
+
+## 🧠 Valores por defecto aplicados automáticamente
+
+Cuando se omiten los campos estéticos en la especificación, Heeey aplica valores coherentes:
+
+- **Fuente**: familia 5 (`Excalifont`, la fuente manuscrita por defecto de Excalidraw).
+- **Tamaños por defecto de las formas**:
+  - `rectangle`: 180 × 80 px (crece con el texto).
+  - `ellipse`: 140 × 100 px.
+  - `diamond`: 180 × 110 px.
+- **Colores por defecto**:
+  - `strokeColor`: `#1e1e1e`
+  - `backgroundColor`: `transparent`
+  - `fillStyle`: `solid`
+  - `roughness`: `1` (el característico estilo dibujado a mano)
+  - `opacity`: `100`
+
+---
+
+## 🔄 Vista compacta (`describeElements`)
+
+Al leer con formatos optimizados para modelos de lenguaje (como hacen las herramientas MCP), Heeey hace el proceso inverso:
+- Las etiquetas vinculadas a formas se vuelven a incorporar a la propiedad `label` de la forma que las contiene.
+- Las flechas muestran `start: { id }` y `end: { id }`.
+- Las coordenadas decimales se redondean a enteros.
+- Esta compactación ahorra hasta un 80 % de los tokens que ocupa la ventana de contexto del LLM.
+
+
+================================================================================
+FILE: docs/es/api/endpoints.md
+================================================================================
+
+# Referencia completa de endpoints de la API REST
+
+Esta página documenta todos los endpoints disponibles en la API REST v1 de Heeey (`https://heeey.click/api/v1`).
+
+Todas las peticiones (excepto `GET /api/v1`) requieren autenticación mediante la cabecera:
+```http
+Authorization: Bearer hk_...
+```
+
+---
+
+## 📌 Índice de endpoints
+
+- [GET /api/v1](#get-apiv1) — Catálogo de la API
+- [GET /api/v1/boards](#get-apiv1boards) — Listar pizarras
+- [POST /api/v1/boards](#post-apiv1boards) — Crear una pizarra
+- [GET /api/v1/boards/:id](#get-apiv1boardsid) — Obtener una pizarra y su escena completa
+- [PATCH /api/v1/boards/:id](#patch-apiv1boardsid) — Actualizar una pizarra
+- [DELETE /api/v1/boards/:id](#delete-apiv1boardsid) — Enviar una pizarra a la papelera
+- [POST /api/v1/boards/:id/move](#post-apiv1boardsidmove) — Mover una pizarra a una carpeta
+- [GET /api/v1/search](#get-apiv1search) — Buscar pizarras por texto
+- [GET /api/v1/folders](#get-apiv1folders) — Listar carpetas
+- [POST /api/v1/folders](#post-apiv1folders) — Crear una carpeta
+
+---
+
+## 🔍 Detalles de los endpoints
+
+### `GET /api/v1`
+Devuelve información general sobre la API, instrucciones de autenticación y las rutas disponibles.
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "name": "heeey.click API",
+  "version": "v1",
+  "auth": "Authorization: Bearer <chave de API criada em heeey.click>",
+  "endpoints": [
+    "GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=",
+    "POST   /api/v1/boards { title, elements?, folder_id? }",
+    "GET    /api/v1/boards/:id",
+    "PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }",
+    "DELETE /api/v1/boards/:id  (move para a lixeira)",
+    "POST   /api/v1/boards/:id/move { folder_id }",
+    "GET    /api/v1/search?q=",
+    "GET    /api/v1/folders",
+    "POST   /api/v1/folders { name, parent_id? }"
+  ]
+}
+```
+
+---
+
+### `GET /api/v1/boards`
+Lista las pizarras del usuario de la clave de API, de la editada más recientemente a la más antigua.
+
+**Parámetros de consulta (query params):**
+- `folder_id` *(opcional, UUID)*: solo las pizarras que están dentro de esta carpeta.
+- `include_trashed` *(opcional, boolean)*: si es `true`, incluye las pizarras de la papelera. Por defecto: `false`.
+- `limit` *(opcional, integer)*: número máximo de resultados (por defecto: `50`, máx.: `200`).
+- `offset` *(opcional, integer)*: desplazamiento para la paginación (por defecto: `0`).
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "boards": [
+    {
+      "id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+      "title": "Arquitectura de microservicios",
+      "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822",
+      "access_level": "edit",
+      "created_at": "2026-09-20T14:30:00Z",
+      "updated_at": "2026-09-23T01:15:00Z",
+      "deleted_at": null,
+      "element_count": 42,
+      "url": "https://heeey.click/b/e67e3a1e-8e89-4089-a5f1-382a39281a92"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/v1/boards`
+Crea una pizarra nueva con un título y elementos opcionales.
+
+**Cuerpo de la petición (JSON):**
+- `title` *(opcional, string)*: título de la pizarra (si se omite, se usa el título por defecto del sistema).
+- `folder_id` *(opcional, UUID)*: carpeta de destino. Si se omite o es `null`, la pizarra se crea en el nivel superior.
+- `elements` *(opcional, array)*: lista de elementos nativos de Excalidraw o de especificaciones abreviadas (`ElementSpec`).
+
+**Ejemplo de petición:**
+```bash
+curl -X POST https://heeey.click/api/v1/boards \
+  -H "Authorization: Bearer hk_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Pipeline de CI/CD",
+    "elements": [
+      { "id": "git", "type": "rectangle", "x": 50, "y": 100, "label": "Git Push" },
+      { "id": "build", "type": "rectangle", "x": 280, "y": 100, "label": "Build Docker" },
+      { "type": "arrow", "start": { "id": "git" }, "end": { "id": "build" } }
+    ]
+  }'
+```
+
+**Ejemplo de respuesta (201 Created):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "title": "Pipeline de CI/CD",
+    "folder_id": null,
+    "access_level": "edit",
+    "created_at": "2026-09-23T02:00:00Z",
+    "updated_at": "2026-09-23T02:00:00Z",
+    "deleted_at": null,
+    "element_count": 4,
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `GET /api/v1/boards/:id`
+Devuelve los metadatos de la pizarra y el array completo con todos los elementos dibujados en la escena.
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "title": "Pipeline de CI/CD",
+    "elements": [
+      {
+        "id": "git",
+        "type": "rectangle",
+        "x": 50,
+        "y": 100,
+        "width": 180,
+        "height": 80,
+        "strokeColor": "#1e1e1e",
+        "backgroundColor": "transparent",
+        "boundElements": [{ "type": "text", "id": "git-label" }]
+      }
+    ],
+    "app_state": { "viewBackgroundColor": "#ffffff" },
+    "files": {},
+    "access_level": "edit",
+    "created_at": "2026-09-23T02:00:00Z",
+    "updated_at": "2026-09-23T02:00:00Z",
+    "deleted_at": null,
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `PATCH /api/v1/boards/:id`
+Cambia propiedades de una pizarra existente. Las actualizaciones de elementos se difunden en tiempo real a los colaboradores que tienen la pizarra abierta.
+
+**Cuerpo de la petición (JSON):**
+- `title` *(opcional, string)*: nuevo título.
+- `elements` *(opcional, array)*: elementos que se añaden o actualizan. Los elementos cuyo `id` ya existe en la pizarra se actualizan (*upsert*); los ID nuevos se insertan.
+- `delete_element_ids` *(opcional, array de strings)*: ID de los elementos que se eliminan. Si eliminas una forma con texto interior vinculado, el texto vinculado se elimina con ella.
+
+**Ejemplo de petición:**
+```json
+{
+  "title": "Pipeline de CI/CD (Producción)",
+  "elements": [
+    { "id": "deploy", "type": "rectangle", "x": 510, "y": 100, "label": "Deploy K8s", "backgroundColor": "#b2f2bb" },
+    { "type": "arrow", "start": { "id": "build" }, "end": { "id": "deploy" } }
+  ]
+}
+```
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "title": "Pipeline de CI/CD (Producción)",
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `DELETE /api/v1/boards/:id`
+Mueve la pizarra a la papelera (*soft delete*). Se puede restaurar más tarde desde la interfaz de Heeey.
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "board": {
+    "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+    "deleted_at": "2026-09-23T02:05:00Z",
+    "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+  }
+}
+```
+
+---
+
+### `POST /api/v1/boards/:id/move`
+Mueve la pizarra a una carpeta concreta o la devuelve al nivel superior.
+
+**Cuerpo de la petición (JSON):**
+- `folder_id` *(UUID o null)*: el ID de la carpeta de destino, o `null` para moverla al nivel superior.
+
+**Ejemplo de petición:**
+```json
+{
+  "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
+}
+```
+
+---
+
+### `GET /api/v1/search?q=`
+Busca términos en todas las pizarras de la cuenta. Busca tanto en el **título** como en el **texto y las etiquetas dibujadas en las pizarras**, sin distinguir acentos ni mayúsculas.
+
+**Parámetros de consulta (query params):**
+- `q` *(obligatorio, string)*: término de búsqueda (mínimo 1 carácter).
+- `limit` *(opcional, integer)*: número máximo de resultados (por defecto: `20`).
+
+Consulta también la guía de [Paginación](pagination.md).
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "results": [
+    {
+      "id": "c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234",
+      "title": "Pipeline de CI/CD",
+      "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822",
+      "updated_at": "2026-09-23T02:00:00Z",
+      "text": "Git Push · Build Docker · Deploy K8s",
+      "url": "https://heeey.click/b/c1f10e4a-939e-4e89-9a2d-4f1b8a9d1234"
+    }
+  ]
+}
+```
+
+---
+
+### `GET /api/v1/folders`
+Devuelve todas las carpetas creadas por el usuario, con `parent_id` para construir el árbol (`parent_id: null` indica el nivel superior).
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "folders": [
+    {
+      "id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822",
+      "name": "DevOps",
+      "parent_id": null
+    },
+    {
+      "id": "2da33d11-5cb2-4a1e-9d21-fb21bc118833",
+      "name": "Kubernetes",
+      "parent_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /api/v1/folders`
+Crea una carpeta nueva en el nivel superior o anidada dentro de otra carpeta existente.
+
+**Cuerpo de la petición (JSON):**
+- `name` *(obligatorio, string)*: nombre de la carpeta (de 1 a 60 caracteres).
+- `parent_id` *(opcional, UUID o null)*: ID de la carpeta padre, para anidarla.
+
+**Ejemplo de respuesta (201 Created):**
+```json
+{
+  "folder": {
+    "id": "3cc44e22-6dc3-5b2f-0e32-gc32cd229944",
+    "name": "Frontend",
+    "parent_id": null
+  }
+}
+```
+
+
+================================================================================
+FILE: docs/es/mcp/overview.md
+================================================================================
+
+# Visión general del servidor MCP (Model Context Protocol)
+
+**Heeey** ofrece un servidor nativo de **Model Context Protocol (MCP)**, el estándar abierto del sector para conectar modelos de lenguaje (LLMs) con fuentes de datos y herramientas externas.
+
+Con el servidor MCP de Heeey, los agentes autónomos (como Claude Code, Claude Desktop, Cursor y otros) pueden revisar pizarras existentes, crear diagramas de arquitectura complejos, ordenar pizarras desordenadas y colaborar activamente con personas en tiempo real.
+
+---
+
+## 🚀 Cómo funciona MCP en Heeey
+
+- **Endpoint único de producción**: `https://heeey.click/api/mcp`
+- **Transporte**: **Streamable HTTP** (POST con un payload JSON-RPC 2.0 y cabeceras de control).
+- **Sin estado (stateless)**: cada petición se autentica de forma independiente en la base de datos, lo que permite escalar al instante en entornos serverless/edge sin gestionar daemons ni WebSockets dedicados para el agente.
+- **Versiones del protocolo admitidas**:
+  - `2025-06-18`
+  - `2025-03-26`
+  - `2024-11-05`
+- **Interoperabilidad verificada**: el servidor supera pruebas automáticas de integración con el SDK oficial `@modelcontextprotocol/sdk`.
+
+---
+
+## 🤖 Qué puede hacer el agente de IA
+
+Al conectar un agente a Heeey, recibe un conjunto completo de herramientas capaces de:
+
+1. **Leer escenas de forma inteligente (`get_board`)**:
+   - Por defecto, el agente recibe una vista compacta y contextual de la escena: formas con su texto interior (`label`), flechas que indican qué nodos conectan (`start`, `end`) y coordenadas redondeadas. Así se ahorra hasta un 80 % del contexto del LLM.
+2. **Generar diagramas automáticamente (`create_diagram`)**:
+   - El agente solo tiene que enumerar los nodos (`label`, `shape`, `color`) y las conexiones (`from`, `to`, `label`).
+   - El motor de disposición interno de Heeey ajusta el tamaño de cada caja a su texto, reparte los elementos en capas sin solapamientos y traza las flechas rodeando las formas.
+3. **Ordenar pizarras existentes (`layout_board`)**:
+   - ¿Alguien dibujó un flujo desordenado? El agente puede usar `layout_board` para alinear las formas y trazar las flechas automáticamente en la dirección indicada (`TB`, `LR`, `BT`, `RL`).
+4. **Colaboración visible en directo**:
+   - Cuando el agente añade o edita elementos, el cambio se difunde al instante por Supabase Realtime. ¡El usuario ve aparecer las formas en el lienzo mientras conversa con el asistente!
+
+
+================================================================================
+FILE: docs/es/mcp/getting-started.md
+================================================================================
+
+# Conectar agentes de IA a Heeey mediante MCP
+
+Esta guía explica paso a paso cómo conectar el servidor MCP de Heeey a los clientes de IA más populares: **Claude Code**, **Claude Desktop** y **Cursor**.
+
+---
+
+## 🔑 Requisito previo: obtén una clave de API
+
+1. Entra en [heeey.click](https://heeey.click) e inicia sesión en tu cuenta (Magic Link).
+2. Abre el diálogo **Claves de API** (icono de la llave en el panel).
+3. Crea una clave con alcance de **lectura y escritura** (`read`, `write`).
+4. Copia el valor generado (empieza por `hk_...`).
+
+---
+
+## 1. Claude Code (CLI)
+
+Claude Code admite servidores MCP HTTP directamente desde la terminal con un solo comando:
+
+```bash
+claude mcp add --transport http heeey https://heeey.click/api/mcp --header "Authorization: Bearer hk_TU_CLAVE_AQUI"
+```
+
+Para comprobar la conexión:
+```bash
+claude mcp list
+```
+
+Verás el servidor `heeey` conectado, con herramientas como `create_diagram`, `list_boards`, etc.
+
+---
+
+## 2. Claude Desktop
+
+Para usar Heeey en la aplicación de escritorio de Anthropic:
+
+1. Abre el archivo de configuración de Claude Desktop:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+2. Añade la configuración de Heeey en la sección `mcpServers`:
+
+```json
+{
+  "mcpServers": {
+    "heeey": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote-client",
+        "https://heeey.click/api/mcp",
+        "--header",
+        "Authorization: Bearer hk_TU_CLAVE_AQUI"
+      ]
+    }
+  }
+}
+```
+*(Nota: Claude Desktop requiere de forma nativa clientes SSE/HTTP mediante un adaptador local, o una conexión directa si tu versión instalada lo admite).*
+
+3. Reinicia Claude Desktop. El icono de herramientas (martillo) mostrará las funciones de Heeey activas.
+
+---
+
+## 3. Cursor
+
+En Cursor puedes registrar el servidor MCP en los ajustes:
+
+1. Abre **Settings** > **Cursor Settings** > **Features** > **MCP Servers**.
+2. Haz clic en **Add New MCP Server**.
+3. Rellena los campos:
+   - **Name**: `heeey`
+   - **Type**: `command` (o `sse`/`http`, según tu versión)
+   - **Command**:
+     ```bash
+     npx -y mcp-remote-client https://heeey.click/api/mcp --header "Authorization: Bearer hk_TU_CLAVE_AQUI"
+     ```
+4. Guarda y recarga el editor.
+
+---
+
+## 💡 Ejemplos de prompts para tu agente
+
+Cuando el agente esté conectado, prueba peticiones naturales como:
+
+> *«Crea en Heeey un diagrama de flujo con el ciclo de vida de una petición HTTP que pasa por Nginx, un API Gateway, el microservicio de usuarios y PostgreSQL. Usa colores agradables».*
+
+> *«Lista mis pizarras recientes en Heeey y resume lo que hay dibujado en la pizarra "Arquitectura backend"».*
+
+> *«La pizarra "Flujo de compra" está un poco desordenada. Usa la herramienta layout_board para organizarla de izquierda a derecha».*
+
+
+================================================================================
+FILE: docs/es/mcp/auth-and-permissions.md
+================================================================================
+
+# Autenticación y permisos en el servidor MCP
+
+El servidor MCP de Heeey funciona sobre el transporte **Streamable HTTP** (`https://heeey.click/api/mcp`) y autentica cada petición mediante **claves personales de API** (*Personal API Keys*).
+
+Este documento explica cómo se valida el acceso, cómo se aplican las políticas de seguridad en la base de datos y cómo las anotaciones de las herramientas orientan una ejecución segura por parte de los modelos de lenguaje (LLMs).
+
+---
+
+## 🔑 Cómo funciona la autenticación
+
+Al configurar un cliente MCP (como Claude Code, Claude Desktop o Cursor), la clave de API debe enviarse en las cabeceras HTTP de la conexión:
+
+```http
+POST /api/mcp HTTP/1.1
+Host: heeey.click
+Authorization: Bearer hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+Content-Type: application/json
+Accept: application/json
+```
+
+También se acepta la cabecera alternativa `X-API-Key`:
+```http
+X-API-Key: hk_1a2b3c4d_e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+```
+
+### Clave ausente o no válida
+Si la petición no incluye una credencial válida:
+- Devuelve el estado HTTP `401 Unauthorized`.
+- Incluye la cabecera `WWW-Authenticate: Bearer realm="heeey.click"`.
+- El cuerpo contiene el error estándar de JSON-RPC 2.0 (el mensaje está en portugués):
+  ```json
+  {
+    "jsonrpc": "2.0",
+    "id": null,
+    "error": {
+      "code": -32001,
+      "message": "Envie sua chave de API do heeey.click em Authorization: Bearer <chave>."
+    }
+  }
+  ```
+
+---
+
+## 🛡️ Alcances y aislamiento de datos en la base de datos
+
+Las herramientas MCP no se ejecutan con permisos de administración globales. Cada herramienta llama a funciones de PostgreSQL que invocan `public.api_authenticate(p_key, required_scope)`:
+
+1. **Contexto del usuario (`v_user`)**: la base de datos identifica al dueño de la clave a partir del hash SHA-256 y actúa estrictamente sobre los registros de ese usuario.
+2. **Alcances admitidos**:
+   - **`read`**: permiso para consultar y leer información.
+   - **`write`**: permiso para crear, actualizar, dibujar y eliminar.
+
+### Alcance necesario para cada herramienta MCP:
+
+| Herramienta MCP | Alcance mínimo | Qué hace |
+|---|---|---|
+| `list_boards` | `read` | Lista las pizarras de la cuenta. |
+| `search_boards` | `read` | Búsqueda de texto completo en títulos y textos. |
+| `get_board` | `read` | Lee los elementos y el estado de la pizarra. |
+| `list_folders` | `read` | Lista las carpetas. |
+| `create_board` | `write` | Crea una pizarra nueva. |
+| `add_elements` | `write` | Añade o actualiza elementos en el lienzo. |
+| `delete_elements` | `write` | Elimina elementos concretos de la escena. |
+| `rename_board` | `write` | Cambia el título de una pizarra. |
+| `trash_board` | `write` | Envía la pizarra a la papelera. |
+| `create_diagram` | `write` | Crea diagramas con disposición automática Dagre. |
+| `layout_board` | `write` | Reorganiza visualmente una pizarra existente. |
+| `create_folder` | `write` | Crea una carpeta nueva. |
+| `move_board` | `write` | Coloca una pizarra dentro de una carpeta. |
+
+> Si una clave que solo tiene el alcance `read` intenta usar una herramienta de escritura (como `create_diagram`), la llamada no cambia nada y devuelve el mensaje de error de la herramienta `"Esta chave de API não tem permissão de escrita."` («Esta clave de API no tiene permiso de escritura»).
+
+---
+
+## 🚦 Anotaciones de las herramientas (Tool Annotations)
+
+El protocolo MCP permite indicar a los clientes de IA las características de seguridad de cada herramienta. Heeey usa tres anotaciones fundamentales en su catálogo:
+
+### 1. `readOnlyHint: true`
+- **Herramientas**: `list_boards`, `search_boards`, `get_board`, `list_folders`.
+- **Efecto en el agente**: la llamada no cambia ningún estado. Los agentes autónomos pueden ejecutarlas libremente en segundo plano para inspeccionar y planificar antes de dibujar.
+
+### 2. `destructiveHint: true`
+- **Herramientas**: `delete_elements`, `trash_board`.
+- **Efecto en el agente**: indica que se van a eliminar o archivar datos. Los clientes de IA suelen pedir confirmación explícita a la persona antes de ejecutar herramientas con esta anotación.
+
+### 3. `idempotentHint: true`
+- **Herramientas**: `rename_board`, `trash_board`, `layout_board`, `move_board`.
+- **Efecto en el agente**: repetir la misma llamada varias veces produce el mismo resultado final, así que los reintentos son seguros tras fallos de conexión pasajeros.
+
+---
+
+## ⚙️ Errores de protocolo frente a errores de herramienta
+
+El servidor MCP de Heeey distingue con precisión los dos niveles de error:
+
+### 1. Errores del protocolo JSON-RPC 2.0
+Los fallos de red, el formato de petición no válido o los métodos no implementados se responden a nivel de protocolo:
+- `-32700`: JSON mal formado (*Parse error*).
+- `-32600`: el objeto no cumple la especificación JSON-RPC 2.0 (*Invalid Request*).
+- `-32601`: método desconocido (*Method not found*).
+- `-32602`: nombre de herramienta desconocido o faltan argumentos.
+- `-32001`: falta la autenticación o la clave está revocada.
+
+### 2. Errores de ejecución de herramientas (`isError: true`)
+Cuando la petición es válida pero la operación falla en Heeey (por ejemplo, al intentar editar una pizarra que ya está en la papelera, pasar un UUID inexistente o saltarse los permisos), el servidor devuelve una respuesta JSON-RPC correcta que contiene el payload de error de la herramienta:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "Quadro na lixeira é somente leitura."
+      }
+    ],
+    "isError": true
+  }
+}
+```
+
+Esto es clave para los agentes de IA: en lugar de cortar la conexión del cliente, el LLM lee la explicación del error y puede razonar y corregir su plan (p. ej. restaurar la pizarra antes de dibujar o elegir otra pizarra válida).
+
+
+================================================================================
+FILE: docs/es/mcp/tools.md
+================================================================================
+
+# Catálogo completo de herramientas MCP de Heeey
+
+Esta página describe la especificación técnica detallada de las **13 herramientas MCP** que ofrece el servidor de Heeey en `https://heeey.click/api/mcp`.
+
+---
+
+## 🗂️ Tabla de referencia rápida
+
+| Herramienta | Alcance | Anotación MCP | Finalidad principal |
+|---|---|---|---|
+| [`list_boards`](#1-list_boards) | `read` | `readOnlyHint: true` | Lista las pizarras de la cuenta del usuario. |
+| [`search_boards`](#2-search_boards) | `read` | `readOnlyHint: true` | Búsqueda de texto completo en títulos y en el texto dibujado en el lienzo. |
+| [`get_board`](#3-get_board) | `read` | `readOnlyHint: true` | Lee metadatos y elementos (compacto o detallado). |
+| [`create_board`](#4-create_board) | `write` | — | Crea una pizarra nueva, vacía o con elementos. |
+| [`add_elements`](#5-add_elements) | `write` | — | Añade elementos nuevos o actualiza los existentes reutilizando sus ID. |
+| [`delete_elements`](#6-delete_elements) | `write` | `destructiveHint: true` | Elimina elementos por ID (sus etiquetas de texto se eliminan con ellos). |
+| [`rename_board`](#7-rename_board) | `write` | `idempotentHint: true` | Cambia el título visible de una pizarra. |
+| [`trash_board`](#8-trash_board) | `write` | `destructiveHint: true`, `idempotentHint: true` | Envía una pizarra a la papelera (reversible). |
+| [`create_diagram`](#9-create_diagram) | `write` | — | Dibuja diagramas por capas con disposición automática Dagre. |
+| [`layout_board`](#10-layout_board) | `write` | `idempotentHint: true` | Reorganiza y alinea automáticamente una pizarra existente. |
+| [`list_folders`](#11-list_folders) | `read` | `readOnlyHint: true` | Lista todas las carpetas de la cuenta. |
+| [`create_folder`](#12-create_folder) | `write` | — | Crea una carpeta en el nivel superior o dentro de otra carpeta. |
+| [`move_board`](#13-move_board) | `write` | `idempotentHint: true` | Mueve una pizarra a una carpeta o de vuelta al nivel superior. |
+
+---
+
+## 🛠️ Especificación de cada herramienta
+
+### 1. `list_boards`
+> Lista las pizarras del usuario, de la editada más recientemente a la más antigua.
+
+- **Anotaciones**: `readOnlyHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `folder_id` *(string, opcional, UUID)*: solo las pizarras que están dentro de esta carpeta.
+  - `limit` *(integer, opcional)*: número máximo de pizarras (por defecto: `50`, mín.: `1`, máx.: `200`).
+- **Devuelve**:
+  - `boards`: lista de resúmenes de pizarras con `id`, `title`, `folder_id`, `access_level`, `created_at`, `updated_at`, `deleted_at`, `element_count` y `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "list_boards",
+  "arguments": {
+    "limit": 10
+  }
+}
+```
+
+---
+
+### 2. `search_boards`
+> Búsqueda de texto completo, sin distinguir acentos, en los títulos de las pizarras y en el texto escrito en las formas y flechas del lienzo.
+
+- **Anotaciones**: `readOnlyHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `query` *(string, obligatorio)*: término o frase de búsqueda (p. ej. `"microservicios"`, `"login"`).
+- **Devuelve**:
+  - `results`: pizarras encontradas ordenadas por relevancia, con `id`, `title`, `folder_id`, `updated_at`, `text` (fragmento de hasta 500 caracteres del contenido coincidente) y `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "search_boards",
+  "arguments": {
+    "query": "autenticación"
+  }
+}
+```
+
+---
+
+### 3. `get_board`
+> Lee los datos y los elementos de una pizarra. Admite una vista compacta inteligente que ahorra tokens de contexto del modelo.
+
+- **Anotaciones**: `readOnlyHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `board_id` *(string, obligatorio, UUID)*: ID de la pizarra que se consulta.
+  - `detail` *(string, enum: `["compact", "full"]`, por defecto: `"compact"`)*:
+    - `"compact"`: formas combinadas con su texto interior (`label`), flechas que indican qué nodos conectan (`start`, `end`) y coordenadas simplificadas. Recomendado para agentes de IA.
+    - `"full"`: lista en bruto con todos los elementos nativos de Excalidraw.
+- **Devuelve**:
+  - `board`: metadatos de la pizarra con `url`.
+  - `elements`: elementos en el formato compacto o completo solicitado.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "get_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "detail": "compact"
+  }
+}
+```
+
+---
+
+### 4. `create_board`
+> Crea una pizarra nueva en Heeey, opcionalmente con elementos iniciales. Devuelve la pizarra con su URL lista para abrir.
+
+- **Parámetros de entrada (`inputSchema`)**:
+  - `title` *(string, obligatorio)*: título de la nueva pizarra.
+  - `folder_id` *(string, opcional, UUID)*: carpeta de destino. Si se omite, se crea en el nivel superior.
+  - `elements` *(array de `ElementSpec`, opcional)*: formas o flechas que se incluyen al crearla.
+- **Devuelve**:
+  - `board`: la pizarra creada con `id`, `title`, fechas, número de elementos y `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "create_board",
+  "arguments": {
+    "title": "Arquitectura de datos",
+    "elements": [
+      { "id": "db", "type": "rectangle", "x": 100, "y": 100, "label": "PostgreSQL", "backgroundColor": "#a5d8ff" }
+    ]
+  }
+}
+```
+
+---
+
+### 5. `add_elements`
+> Añade elementos a una pizarra existente o actualiza formas existentes reutilizando sus ID. Quien tenga la pizarra abierta ve el cambio en directo.
+
+- **Parámetros de entrada (`inputSchema`)**:
+  - `board_id` *(string, obligatorio, UUID)*: ID de la pizarra.
+  - `elements` *(array de `ElementSpec`, obligatorio, mínimo 1 elemento)*: formas, textos o flechas que se añaden o actualizan.
+- **Devuelve**:
+  - `board`: metadatos actualizados de la pizarra con `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "add_elements",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "elements": [
+      { "id": "cache", "type": "rectangle", "x": 350, "y": 100, "label": "Redis Cache", "backgroundColor": "#ffc9c9" },
+      { "type": "arrow", "start": { "id": "db" }, "end": { "id": "cache" }, "label": "sync" }
+    ]
+  }
+}
+```
+
+---
+
+### 6. `delete_elements`
+> Elimina elementos de una pizarra por sus ID. Los textos vinculados a las formas eliminadas se borran automáticamente con ellas.
+
+- **Anotaciones**: `destructiveHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `board_id` *(string, obligatorio, UUID)*: ID de la pizarra.
+  - `element_ids` *(array de strings, obligatorio, mínimo 1 elemento)*: ID de los elementos que se eliminan.
+- **Devuelve**:
+  - `board`: metadatos actualizados de la pizarra con `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "delete_elements",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "element_ids": ["cache"]
+  }
+}
+```
+
+---
+
+### 7. `rename_board`
+> Cambia el título visible de una pizarra.
+
+- **Anotaciones**: `idempotentHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `board_id` *(string, obligatorio, UUID)*: ID de la pizarra.
+  - `title` *(string, obligatorio)*: nuevo título de la pizarra.
+- **Devuelve**:
+  - `board`: metadatos actualizados de la pizarra con `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "rename_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "title": "Arquitectura de datos v2"
+  }
+}
+```
+
+---
+
+### 8. `trash_board`
+> Envía una pizarra a la papelera del usuario (*soft delete*). Se puede recuperar desde la interfaz en cualquier momento.
+
+- **Anotaciones**: `destructiveHint: true`, `idempotentHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `board_id` *(string, obligatorio, UUID)*: ID de la pizarra.
+- **Devuelve**:
+  - `board`: metadatos de la pizarra con `deleted_at` rellenado.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "trash_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92"
+  }
+}
+```
+
+---
+
+### 9. `create_diagram`
+> **La herramienta más potente para agentes de IA**. Dibuja diagramas de flujo, arquitecturas, pipelines y árboles, ajustando el tamaño de cada nodo a su texto y colocándolos con el algoritmo por capas de Sugiyama (Dagre).
+
+- **Parámetros de entrada (`inputSchema`)**:
+  - `title` *(string, obligatorio cuando no se indica `board_id`)*: título de la nueva pizarra.
+  - `board_id` *(string, opcional, UUID)*: si se indica, dibuja el diagrama **junto al contenido existente** de esta pizarra (`originBeside`).
+  - `folder_id` *(string, opcional, UUID)*: carpeta de destino de la nueva pizarra.
+  - `direction` *(enum: `["TB", "LR", "BT", "RL"]`, por defecto: `"TB"`)*: orientación del flujo.
+  - `nodes` *(array de objetos, obligatorio, de 1 a 300 elementos)*:
+    - `id` *(string, obligatorio)*: identificador estable del nodo.
+    - `label` *(string, obligatorio)*: texto dentro del nodo (con ajuste automático de líneas).
+    - `shape` *(enum: `["rectangle", "ellipse", "diamond"]`, por defecto: `"rectangle"`)*: forma geométrica.
+    - `color` *(enum: `["blue", "green", "yellow", "red", "violet", "gray"]`)*: paleta de relleno y trazo de Excalidraw.
+  - `edges` *(array de objetos, opcional)*:
+    - `from` *(string, obligatorio)*: ID del nodo de origen.
+    - `to` *(string, obligatorio)*: ID del nodo de destino.
+    - `label` *(string, opcional)*: texto centrado en la flecha.
+- **Devuelve**:
+  - `board`: metadatos de la pizarra con `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "create_diagram",
+  "arguments": {
+    "title": "Pipeline de CI/CD",
+    "direction": "LR",
+    "nodes": [
+      { "id": "git", "label": "Git Push", "shape": "rectangle", "color": "blue" },
+      { "id": "ci", "label": "Pruebas automáticas", "shape": "diamond", "color": "yellow" },
+      { "id": "deploy", "label": "Despliegue a producción", "shape": "rectangle", "color": "green" }
+    ],
+    "edges": [
+      { "from": "git", "to": "ci", "label": "disparador" },
+      { "from": "ci", "to": "deploy", "label": "éxito" }
+    ]
+  }
+}
+```
+
+---
+
+### 10. `layout_board`
+> Reorganiza una pizarra existente desordenada, redistribuyendo las cajas y las flechas conectadas en capas regulares sin tocar otros elementos sueltos.
+
+- **Anotaciones**: `idempotentHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `board_id` *(string, obligatorio, UUID)*: ID de la pizarra.
+  - `direction` *(enum: `["TB", "LR", "BT", "RL"]`, opcional, por defecto: `"TB"`)*: nueva orientación de la disposición.
+- **Devuelve**:
+  - `board`: metadatos de la pizarra con `url`.
+  - `moved`: número de formas y flechas recolocadas.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "layout_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "direction": "LR"
+  }
+}
+```
+
+---
+
+### 11. `list_folders`
+> Lista todas las carpetas creadas por el usuario, para recorrer la jerarquía de carpetas.
+
+- **Anotaciones**: `readOnlyHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - Objeto vacío `{}`.
+- **Devuelve**:
+  - `folders`: lista de carpetas, cada una con `id`, `name` y `parent_id` (`null` para las carpetas del nivel superior).
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "list_folders",
+  "arguments": {}
+}
+```
+
+---
+
+### 12. `create_folder`
+> Crea una carpeta nueva para organizar pizarras, con soporte para anidarlas.
+
+- **Parámetros de entrada (`inputSchema`)**:
+  - `name` *(string, obligatorio)*: nombre de la carpeta.
+  - `parent_id` *(string, opcional, UUID)*: ID de la carpeta padre (para crear una subcarpeta). Si se omite, la carpeta se crea en el nivel superior.
+- **Devuelve**:
+  - `folder`: objeto con `id`, `name` y `parent_id`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "create_folder",
+  "arguments": {
+    "name": "Infraestructura en la nube",
+    "parent_id": null
+  }
+}
+```
+
+---
+
+### 13. `move_board`
+> Mueve una pizarra a una carpeta de destino o la devuelve al nivel superior del panel.
+
+- **Anotaciones**: `idempotentHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - `board_id` *(string, obligatorio, UUID)*: ID de la pizarra.
+  - `folder_id` *(string o null, opcional)*: ID de la carpeta de destino, o `null` para devolver la pizarra al nivel superior.
+- **Devuelve**:
+  - `board`: metadatos actualizados de la pizarra con `url`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "move_board",
+  "arguments": {
+    "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
+    "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
+  }
+}
+```
+
+
+================================================================================
+FILE: docs/es/mcp/diagram-layout.md
+================================================================================
+
+# Motor de disposición automática de diagramas
+
+Dibujar diagramas bonitos con modelos de lenguaje suele ser complicado: los LLMs no tienen una percepción espacial nativa de los píxeles, lo que a menudo produce cajas superpuestas, flechas que cruzan las formas y textos cortados.
+
+Heeey lo resuelve con un motor de disposición determinista integrado en el servidor (`diagramLayout.ts`), basado en el algoritmo por capas de Sugiyama mediante **Dagre**.
+
+---
+
+## 🏗️ Cómo funciona el algoritmo
+
+Cuando el agente llama a la herramienta `create_diagram` o `layout_board`:
+
+```
+[Nodos y conexiones sencillos]
+         │
+         ▼
+1. Medición del texto y ajuste automático:
+   - Mide las dimensiones reales del texto según la fuente Excalifont.
+   - Aplica ajuste automático de palabras (word wrap) con un ancho ideal.
+   - Amplía rectángulos, elipses y rombos para que el texto quepa con margen interior (padding).
+         │
+         ▼
+2. Algoritmo por capas (Sugiyama mediante Dagre):
+   - Asigna los nodos a capas consecutivas según la dirección del flujo (TB, LR, BT, RL).
+   - Minimiza los cruces de flechas (crossing reduction).
+   - Reparte espacios uniformes (nodeSpacing: 50px, rankSpacing: 70px).
+         │
+         ▼
+3. Trazado inteligente de flechas y polilíneas:
+   - Las conexiones se doblan suavemente alrededor de las formas para evitar colisiones.
+   - Recorta los extremos (`trimEnds`) para que las puntas de flecha no toquen el borde de las cajas.
+   - Vincula magnéticamente el inicio y el final a los nodos correspondientes.
+         │
+         ▼
+[Escena de Excalidraw lista y difundida en directo]
+```
+
+---
+
+## 🧭 Direcciones de flujo admitidas (`direction`)
+
+El parámetro `direction` define la orientación general del diagrama:
+
+| Dirección | Nombre | Uso habitual |
+|---|---|---|
+| `'TB'` (por defecto) | *Top to Bottom* (de arriba abajo) | Diagramas de flujo verticales, organigramas, árboles de decisión. |
+| `'LR'` | *Left to Right* (de izquierda a derecha) | Pipelines de CI/CD, flujos de datos, recorridos de usuario. |
+| `'BT'` | *Bottom to Top* (de abajo arriba) | Modelados de capas inferiores a superiores. |
+| `'RL'` | *Right to Left* (de derecha a izquierda) | Diagramas en sentido inverso o flujos de retorno. |
+
+---
+
+## 🎨 Paleta de colores de los nodos
+
+El motor tiene una paleta de 6 tonos pastel tomados de la estética nativa de Excalidraw:
+
+| Color (`color`) | Color del trazo (`strokeColor`) | Color de fondo (`backgroundColor`) | Significado sugerido |
+|---|---|---|---|
+| `'blue'` | `#1971c2` | `#a5d8ff` | Servicios, bases de datos, nodos neutros |
+| `'green'` | `#2f9e44` | `#b2f2bb` | Éxito, nodos finales, aprobación |
+| `'yellow'` | `#f08c00` | `#ffec99` | Decisiones, avisos, colas, procesamiento |
+| `'red'` | `#e03131` | `#ffc9c9` | Errores, fallos, zonas críticas |
+| `'violet'` | `#6741d9` | `#d0bfff` | Usuarios, clientes externos, gateways |
+| `'gray'` | `#495057` | `#e9ecef` | Componentes secundarios, infraestructura |
+
+---
+
+## 📍 Colocación junto al contenido existente (`originBeside`)
+
+Si le pides al agente que añada un diagrama a una pizarra que **ya tiene dibujos** (pasando el parámetro `board_id`):
+
+- El motor calcula la caja delimitadora (*bounding box*) de todos los elementos visibles de la pizarra.
+- Coloca el nuevo diagrama automáticamente **a la derecha del contenido existente**, con un margen de seguridad de `160px`.
+- ¡Así ningún dibujo existente queda sobrescrito ni tapado!

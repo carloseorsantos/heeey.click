@@ -25,14 +25,17 @@ export async function listApiKeys(): Promise<ApiKey[] | null> {
   return (data || []) as ApiKey[];
 }
 
-/** Returns the full key, which is only available right after creation */
+/**
+ * Returns the full key, which is only available right after creation. Errors come back as a
+ * reason for the UI to translate (the database raises its messages in Portuguese).
+ */
 export async function createApiKey(
   name: string,
   scopes: ApiKeyScope[]
-): Promise<{ key: string } | { error: string }> {
+): Promise<{ key: string } | { error: 'limit' | 'failed' }> {
   const { data, error } = await supabase.rpc('create_api_key', { p_name: name.trim(), p_scopes: scopes });
   const row = Array.isArray(data) ? data[0] : data;
-  if (error || !row?.key) return { error: error?.message || 'Não foi possível criar a chave.' };
+  if (error || !row?.key) return { error: /limite de \d+ chaves/i.test(error?.message ?? '') ? 'limit' : 'failed' };
   return { key: row.key as string };
 }
 

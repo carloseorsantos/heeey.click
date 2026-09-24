@@ -1,4 +1,16 @@
 /lousa-online    /       301
 /whiteboard-mcp  /mcp    301
+/en/mcp          /mcp    301
+/pt-br           /       301
 /mcp             /mcp/index.html   200
+/termos          /termos/index.html   200
+/privacidade     /privacidade/index.html   200
+/en              /en/index.html   200
+/en/terms        /en/terms/index.html   200
+/en/privacy      /en/privacy/index.html   200
+/es              /es/index.html   200
+/es/mcp          /es/mcp/index.html   200
+/es/terminos     /es/terminos/index.html   200
+/es/privacidad   /es/privacidad/index.html   200
+/pt-br/mcp       /pt-br/mcp/index.html   200
 /*               /app/index.html   200

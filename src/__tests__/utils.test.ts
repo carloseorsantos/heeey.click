@@ -46,17 +46,17 @@ describe('utils', () => {
   it('formatDateRelative should format recent dates appropriately', () => {
     const now = new Date();
     expect(formatDateRelative(now.toISOString(), 'pt-BR')).toBe('agora mesmo');
-    expect(formatDateRelative(now.toISOString(), 'en')).toBe('just now');
+    expect(formatDateRelative(now.toISOString(), 'en-US')).toBe('just now');
 
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
     expect(formatDateRelative(tenMinutesAgo.toISOString(), 'pt-BR')).toBe('há 10 minutos');
-    expect(formatDateRelative(tenMinutesAgo.toISOString(), 'en')).toBe('10 minutes ago');
+    expect(formatDateRelative(tenMinutesAgo.toISOString(), 'en-US')).toBe('10 minutes ago');
 
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
     expect(formatDateRelative(twoHoursAgo.toISOString(), 'pt-BR')).toBe('há 2 horas');
 
     const yesterday = new Date(Date.now() - 26 * 60 * 60 * 1000);
-    expect(formatDateRelative(yesterday.toISOString(), 'en')).toBe('yesterday');
+    expect(formatDateRelative(yesterday.toISOString(), 'en-US')).toBe('yesterday');
     expect(formatDateRelative('not a date', 'pt-BR')).toBe('recentemente');
   });
 

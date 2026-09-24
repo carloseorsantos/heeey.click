@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy — Heeey</title>
+    <meta name="description" content="What data Heeey collects, why, who it's shared with and how to exercise your rights under the LGPD and the GDPR." />
+    <link rel="canonical" href="https://www.heeey.click/en/privacy" />
+    <link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/privacidade" />
+    <link rel="alternate" hreflang="en" href="https://www.heeey.click/en/privacy" />
+    <link rel="alternate" hreflang="es" href="https://www.heeey.click/es/privacidad" />
+    <link rel="alternate" hreflang="x-default" href="https://www.heeey.click/privacidade" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
+    <script>
+      try {
+        var t = localStorage.getItem('heeey_theme');
+        if (t === 'dark' || (t !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
+    <script>
+      // Open the page in the language the visitor picked (in the app or the language links below).
+      // Crawlers have no saved choice, so they always get the page they asked for.
+      try {
+        var want = localStorage.getItem('heeey_locale'), pages = { 'pt-BR': '/privacidade', 'en-US': '/en/privacy', 'es-ES': '/es/privacidad' };
+        if (want === 'en') want = 'en-US';
+        if (pages[want] && want !== document.documentElement.lang) location.replace(pages[want] + location.search + location.hash);
+      } catch (e) {}
+    </script>
+  </head>
+  <body class="bg-app text-label antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Skip to content</a>
+    <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
+      <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <a href="/en" class="flex items-center gap-2 text-base font-semibold">
+          <img src="/logo.svg" alt="" width="24" height="24" class="h-6 w-6" />
+          Heeey
+        </a>
+        <a href="/app?lang=en-US" class="rounded-lg px-3 py-1.5 text-sm font-medium text-accent-text hover:bg-fill">Open the app</a>
+      </nav>
+    </header>
+
+    <main id="main" tabindex="-1" class="legal mx-auto max-w-3xl px-4 pb-20 pt-12 sm:px-6">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated September 23, 2026</p>
+
+      <p>
+        This is a translation of the <a href="/privacidade" hreflang="pt-BR" data-locale="pt-BR">Portuguese version</a>, provided for your
+        convenience. If the two differ, the Portuguese version prevails.
+      </p>
+
+      <p>
+        This policy explains what data Heeey (heeey.click) processes and why. The data controller is
+        Carlos Santos, who runs Heeey. Contact for any privacy matter:
+        <a href="mailto:contato@heeey.click">contato@heeey.click</a>.
+      </p>
+
+      <h2>1. Data we process</h2>
+      <ul>
+        <li><strong>Email</strong>, when you create an account, to send you the sign-in link and identify the account.</li>
+        <li><strong>Board content</strong> (drawings, text, uploaded images, title and version history).</li>
+        <li><strong>The name and cursor color</strong> you choose, shown to the people on the same board.</li>
+        <li>
+          <strong>Usage data</strong>: pages visited and app events (for example, “account created”), tied to a
+          random identifier, never to your email. We don't record sessions or what you type.
+        </li>
+        <li><strong>Technical data</strong>, such as IP address and browser, logged by our hosting providers for security.</li>
+      </ul>
+      <p>We don't sell data and we don't use advertising cookies.</p>
+
+      <h2>2. Purposes and legal bases</h2>
+      <ul>
+        <li>Running the service (account, saving and syncing boards): performance of a contract.</li>
+        <li>Security, abuse prevention and usage metrics to improve the product: legitimate interest.</li>
+        <li>Meeting legal obligations and responding to requests from authorities: legal obligation.</li>
+      </ul>
+
+      <h2>3. Who we share it with</h2>
+      <p>We use these providers to run Heeey, and they only process data following our instructions:</p>
+      <ul>
+        <li><strong>Supabase</strong>: database, sign-in and image storage.</li>
+        <li><strong>Vercel</strong>: hosting for the website and the API.</li>
+        <li>
+          <strong>Vercel AI Gateway</strong>: only when you use search by meaning, the titles and text of your boards are
+          sent to the AI model to find the results.
+        </li>
+        <li><strong>PostHog</strong>: the usage metrics described above.</li>
+      </ul>
+      <p>
+        Some of these providers are outside Brazil (for example, in the United States). These transfers follow the
+        LGPD (Brazil's General Data Protection Law) and the GDPR, with data protection contractual clauses.
+      </p>
+      <p>
+        Remember: anyone with a board's link can see it (see the <a href="/en/terms">Terms of use</a>).
+      </p>
+
+      <h2>4. Storage in your browser</h2>
+      <p>
+        We use the browser's local storage (localStorage) to keep you signed in, remember your theme and language,
+        and keep guest boards and copies for offline use. This information stays on your device.
+      </p>
+
+      <h2>5. How long we keep it</h2>
+      <p>
+        We keep your data for as long as your account exists. Deleted boards go to the trash and you can delete them
+        permanently. When you ask us to delete your account, we delete your data within 30 days, except what the law
+        requires us to keep.
+      </p>
+
+      <h2>6. Your rights</h2>
+      <p>
+        Under the LGPD (and the GDPR, if you are in the European Union) you can ask for confirmation of and access to your
+        data, correction, portability, deletion, information about sharing, and object to processing based on legitimate
+        interest. Write to <a href="mailto:contato@heeey.click">contato@heeey.click</a>; we reply within 15 days.
+        You can also complain to Brazil's data protection authority (ANPD) or to the data protection authority in your country.
+      </p>
+
+      <h2>7. Children</h2>
+      <p>
+        Heeey is not directed at people under 16, and accounts can't be created below that age. If you are responsible
+        for a child who created an account, contact us to have it deleted.
+      </p>
+
+      <h2>8. Security</h2>
+      <p>
+        Data travels encrypted (HTTPS) and the database enforces row-level access rules: each person can only read their
+        own boards or the boards whose link they received.
+      </p>
+
+      <h2>9. Changes</h2>
+      <p>If this policy changes in a meaningful way, we'll let you know in the app or by email.</p>
+    </main>
+
+    <footer class="border-t border-separator">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-8 text-sm text-label-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <span>Heeey — collaborative whiteboard</span>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          <a href="/en/terms" class="hover:text-label">Terms of use</a>
+          <a href="/en/privacy" class="hover:text-label" aria-current="page">Privacy</a>
+          <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
+        </div>
+      </div>
+      <nav aria-label="Language" class="mx-auto flex max-w-5xl gap-x-5 px-4 pb-8 text-sm text-label-3 sm:px-6">
+        <a href="/privacidade" lang="pt-BR" hreflang="pt-BR" data-locale="pt-BR" class="hover:text-label">Português</a>
+        <a href="/en/privacy" lang="en-US" hreflang="en" data-locale="en-US" class="font-medium text-label" aria-current="page">English</a>
+        <a href="/es/privacidad" lang="es-ES" hreflang="es" data-locale="es-ES" class="hover:text-label">Español</a>
+      </nav>
+    </footer>
+
+    <script type="module" src="/src/landing/main.ts"></script>
+  </body>
+</html>

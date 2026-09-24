@@ -1,9 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://www.heeey.click/</loc></url>
-  <url><loc>https://www.heeey.click/mcp</loc></url>
-  <url><loc>https://www.heeey.click/termos</loc></url>
-  <url><loc>https://www.heeey.click/privacidade</loc></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <!-- Static pages: one URL per language, each listing its alternates (hreflang) -->
+  <url>
+    <loc>https://www.heeey.click/</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/en</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/es</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/pt-br/mcp</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/pt-br/mcp" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/mcp" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/mcp" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/mcp" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/mcp</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/pt-br/mcp" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/mcp" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/mcp" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/mcp" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/es/mcp</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/pt-br/mcp" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/mcp" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/mcp" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/mcp" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/termos</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/termos" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/terminos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/termos" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/en/terms</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/termos" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/terminos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/termos" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/es/terminos</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/termos" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en/terms" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/terminos" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/termos" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/privacidade</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/privacidade" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/privacidad" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/privacidade" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/en/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/privacidade" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/privacidad" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/privacidade" />
+  </url>
+  <url>
+    <loc>https://www.heeey.click/es/privacidad</loc>
+    <xhtml:link rel="alternate" hreflang="pt-BR" href="https://www.heeey.click/privacidade" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://www.heeey.click/en/privacy" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://www.heeey.click/es/privacidad" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://www.heeey.click/privacidade" />
+  </url>
+  <!-- Docs follow the app language (pt-BR, en-US, es-ES) at the same URL -->
   <url><loc>https://www.heeey.click/docs/getting-started</loc></url>
   <url><loc>https://www.heeey.click/docs/readme</loc></url>
   <url><loc>https://www.heeey.click/docs/features/whiteboard-editor</loc></url>

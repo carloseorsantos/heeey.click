@@ -3,6 +3,8 @@
  */
 
 import { normalizeForSearch, getSearchTerms } from './search';
+import { getLocale, type Locale } from '../i18n';
+import { buildLlmsFull, LLMS_LOCALES } from './llmsFull';
 
 export type DocCategory = 'overview' | 'features' | 'api' | 'mcp' | 'llms';
 
@@ -86,7 +88,7 @@ export const DOC_ITEMS: DocItem[] = [
     slug: 'features/i18n',
     category: 'features',
     title: 'Internacionalização (i18n)',
-    description: 'Suporte completo a Português e Inglês, detecção de idioma e sincronização com o Excalidraw.',
+    description: 'Português, inglês e espanhol, detecção de idioma e sincronização com o Excalidraw.',
     order: 14,
     filePath: '/docs/features/i18n.md',
   },
@@ -242,8 +244,248 @@ export const DOC_ITEMS: DocItem[] = [
   },
 ];
 
-// Raw files loaded via Vite eager glob
-const RAW_DOCS = import.meta.glob('/docs/**/*.{md,txt}', {
+type DocText = { title: string; description: string };
+
+/**
+ * Titles and descriptions of each doc in the other locales (DOC_ITEMS holds pt-BR).
+ * The Markdown itself lives in docs/en/ and docs/es/, mirroring docs/.
+ */
+export const DOC_TRANSLATIONS: Record<Exclude<Locale, 'pt-BR'>, Record<string, DocText>> = {
+  'en-US': {
+    'getting-started': {
+      title: 'Getting Started with Heeey (Quick Start)',
+      description: 'First steps: creating boards, sharing them and collaborating in real time without signing up.',
+    },
+    readme: {
+      title: 'Overview & Documentation Index',
+      description: 'Overview of the ecosystem, architecture, full topic index and technical specifications.',
+    },
+    'features/whiteboard-editor': {
+      title: 'Canvas & Drawing Tools',
+      description: 'Drawing tools, vector shapes, bound text, magnetic arrows and keyboard shortcuts.',
+    },
+    'features/collaboration-realtime': {
+      title: 'Collaboration & Real Time',
+      description: 'Multiplayer with Supabase Realtime, delta broadcast, presence, live cursors and permissions.',
+    },
+    'features/folders-and-organization': {
+      title: 'Folders, Organization & Trash',
+      description: 'Nested folders, breadcrumb navigation, board templates and a safety net with the trash.',
+    },
+    'features/version-history': {
+      title: 'Version History & Restore',
+      description: 'Automatic snapshots every 10 min, 30-day retention and safe restores with no data loss.',
+    },
+    'features/i18n': {
+      title: 'Internationalization (i18n)',
+      description: 'Portuguese, English and Spanish, language detection and Excalidraw locale sync.',
+    },
+    'features/libraries': {
+      title: 'Component Libraries',
+      description: 'Cloud storage for reusable libraries, local cache for guests and migration.',
+    },
+    'features/media-and-images': {
+      title: 'Images & Media Optimization',
+      description: 'Client-side WebP compression, async upload to Supabase Storage and offline fallback.',
+    },
+    'features/search': {
+      title: 'Global Canvas Search',
+      description: 'Full-text search across titles and drawn text, with contextual preview and highlighting.',
+    },
+    'api/overview': {
+      title: 'REST API v1 Overview',
+      description: 'API principles, base URL, edge runtime, JSON format and zero-secrets security at the edge.',
+    },
+    'api/getting-started': {
+      title: 'API Quick Start',
+      description: 'How to create keys, authenticate curl/TypeScript requests and work with boards via the API.',
+    },
+    'api/authentication': {
+      title: 'Authentication & Key Scopes',
+      description: 'The hk_... token format, read-only vs read-write scopes, SHA-256 hashing and RLS policies.',
+    },
+    'api/endpoints': {
+      title: 'Full Endpoint Reference',
+      description: 'Detailed docs for the /boards and /folders routes with parameters, responses and examples.',
+    },
+    'api/scene-content-schema': {
+      title: 'Scene Content Schema (Element Spec)',
+      description: 'Short-form spec for nodes, shapes, text, bound arrows and style attributes.',
+    },
+    'api/pagination': {
+      title: 'Paginating Results',
+      description: 'Cursor and offset pagination, page limits and walking through large lists.',
+    },
+    'api/rate-limiting': {
+      title: 'Rate & Operational Limits',
+      description: 'Requests per minute, maximum payload sizes and integration best practices.',
+    },
+    'api/error-handling': {
+      title: 'API Error Handling',
+      description: 'HTTP status codes, the standard error response format and explanatory messages.',
+    },
+    'mcp/overview': {
+      title: 'MCP Server Overview',
+      description: 'Streamable HTTP server for AI agents (Claude Code, Desktop, Cursor) to work on whiteboards.',
+    },
+    'mcp/getting-started': {
+      title: 'Setting Up MCP Agents',
+      description: 'Step-by-step setup in Claude Desktop, Claude Code and the Cursor IDE.',
+    },
+    'mcp/tools': {
+      title: 'MCP Tool Catalog',
+      description: 'Full reference for the 13 MCP tools to read, create, lay out and search boards.',
+    },
+    'mcp/diagram-layout': {
+      title: 'Automatic Diagram Layout',
+      description: 'Sugiyama/Dagre algorithm for layered node placement, smart arrows and flow direction.',
+    },
+    'mcp/auth-and-permissions': {
+      title: 'MCP Authentication & Permissions',
+      description: 'Security of MCP calls, user context propagation and permission restrictions.',
+    },
+    llms: {
+      title: 'Short Index for LLMs (llms.txt)',
+      description: 'Structured plain-text summary and reference links for language models and agents.',
+    },
+    'llms-full': {
+      title: 'Full Documentation for LLMs (llms-full.txt)',
+      description: 'A single file with all of the project documentation for agents and LLMs.',
+    },
+  },
+  'es-ES': {
+    'getting-started': {
+      title: 'Primeros pasos con Heeey (Inicio rápido)',
+      description: 'Primeros pasos: crear pizarras, compartirlas y colaborar en tiempo real sin registrarte.',
+    },
+    readme: {
+      title: 'Visión general e índice de la documentación',
+      description: 'Visión general del ecosistema, arquitectura, índice completo de temas y especificaciones técnicas.',
+    },
+    'features/whiteboard-editor': {
+      title: 'Lienzo y herramientas de dibujo',
+      description: 'Herramientas de dibujo, formas vectoriales, texto vinculado, flechas magnéticas y atajos de teclado.',
+    },
+    'features/collaboration-realtime': {
+      title: 'Colaboración y tiempo real',
+      description: 'Multijugador con Supabase Realtime, difusión de deltas, presencia, cursores en directo y permisos.',
+    },
+    'features/folders-and-organization': {
+      title: 'Carpetas, organización y papelera',
+      description: 'Carpetas anidadas, navegación con migas de pan, plantillas de pizarras y protección con la papelera.',
+    },
+    'features/version-history': {
+      title: 'Historial de versiones y restauración',
+      description: 'Instantáneas automáticas cada 10 min, retención de 30 días y restauración segura sin pérdida de datos.',
+    },
+    'features/i18n': {
+      title: 'Internacionalización (i18n)',
+      description: 'Portugués, inglés y español, detección de idioma y sincronización con Excalidraw.',
+    },
+    'features/libraries': {
+      title: 'Bibliotecas de componentes',
+      description: 'Almacenamiento en la nube de bibliotecas reutilizables, caché local para invitados y migración.',
+    },
+    'features/media-and-images': {
+      title: 'Imágenes y optimización de medios',
+      description: 'Compresión WebP en el cliente, subida asíncrona a Supabase Storage y alternativa sin conexión.',
+    },
+    'features/search': {
+      title: 'Búsqueda global en el lienzo',
+      description: 'Búsqueda de texto completo en títulos y textos dibujados, con vista previa contextual y resaltado.',
+    },
+    'api/overview': {
+      title: 'Visión general de la API REST v1',
+      description: 'Principios de la API, URL base, edge runtime, formato JSON y seguridad sin secretos en el edge.',
+    },
+    'api/getting-started': {
+      title: 'Primeros pasos con la API (Inicio rápido)',
+      description: 'Cómo crear claves, autenticar peticiones con curl/TypeScript y manejar pizarras mediante la API.',
+    },
+    'api/authentication': {
+      title: 'Autenticación y alcances de las claves',
+      description: 'Formato del token hk_..., alcances de solo lectura y de lectura y escritura, hash SHA-256 y políticas RLS.',
+    },
+    'api/endpoints': {
+      title: 'Referencia completa de endpoints',
+      description: 'Documentación detallada de las rutas /boards y /folders con parámetros, respuestas y ejemplos.',
+    },
+    'api/scene-content-schema': {
+      title: 'Esquema del contenido de la escena (Element Spec)',
+      description: 'Especificación abreviada de nodos, formas, textos, flechas conectadas y atributos de estilo.',
+    },
+    'api/pagination': {
+      title: 'Paginación de resultados',
+      description: 'Paginación por cursor y por desplazamiento, límites de página y navegación por listas grandes.',
+    },
+    'api/rate-limiting': {
+      title: 'Tasas y límites operativos',
+      description: 'Límites de peticiones por minuto, tamaños máximos de payload y buenas prácticas de integración.',
+    },
+    'api/error-handling': {
+      title: 'Gestión de errores en la API',
+      description: 'Códigos de estado HTTP, formato estándar de las respuestas de error y mensajes explicativos.',
+    },
+    'mcp/overview': {
+      title: 'Visión general del servidor MCP',
+      description: 'Servidor Streamable HTTP para que agentes de IA (Claude Code, Desktop, Cursor) trabajen en pizarras.',
+    },
+    'mcp/getting-started': {
+      title: 'Configurar agentes MCP',
+      description: 'Guía paso a paso de configuración en Claude Desktop, Claude Code y Cursor.',
+    },
+    'mcp/tools': {
+      title: 'Catálogo de herramientas MCP',
+      description: 'Referencia completa de las 13 herramientas MCP para consultar, crear, organizar y buscar pizarras.',
+    },
+    'mcp/diagram-layout': {
+      title: 'Disposición automática de diagramas',
+      description: 'Algoritmo Sugiyama/Dagre para colocar nodos por capas, flechas inteligentes y dirección del flujo.',
+    },
+    'mcp/auth-and-permissions': {
+      title: 'Autenticación y permisos MCP',
+      description: 'Seguridad en las llamadas MCP, propagación del contexto del usuario y restricciones de permisos.',
+    },
+    llms: {
+      title: 'Índice resumido para LLMs (llms.txt)',
+      description: 'Resumen estructurado en texto plano y enlaces de referencia para modelos de lenguaje y agentes.',
+    },
+    'llms-full': {
+      title: 'Documentación completa para LLMs (llms-full.txt)',
+      description: 'Un único archivo con toda la documentación del proyecto para agentes y LLMs.',
+    },
+  },
+};
+
+const DOC_DIRS: Record<Locale, string> = { 'pt-BR': '/docs/', 'en-US': '/docs/en/', 'es-ES': '/docs/es/' };
+
+/** Where each language's plain-text llms-full.txt is served (built by scripts/build-llms.mjs) */
+export const LLMS_FULL_URLS: Record<Locale, string> = {
+  'pt-BR': '/pt-br/llms-full.txt',
+  'en-US': '/llms-full.txt',
+  'es-ES': '/es/llms-full.txt',
+};
+
+/** The doc in the given locale: translated title and description, and that locale's Markdown file */
+export function localizeDoc(item: DocItem, locale: Locale = getLocale()): DocItem {
+  if (locale === 'pt-BR') return item;
+  const text = DOC_TRANSLATIONS[locale][item.slug];
+  return {
+    ...item,
+    title: text?.title ?? item.title,
+    description: text?.description ?? item.description,
+    filePath: item.filePath.replace(/^\/docs\//, DOC_DIRS[locale]),
+  };
+}
+
+/** All docs in reading order, in the given locale */
+export function getDocItems(locale: Locale = getLocale()): DocItem[] {
+  return DOC_ITEMS.map((item) => localizeDoc(item, locale));
+}
+
+// Raw files loaded via Vite eager glob. llms-full.txt is left out: it repeats every doc, so it's
+// rebuilt from them on demand instead of shipping the same text twice.
+const RAW_DOCS = import.meta.glob(['/docs/**/*.{md,txt}', '!/docs/**/llms-full.txt'], {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -251,6 +493,10 @@ const RAW_DOCS = import.meta.glob('/docs/**/*.{md,txt}', {
 
 /** Get raw content of a document by file path */
 export function getDocRawContent(filePath: string): string {
+  if (filePath.endsWith('/llms-full.txt')) {
+    const locale = LLMS_LOCALES.find((l) => `/${l.docsDir}/llms-full.txt` === filePath);
+    return locale ? buildLlmsFull(locale, (path) => RAW_DOCS[`/${path}`] ?? '') : '';
+  }
   if (RAW_DOCS[filePath]) {
     return RAW_DOCS[filePath];
   }
@@ -284,36 +530,46 @@ export function normalizeSlug(rawSlug?: string | null): string {
 }
 
 /** Find DocItem by slug (with normalization and alias support) */
-export function getDocBySlug(rawSlug?: string | null): (DocItem & { content: string }) | null {
+export function getDocBySlug(
+  rawSlug?: string | null,
+  locale: Locale = getLocale()
+): (DocItem & { content: string }) | null {
   const slug = normalizeSlug(rawSlug);
-  const item = DOC_ITEMS.find((d) => d.slug.toLowerCase() === slug.toLowerCase());
-  if (!item) return null;
-  const content = getDocRawContent(item.filePath);
+  const base = DOC_ITEMS.find((d) => d.slug.toLowerCase() === slug.toLowerCase());
+  if (!base) return null;
+  const item = localizeDoc(base, locale);
+  // A missing translation falls back to the Portuguese original rather than an empty page
+  const content = getDocRawContent(item.filePath) || getDocRawContent(base.filePath);
   return { ...item, content };
 }
 
 /** Get adjacent (previous and next) docs in reading order */
-export function getAdjacentDocs(currentSlug: string): {
+export function getAdjacentDocs(
+  currentSlug: string,
+  locale: Locale = getLocale()
+): {
   prev: DocItem | null;
   next: DocItem | null;
 } {
   const normalized = normalizeSlug(currentSlug);
-  const index = DOC_ITEMS.findIndex((d) => d.slug.toLowerCase() === normalized.toLowerCase());
+  const items = getDocItems(locale);
+  const index = items.findIndex((d) => d.slug.toLowerCase() === normalized.toLowerCase());
   if (index === -1) {
     return { prev: null, next: null };
   }
-  const prev = index > 0 ? DOC_ITEMS[index - 1] : null;
-  const next = index < DOC_ITEMS.length - 1 ? DOC_ITEMS[index + 1] : null;
+  const prev = index > 0 ? items[index - 1] : null;
+  const next = index < items.length - 1 ? items[index + 1] : null;
   return { prev, next };
 }
 
 /** Group doc items by category */
-export function getDocsGroupedByCategory(): {
+export function getDocsGroupedByCategory(locale: Locale = getLocale()): {
   category: DocCategoryMeta;
   docs: DocItem[];
 }[] {
+  const items = getDocItems(locale);
   return DOC_CATEGORIES.map((category) => {
-    const docs = DOC_ITEMS.filter((d) => d.category === category.id).sort((a, b) => a.order - b.order);
+    const docs = items.filter((d) => d.category === category.id).sort((a, b) => a.order - b.order);
     return { category, docs };
   });
 }
@@ -328,13 +584,13 @@ export interface DocSearchResult {
   };
 }
 
-export function searchDocs(query: string): DocSearchResult[] {
+export function searchDocs(query: string, locale: Locale = getLocale()): DocSearchResult[] {
   const terms = getSearchTerms(query);
   if (terms.length === 0) return [];
 
   const results: DocSearchResult[] = [];
 
-  for (const item of DOC_ITEMS) {
+  for (const item of getDocItems(locale)) {
     const normTitle = normalizeForSearch(item.title);
     const normDesc = normalizeForSearch(item.description);
     const content = getDocRawContent(item.filePath);
@@ -414,10 +670,11 @@ export function resolveDocHref(rawHref: string, currentSlug: string): ResolvedDo
   }
 
   // Standalone LLM text docs at root
-  if (cleanHref === '/llms.txt' || cleanHref === 'llms.txt') {
+  // (also the per-language copies at /pt-br/ and /es/)
+  if (/^(?:\/(?:pt-br|es)\/|\/)?llms\.txt$/.test(cleanHref)) {
     return { type: 'internal', targetSlug: 'llms', href: '/docs/llms' };
   }
-  if (cleanHref === '/llms-full.txt' || cleanHref === 'llms-full.txt') {
+  if (/^(?:\/(?:pt-br|es)\/|\/)?llms-full\.txt$/.test(cleanHref)) {
     return { type: 'internal', targetSlug: 'llms-full', href: '/docs/llms-full' };
   }
 
@@ -556,14 +813,15 @@ export interface DocFileSection {
 }
 
 /** Extract individual file sections from concatenated documentation dumps (e.g. llms-full.txt) */
-export function extractDocFiles(content: string): DocFileSection[] {
+export function extractDocFiles(content: string, locale: Locale = getLocale()): DocFileSection[] {
+  const items = getDocItems(locale);
   const fileRegex = /(?:^|\n)={10,}\s*\n\s*FILE:\s*([^\n]+)\s*\n\s*={10,}/gi;
   const sections: DocFileSection[] = [];
   let match;
   while ((match = fileRegex.exec(content)) !== null) {
     const rawPath = match[1].trim();
-    const cleanSlug = normalizeSlug(rawPath.replace(/^docs\//, ''));
-    const docItem = DOC_ITEMS.find((d) => d.slug.toLowerCase() === cleanSlug.toLowerCase());
+    const cleanSlug = normalizeSlug(rawPath.replace(/^docs\/(?:(?:en|es)\/)?/, ''));
+    const docItem = items.find((d) => d.slug.toLowerCase() === cleanSlug.toLowerCase());
     sections.push({
       filePath: rawPath,
       docSlug: cleanSlug,

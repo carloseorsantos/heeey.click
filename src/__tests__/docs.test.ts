@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Marked } from 'marked';
+import { buildLlmsFull, LLMS_LOCALES } from '../lib/llmsFull';
 import {
   DOC_ITEMS,
   DOC_CATEGORIES,
@@ -12,6 +13,10 @@ import {
   extractDocFiles,
   calculateReadingTime,
   slugify,
+  getDocItems,
+  getDocRawContent,
+  getDocsGroupedByCategory,
+  DOC_TRANSLATIONS,
 } from '../lib/docsData';
 import { extractPlainFromTokens } from '../components/docs/MarkdownRenderer';
 
@@ -334,3 +339,55 @@ describe('docsData', () => {
   });
 });
 
+
+describe('docs translations', () => {
+  const files = {
+    ...import.meta.glob('/docs/**/*.{md,txt}', { query: '?raw', import: 'default', eager: true }),
+    ...import.meta.glob('/public/**/llms*.txt', { query: '?raw', import: 'default', eager: true }),
+  } as Record<string, string>;
+  const read = (path: string) => files[`/${path}`];
+
+  for (const locale of ['en-US', 'es-ES'] as const) {
+    it(`has every document translated to ${locale}`, () => {
+      const items = getDocItems(locale);
+      expect(items.map((d) => d.slug)).toEqual(DOC_ITEMS.map((d) => d.slug));
+      for (const [i, item] of items.entries()) {
+        const original = DOC_ITEMS[i];
+        expect(DOC_TRANSLATIONS[locale][item.slug], `${locale} title for ${item.slug}`).toBeTruthy();
+        expect(item.filePath, item.slug).not.toBe(original.filePath);
+        // Its own file, not the Portuguese fallback
+        const content = getDocRawContent(item.filePath);
+        expect(content.length, `${locale} file for ${item.slug}`).toBeGreaterThan(50);
+        expect(content).not.toBe(getDocRawContent(original.filePath));
+        // Same sections (the headings' count) as the original, so nothing was left out
+        const headings = (text: string) => text.split('\n').filter((l) => /^#{1,3} /.test(l)).length;
+        expect(headings(content), `${locale} headings in ${item.slug}`).toBe(headings(getDocRawContent(original.filePath)));
+      }
+    });
+  }
+
+  it('serves each language its own doc, falling back to Portuguese for unknown slugs only', () => {
+    expect(getDocBySlug('getting-started', 'en-US')!.content).toMatch(/^# Getting Started with Heeey/);
+    expect(getDocBySlug('getting-started', 'es-ES')!.content).toMatch(/^# Primeros pasos con Heeey/);
+    expect(getDocBySlug('getting-started', 'pt-BR')!.content).toMatch(/^# Começando com o Heeey/);
+    expect(getDocsGroupedByCategory('es-ES')[0].docs[0].title).toBe('Primeros pasos con Heeey (Inicio rápido)');
+    expect(searchDocs('papelera', 'es-ES').length).toBeGreaterThan(0);
+  });
+
+  it('maps localized llms.txt links to the llms docs', () => {
+    expect(resolveDocHref('https://heeey.click/pt-br/llms-full.txt', 'llms').href).toBe('/docs/llms-full');
+    expect(resolveDocHref('https://heeey.click/es/llms.txt', 'llms').href).toBe('/docs/llms');
+  });
+
+  it('keeps llms-full.txt and the public copies in sync with the docs (npm run docs:llms)', () => {
+    for (const locale of LLMS_LOCALES) {
+      const full = buildLlmsFull(locale, read);
+      expect(read(`${locale.docsDir}/llms-full.txt`), locale.docsDir).toBe(full);
+      expect(read(`${locale.publicDir}/llms-full.txt`), locale.publicDir).toBe(full);
+      expect(read(`${locale.publicDir}/llms.txt`), locale.publicDir).toBe(read(`${locale.docsDir}/llms.txt`));
+      expect(extractDocFiles(full).length).toBe(23);
+      // What the docs page shows is the same file
+      expect(getDocRawContent(`/${locale.docsDir}/llms-full.txt`)).toBe(full);
+    }
+  });
+});
