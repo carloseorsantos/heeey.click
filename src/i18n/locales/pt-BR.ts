@@ -28,6 +28,11 @@ export const ptBR = {
     loadingBoard: "Carregando a lousa…",
   },
   auth: {
+    consentAnd: "e a",
+    consentBefore: "Tenho 16 anos ou mais e concordo com os",
+    consentRequired: "Confirme sua idade e aceite os termos para continuar.",
+    privacy: "Política de privacidade",
+    terms: "Termos de uso",
     useAnotherEmail: "Usar outro e-mail",
     checkEmail: "Confira seu e-mail",
     continueAsGuest: "Continuar como convidado",

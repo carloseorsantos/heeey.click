@@ -9,6 +9,8 @@ export default {
     "./index.html",
     "./app/index.html",
     "./mcp/index.html",
+    "./termos/index.html",
+    "./privacidade/index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {

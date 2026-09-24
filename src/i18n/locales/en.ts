@@ -29,6 +29,11 @@ export const en: Messages = {
     loadingBoard: "Loading the whiteboard…",
   },
   auth: {
+    consentAnd: "and the",
+    consentBefore: "I'm 16 or older and agree to the",
+    consentRequired: "Confirm your age and accept the terms to continue.",
+    privacy: "Privacy Policy",
+    terms: "Terms of Use",
     useAnotherEmail: "Use another email",
     checkEmail: "Check your email",
     continueAsGuest: "Continue as a guest",

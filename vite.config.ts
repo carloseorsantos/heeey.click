@@ -13,6 +13,7 @@ function htmlRoutes(): Plugin {
     const q = query ? `?${query}` : ''
     if (APP_ROUTE.test(path)) req.url = `/app/index.html${q}`
     else if (/^\/mcp\/?$/.test(path)) req.url = `/mcp/index.html${q}`
+    else if (/^\/(termos|privacidade)\/?$/.test(path)) req.url = `/${path.split('/')[1]}/index.html${q}`
     next()
   }
   return {
@@ -60,6 +61,8 @@ export default defineConfig({
         home: resolve(__dirname, 'index.html'),
         mcp: resolve(__dirname, 'mcp/index.html'),
         app: resolve(__dirname, 'app/index.html'),
+        termos: resolve(__dirname, 'termos/index.html'),
+        privacidade: resolve(__dirname, 'privacidade/index.html'),
       },
     },
   },
