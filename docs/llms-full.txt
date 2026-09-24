@@ -141,11 +141,15 @@ Embora o uso anônimo seja suportado, entrar com sua conta traz vantagens essenc
 - **Bibliotecas na nuvem**: Os elementos salvos na sua biblioteca de componentes ficam disponíveis em todos os seus quadros.
 - **Geração de Chaves de API**: Habilite integrações com a API REST pública e o servidor MCP para IA.
 
+### Como criar sua conta:
+1. Na página inicial, clique em **"Criar conta grátis"**.
+2. Digite seu endereço de e-mail e confirme que tem 16 anos ou mais e aceita os Termos de uso e a Política de privacidade.
+3. Clique em **"Enviar link de acesso"** e abra o link que chegar no seu e-mail, neste mesmo navegador. Pronto! Não é necessário lembrar senhas.
+
 ### Como entrar:
-1. No Dashboard ou no menu superior do quadro, clique em **"Entrar"**.
-2. Digite seu endereço de e-mail.
-3. Um código OTP de 6 dígitos será enviado instantaneamente para a sua caixa de entrada.
-4. Digite o código na tela para confirmar. Pronto! Não é necessário lembrar senhas.
+1. Na página inicial, no Dashboard ou no menu do seu avatar, clique em **"Entrar"**.
+2. Digite o e-mail da sua conta e clique em **"Enviar link de acesso"**.
+3. Abra o link que chegar no seu e-mail, neste mesmo navegador.
 
 ---
 
