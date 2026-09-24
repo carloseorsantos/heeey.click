@@ -4,3 +4,27 @@ body {
   height: auto;
   overflow: visible;
 }
+
+/* Long-form legal pages (/termos, /privacidade) */
+.legal h1 {
+  @apply text-3xl font-bold tracking-tight sm:text-4xl;
+}
+.legal .updated {
+  @apply mt-2 text-sm text-label-3;
+}
+.legal h2 {
+  @apply mt-10 scroll-mt-20 text-xl font-semibold;
+}
+.legal p,
+.legal ul {
+  @apply mt-4 leading-relaxed text-label-2;
+}
+.legal ul {
+  @apply list-disc space-y-1.5 pl-6;
+}
+.legal strong {
+  @apply font-semibold text-label;
+}
+.legal a {
+  @apply text-accent-text underline underline-offset-2;
+}

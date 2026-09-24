@@ -21,10 +21,14 @@ const BOARD = '10000000-0000-4000-8000-000000000001';
 
 let db: PGlite;
 
-/** Runs a statement as a user (authenticated role) or as anon (user = null); RLS applies */
-async function as(user: string | null, sql: string, params: unknown[] = []) {
+/**
+ * Runs a statement as a user (authenticated role) or as anon (user = null); RLS applies.
+ * `link` is the board opened by link (the x-board-id request header the app sends).
+ */
+async function as(user: string | null, sql: string, params: unknown[] = [], link: string | null = BOARD) {
+  const headers = link ? JSON.stringify({ 'x-board-id': link }) : '{}';
   await db.exec(
-    `reset role; select set_config('request.jwt.claim.sub', '${user ?? ''}', false); set role ${user ? 'authenticated' : 'anon'};`
+    `reset role; select set_config('request.jwt.claim.sub', '${user ?? ''}', false); select set_config('request.headers', '${headers}', false); set role ${user ? 'authenticated' : 'anon'};`
   );
   try {
     return { rows: (await db.query<any>(sql, params)).rows, error: undefined as string | undefined };
@@ -458,6 +462,40 @@ describe('database schema and migrations', () => {
       await as(A, `update public.boards set deleted_at = now() where id = $1`, [BOARD]);
       expect((await candidates(A)).rows.map((r) => r.id)).not.toContain(BOARD);
       await as(A, `update public.boards set deleted_at = null where id = $1`, [BOARD]);
+    });
+  });
+
+  describe('link access (no listing with the public key)', () => {
+    it('only the owner or whoever opened the board by link reads it', async () => {
+      const ids = async (user: string | null, link: string | null) =>
+        (await as(user, `select id from public.boards`, [], link)).rows.map((r) => r.id);
+
+      expect(await ids(null, null)).toEqual([]);
+      expect(await ids(B, null)).not.toContain(BOARD);
+      expect(await ids(A, null)).toContain(BOARD);
+      expect(await ids(null, BOARD)).toEqual([BOARD]);
+      expect(await ids(null, 'not-a-uuid')).toEqual([]);
+      // Without the link a collaborator's write silently matches nothing
+      const renamed = await as(B, `update public.boards set title = 'x' where id = $1 returning id`, [BOARD], null);
+      expect(renamed.rows).toHaveLength(0);
+    });
+
+    it('does not let anyone list board-media, but keeps uploads on editable boards', async () => {
+      const upload = (user: string | null, name: string) =>
+        as(user, `insert into storage.objects (bucket_id, name) values ('board-media', $1)`, [name], null);
+      expect((await upload(null, `${BOARD}/a.webp`)).error).toBeUndefined();
+      expect((await upload(null, `20000000-0000-4000-8000-000000000009/draft.webp`)).error).toBeUndefined();
+
+      const listed = async (user: string | null) =>
+        (await as(user, `select name from storage.objects where bucket_id = 'board-media'`, [], null)).rows.map((r) => r.name);
+      expect(await listed(null)).toEqual([]);
+      expect(await listed(B)).toEqual([]);
+      expect(await listed(A)).toEqual([`${BOARD}/a.webp`]);
+
+      await as(A, `update public.boards set access_level = 'view' where id = $1`, [BOARD]);
+      expect((await upload(B, `${BOARD}/b.webp`)).error).toBeDefined();
+      expect((await upload(A, `${BOARD}/b.webp`)).error).toBeUndefined();
+      await as(A, `update public.boards set access_level = 'edit' where id = $1`, [BOARD]);
     });
   });
 });

@@ -34,6 +34,7 @@
     </script>
   </head>
   <body class="bg-app text-label antialiased">
+    <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-app focus:px-3 focus:py-2 focus:shadow-lg">Pular para o conteúdo</a>
     <header class="sticky top-0 z-10 border-b border-separator bg-[var(--material-chrome)] backdrop-blur-xl">
       <nav class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
         <a href="/" class="flex items-center gap-2 text-base font-semibold">
@@ -47,7 +48,7 @@
       </nav>
     </header>
 
-    <main>
+    <main id="main" tabindex="-1">
       <section class="mx-auto max-w-5xl px-4 pb-16 pt-14 sm:px-6 sm:pt-20">
         <div class="max-w-2xl">
           <h1 class="text-4xl font-bold tracking-tight sm:text-5xl sm:leading-[1.1]">
@@ -209,6 +210,8 @@
         <div class="flex flex-wrap gap-x-5 gap-y-2">
           <a href="/docs" class="hover:text-label">Documentação</a>
           <a href="/mcp" class="hover:text-label" hreflang="en">Para devs: MCP para agentes de IA</a>
+          <a href="/termos" class="hover:text-label">Termos de uso</a>
+          <a href="/privacidade" class="hover:text-label">Privacidade</a>
           <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
         </div>
       </div>

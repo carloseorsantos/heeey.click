@@ -19,3 +19,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     },
   },
 });
+
+// Boards are shared by link: RLS only returns a board to its owner or to requests that
+// name it in this header (supabase/migrations/20260923210000_board_link_access.sql).
+// Every query on a board someone else may own must set it.
+export const BOARD_ID_HEADER = 'x-board-id';

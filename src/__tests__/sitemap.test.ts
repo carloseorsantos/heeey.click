@@ -10,6 +10,8 @@ describe('sitemap.xml', () => {
     const expected = [
       'https://www.heeey.click/',
       'https://www.heeey.click/mcp',
+      'https://www.heeey.click/termos',
+      'https://www.heeey.click/privacidade',
       ...DOC_ITEMS.map((d) => `https://www.heeey.click/docs/${d.slug}`),
     ];
     expect(locs.sort()).toEqual(expected.sort());

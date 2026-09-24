@@ -117,8 +117,19 @@ describe('imageOptimizer', () => {
       expect(mockUpload).toHaveBeenCalledWith(
         'board-1/file-1.webp',
         fakeBlob,
-        expect.objectContaining({ contentType: 'image/webp', upsert: true })
+        expect.objectContaining({ contentType: 'image/webp', upsert: false })
       );
+    });
+
+    it('treats an already uploaded file (retry of the same image) as success', async () => {
+      vi.spyOn(supabase.storage, 'from').mockReturnValue({
+        upload: vi.fn().mockResolvedValue({ data: null, error: { message: 'The resource already exists', statusCode: '409' } }),
+        getPublicUrl: vi.fn().mockReturnValue({ data: { publicUrl: 'https://example.test/board-1/file-1.webp' } }),
+      } as any);
+
+      const url = await uploadBoardImage('board-1', 'file-1', new Blob(['x'], { type: 'image/webp' }), 'image/webp');
+
+      expect(url).toBe('https://example.test/board-1/file-1.webp');
     });
 
     it('should return null gracefully when Supabase storage returns an error (bucket missing / offline)', async () => {
