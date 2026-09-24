@@ -1,9 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { LogIn, UserPlus } from 'lucide-react';
 import { SettingsModal, isSettingsSection, type SettingsSection } from '../components/settings/SettingsModal';
+import { AuthForm, type AuthMode } from '../components/settings/AuthForm';
+import { Modal, ModalIcon } from '../components/Modal';
+import { useI18n } from '../i18n';
+import { useAuth } from './useAuth';
 
 interface SettingsContextValue {
   openSettings: (section?: SettingsSection) => void;
+  openAuthDialog: (mode: AuthMode) => void;
 }
+
+const AUTH_DIALOGS: AuthMode[] = ['signup', 'login'];
+const AUTH_DIALOG_DELAY_MS = 500;
 
 const SettingsContext = createContext<SettingsContextValue | null>(null);
 
@@ -11,20 +20,40 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 export function SettingsProvider({ children, onOpenDocs }: { children: React.ReactNode; onOpenDocs?: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
   const [section, setSection] = useState<SettingsSection>('profile');
+  const [authDialog, setAuthDialog] = useState<AuthMode | null>(null);
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { t } = useI18n();
 
   const openSettings = useCallback((next?: SettingsSection) => {
     if (next) setSection(next);
     setIsOpen(true);
   }, []);
 
-  // Deep link (?settings=account) so landing pages can send visitors straight to sign up
+  // Drop the dialog once signed in (e.g. ?login while already signed in, or the magic link
+  // opened in another tab) so it does not pop up after signing out, and when Settings opens
+  // so the two never stack. Watches authDialog too: the deep link sets it after a delay
+  useEffect(() => {
+    if (authDialog && (isAuthenticated || isOpen)) setAuthDialog(null);
+  }, [authDialog, isAuthenticated, isOpen]);
+
+  // Deep links so landing pages can send visitors straight to sign up or in (?signup, ?login)
+  // or to a section (?settings=account)
   useEffect(() => {
     const url = new URL(window.location.href);
     const requested = url.searchParams.get('settings');
-    if (!requested || !isSettingsSection(requested)) return;
-    setSection(requested);
-    setIsOpen(true);
-    // Drop the param so the magic link redirect (current URL) and reloads stay clean
+    const dialog = AUTH_DIALOGS.find((d) => url.searchParams.has(d));
+    if (dialog) {
+      // Let the dashboard land first so the dialog reads as arriving on top of it. No cleanup:
+      // the provider lives as long as the app, and Strict Mode's second run finds no param
+      window.setTimeout(() => setAuthDialog(dialog), AUTH_DIALOG_DELAY_MS);
+    } else if (requested && isSettingsSection(requested)) {
+      setSection(requested);
+      setIsOpen(true);
+    } else {
+      return;
+    }
+    // Drop the params so the magic link redirect (current URL) and reloads stay clean
+    AUTH_DIALOGS.forEach((d) => url.searchParams.delete(d));
     url.searchParams.delete('settings');
     window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
   }, []);
@@ -40,7 +69,7 @@ export function SettingsProvider({ children, onOpenDocs }: { children: React.Rea
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const value = useMemo(() => ({ openSettings }), [openSettings]);
+  const value = useMemo(() => ({ openSettings, openAuthDialog: setAuthDialog }), [openSettings]);
 
   return (
     <SettingsContext.Provider value={value}>
@@ -52,6 +81,21 @@ export function SettingsProvider({ children, onOpenDocs }: { children: React.Rea
         onClose={() => setIsOpen(false)}
         onOpenDocs={onOpenDocs}
       />
+      {/* Waits for the session so signed-in visitors never see it flash */}
+      <Modal
+        isOpen={!!authDialog && !authLoading && !isAuthenticated}
+        onClose={() => setAuthDialog(null)}
+        title={authDialog === 'login' ? t('auth.title') : t('auth.createAccount')}
+        description={t('auth.description')}
+        icon={<ModalIcon>{authDialog === 'login' ? <LogIn /> : <UserPlus />}</ModalIcon>}
+      >
+        <div className="pt-2">
+          <AuthForm
+            mode={authDialog ?? 'signup'}
+            onSwitchMode={() => setAuthDialog(authDialog === 'login' ? 'signup' : 'login')}
+          />
+        </div>
+      </Modal>
     </SettingsContext.Provider>
   );
 }

@@ -18,8 +18,8 @@ Two audiences, one page each (don't mix them on the same page):
 - Secondary (diagnostic only, not a conversion): `board_created`, `api_key_created`
 
 ## Money pages
-- https://www.heeey.click/ — audience 1 (PT-BR). Target: "lousa online colaborativa", "quadro branco online grátis". CTA: /app?settings=account
-- https://www.heeey.click/mcp — audience 2 (EN). Target: "whiteboard MCP server", "Excalidraw MCP". CTA: /app?settings=account (then API key)
+- https://www.heeey.click/ — audience 1 (PT-BR). Target: "lousa online colaborativa", "quadro branco online grátis". CTA: /app?signup (sign in: /app?login)
+- https://www.heeey.click/mcp — audience 2 (EN). Target: "whiteboard MCP server", "Excalidraw MCP". CTA: /app?signup (then API key)
 - App lives at /app (noindex via robots); boards stay at /b/:id; docs at /docs
 
 ## Brand guardrails

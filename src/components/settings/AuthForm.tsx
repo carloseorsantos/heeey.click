@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { isAuthApiError } from '@supabase/supabase-js';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
 import { STATIC_PAGES, useI18n } from '../../i18n';
@@ -14,32 +15,36 @@ const RATE_LIMIT_MARKERS = [
   'muitas requisições',
 ];
 
-// Signing in creates the account, so the age and terms confirmation lives here.
-// Remembered per browser so returning users are not asked again.
-const CONSENT_KEY = 'heeey_terms_accepted';
-
-function readConsent() {
-  try {
-    return localStorage.getItem(CONSENT_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
 function isRateLimitError(message: string) {
   const lower = message.toLowerCase();
   return RATE_LIMIT_MARKERS.some((marker) => lower.includes(marker));
 }
 
-/** Magic-link sign-in, inline in Settings › Account */
-export function AuthForm() {
+export type AuthMode = 'signup' | 'login';
+
+/**
+ * Magic-link sign-in, inline in Settings › Account and in the sign-up / sign-in dialogs.
+ * "signup" creates the account, so it asks for the age and terms confirmation every time;
+ * "login" never creates one, so it can skip it.
+ */
+export function AuthForm({ mode = 'signup', onSwitchMode }: { mode?: AuthMode; onSwitchMode?: () => void }) {
   const { signInWithMagicLink } = useAuth();
   const { t, locale } = useI18n();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [consent, setConsent] = useState(readConsent);
+  const [consent, setConsent] = useState(false);
+  const emailId = useId();
+  const consentId = useId();
+
+  // Switching between the sign-up and sign-in dialogs keeps the email but starts the rest over,
+  // so the age and terms confirmation is never carried into a sign-up
+  useEffect(() => {
+    setConsent(false);
+    setError(null);
+    setSuccess(false);
+  }, [mode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,23 +52,23 @@ export function AuthForm() {
       setError(t('auth.invalidEmail'));
       return;
     }
-    if (!consent) {
+    if (mode === 'signup' && !consent) {
       setError(t('auth.consentRequired'));
       return;
     }
-    try {
-      localStorage.setItem(CONSENT_KEY, '1');
-    } catch {}
 
     setLoading(true);
     setError(null);
 
-    const { error: err } = await signInWithMagicLink(email.trim());
+    const { error: err } = await signInWithMagicLink(email.trim(), { createUser: mode === 'signup' });
 
     setLoading(false);
     if (err) {
       // Supabase's messages are in English; show ours, in the user's language
-      setError(err.message && isRateLimitError(err.message) ? err.message : t('auth.sendError'));
+      if (err.message && isRateLimitError(err.message)) setError(err.message);
+      // What Supabase answers when shouldCreateUser is false and the email has no account
+      else if (mode === 'login' && isAuthApiError(err) && err.code === 'otp_disabled') setError(t('auth.noAccount'));
+      else setError(t('auth.sendError'));
     } else {
       setSuccess(true);
     }
@@ -77,7 +82,7 @@ export function AuthForm() {
   return (
     <>
       {success ? (
-        <div className="text-center pt-2 space-y-4" role="status">
+        <div className="text-center pt-2 space-y-5" role="status">
           <div className="w-14 h-14 bg-success/15 text-success rounded-full flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-7 h-7" />
           </div>
@@ -88,20 +93,20 @@ export function AuthForm() {
               {t('auth.sentAfter')}
             </p>
           </div>
-          <Button variant="plain" onClick={handleReset}>
+          <Button variant="primary" size="lg" onClick={handleReset} className="w-full">
             {t('auth.useAnotherEmail')}
           </Button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-callout font-medium text-label mb-1.5">
+            <label htmlFor={emailId} className="block text-callout font-medium text-label mb-2">
               {t('auth.email')}
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-label-2 pointer-events-none" />
               <input
-                id="email"
+                id={emailId}
                 type="email"
                 required
                 autoComplete="email"
@@ -109,31 +114,33 @@ export function AuthForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 aria-invalid={!!error}
-                className="field h-11 pl-9 bg-surface"
+                className="field h-11 pl-9 bg-surface border-accent/60 shadow-[0_0_0_3.5px_rgb(var(--accent)/0.22)] aria-[invalid=true]:border-danger"
               />
             </div>
           </div>
 
-          <label className="flex items-start gap-2.5 text-sm text-label-2">
-            <input
-              type="checkbox"
-              required
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              className="w-4 h-4 mt-0.5 flex-shrink-0 rounded accent-[rgb(var(--accent))]"
-            />
-            <span>
-              {t('auth.consentBefore')}{' '}
-              <a href={STATIC_PAGES.terms[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
-                {t('auth.terms')}
-              </a>{' '}
-              {t('auth.consentAnd')}{' '}
-              <a href={STATIC_PAGES.privacy[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
-                {t('auth.privacy')}
-              </a>
-              .
-            </span>
-          </label>
+          {mode === 'signup' && (
+            <label id={consentId} className="flex items-start gap-2.5 text-sm text-label-2">
+              <input
+                type="checkbox"
+                required
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="w-4 h-4 mt-0.5 flex-shrink-0 rounded accent-[rgb(var(--accent))]"
+              />
+              <span>
+                {t('auth.consentBefore')}{' '}
+                <a href={STATIC_PAGES.terms[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+                  {t('auth.terms')}
+                </a>{' '}
+                {t('auth.consentAnd')}{' '}
+                <a href={STATIC_PAGES.privacy[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+                  {t('auth.privacy')}
+                </a>
+                .
+              </span>
+            </label>
+          )}
 
           {error &&
             (isRateLimitError(error) ? (
@@ -151,8 +158,12 @@ export function AuthForm() {
               </div>
             ))}
 
-          <div className="space-y-2 pt-1">
-            <Button type="submit" variant="primary" disabled={loading} className="w-full sm:w-auto">
+          <div className="pt-1">
+            <Button type="submit" variant="primary" size="lg" disabled={loading || (mode === 'signup' && !consent)}
+              // Says why it is disabled: the age and terms confirmation is still unchecked
+              aria-describedby={mode === 'signup' && !consent ? consentId : undefined}
+              className="w-full"
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -163,6 +174,22 @@ export function AuthForm() {
               )}
             </Button>
           </div>
+
+          {/* Hidden once the link is sent, and locked while sending so a late answer
+              never lands in the other dialog */}
+          {onSwitchMode && (
+            <p className="text-center text-sm text-label-2">
+              {mode === 'login' ? t('auth.noAccountYet') : t('auth.haveAccount')}{' '}
+              <button
+                type="button"
+                onClick={onSwitchMode}
+                disabled={loading}
+                className="font-medium text-accent-text underline-offset-2 hover:underline disabled:opacity-50 disabled:no-underline"
+              >
+                {mode === 'login' ? t('auth.createAccount') : t('dashboard.signIn')}
+              </button>
+            </p>
+          )}
         </form>
       )}
     </>

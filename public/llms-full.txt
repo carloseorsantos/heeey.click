@@ -141,11 +141,15 @@ Anonymous use is supported, but signing in to your account brings key advantages
 - **Cloud libraries**: The items saved in your component library are available on all your boards.
 - **API key creation**: Enable integrations with the public REST API and the MCP server for AI.
 
+### How to create your account:
+1. On the home page, click **"Create a free account"**.
+2. Enter your email address and confirm that you are 16 or older and agree to the Terms of Use and the Privacy Policy.
+3. Click **"Send sign-in link"** and open the link you receive by email in this same browser. That's it! No passwords to remember.
+
 ### How to sign in:
-1. On the dashboard or in the board's top menu, click **"Sign in"**.
-2. Enter your email address.
-3. A 6-digit OTP code is sent instantly to your inbox.
-4. Type the code on screen to confirm. That's it! No passwords to remember.
+1. On the home page, on the dashboard or in your avatar menu, click **"Sign in"**.
+2. Enter your account's email and click **"Send sign-in link"**.
+3. Open the link you receive by email in this same browser.
 
 ---
 

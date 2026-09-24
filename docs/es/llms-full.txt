@@ -141,11 +141,15 @@ Aunque se puede usar de forma anónima, iniciar sesión con tu cuenta tiene vent
 - **Bibliotecas en la nube**: los elementos guardados en tu biblioteca de componentes están disponibles en todas tus pizarras.
 - **Creación de claves de API**: habilita integraciones con la API REST pública y el servidor MCP para IA.
 
+### Cómo crear tu cuenta:
+1. En la página de inicio, haz clic en **«Crear cuenta gratis»**.
+2. Escribe tu dirección de correo electrónico y confirma que tienes 16 años o más y aceptas los Términos de uso y la Política de privacidad.
+3. Haz clic en **«Enviar enlace de acceso»** y abre el enlace que recibas por correo en este mismo navegador. ¡Listo! No hay contraseñas que recordar.
+
 ### Cómo iniciar sesión:
-1. En el panel o en el menú superior de la pizarra, haz clic en **«Iniciar sesión»**.
-2. Escribe tu dirección de correo electrónico.
-3. Recibirás al instante en tu bandeja de entrada un código OTP de 6 dígitos.
-4. Escribe el código en pantalla para confirmar. ¡Listo! No hay contraseñas que recordar.
+1. En la página de inicio, en el panel o en el menú de tu avatar, haz clic en **«Iniciar sesión»**.
+2. Escribe el correo de tu cuenta y haz clic en **«Enviar enlace de acceso»**.
+3. Abre el enlace que recibas por correo en este mismo navegador.
 
 ---
 
