@@ -94,12 +94,33 @@ alter table public.boards enable row level security;
 
 -- 5. Políticas de Segurança (RLS)
 
--- Leitura pública: qualquer pessoa com o link do quadro pode visualizá-lo
+-- Id do quadro pedido pelo cliente no cabeçalho `x-board-id` (repassado pelo PostgREST)
+create or replace function public.requested_board_id()
+returns uuid
+language plpgsql
+stable
+set search_path = ''
+as $$
+begin
+  return (nullif(current_setting('request.headers', true), '')::json ->> 'x-board-id')::uuid;
+exception when others then
+  return null;
+end;
+$$;
+
+grant execute on function public.requested_board_id() to anon, authenticated;
+
+-- Leitura: o dono, ou quem abriu o quadro pelo link (o id no cabeçalho x-board-id).
+-- Nunca `using (true)`: a chave anon é pública e listaria os quadros de todos.
 drop policy if exists "Permitir leitura pública dos quadros" on public.boards;
-create policy "Permitir leitura pública dos quadros"
+drop policy if exists "Permitir leitura pelo dono ou pelo link do quadro" on public.boards;
+create policy "Permitir leitura pelo dono ou pelo link do quadro"
   on public.boards
   for select
-  using (true);
+  using (
+    (auth.uid() is not null and owner_id = auth.uid())
+    or id = public.requested_board_id()
+  );
 
 -- Criação pública e segura: anônimos criam com owner_id nulo; logados com seu próprio auth.uid()
 drop policy if exists "Permitir criação pública de quadros" on public.boards;
