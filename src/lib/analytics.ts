@@ -1,5 +1,6 @@
 import type { PostHog } from 'posthog-js';
 import type { User } from '@supabase/supabase-js';
+import { inject, type BeforeSendEvent } from '@vercel/analytics';
 
 // Analytics is opt-in per deploy: without VITE_POSTHOG_KEY nothing is loaded.
 const KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
@@ -35,8 +36,27 @@ function getClient(): Promise<PostHog | null> {
   return client;
 }
 
+// A board link grants access to the board and the magic-link callback carries auth tokens,
+// so Vercel only ever sees the route shape (`/b/[id]`) and utm_* params, never ids or tokens.
+export function redactUrl(href: string): string {
+  const url = new URL(href);
+  url.pathname = url.pathname.replace(/^\/b\/[^/]+/, '/b/[id]');
+  for (const key of [...url.searchParams.keys()]) {
+    if (!key.startsWith('utm_')) url.searchParams.delete(key);
+  }
+  url.hash = '';
+  return url.toString();
+}
+
+function redactEvent(event: BeforeSendEvent): BeforeSendEvent {
+  return { ...event, url: redactUrl(event.url) };
+}
+
 export function initAnalytics() {
   void getClient();
+  // Vercel Web Analytics is cookieless; its script is served from our own domain
+  // (/_vercel/insights) and only reports once the project has it enabled.
+  inject({ mode: import.meta.env.DEV ? 'development' : 'production', beforeSend: redactEvent });
 }
 
 export function track(event: string, properties?: Record<string, unknown>) {
