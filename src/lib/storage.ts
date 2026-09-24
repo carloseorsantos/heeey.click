@@ -1,6 +1,6 @@
 import { Board } from './types';
 import { generateId, generateGuestName, getRandomCollaboratorColor } from './utils';
-import { supabase } from './supabase';
+import { BOARD_ID_HEADER, supabase } from './supabase';
 
 const STORAGE_BOARDS_KEY = 'heeey_local_boards';
 const BOARD_CONTENT_PREFIX = 'heeey_board_';
@@ -403,6 +403,7 @@ export async function claimLocalBoardsForUser(
             .from('boards')
             .update({ owner_id: userId })
             .eq('id', board.id)
+            .setHeader(BOARD_ID_HEADER, board.id)
             .is('owner_id', null);
         } catch (err) {
           console.warn(`Erro ao vincular board ${board.id} ao usuário no Supabase:`, err);

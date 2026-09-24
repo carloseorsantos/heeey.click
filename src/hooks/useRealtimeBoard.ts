@@ -3,7 +3,7 @@ import type { ExcalidrawImperativeAPI, SocketId } from '@excalidraw/excalidraw/t
 import type { ExcalidrawElement, OrderedExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { AppState, BinaryFiles, Collaborator } from '@excalidraw/excalidraw/types';
 import { reconcileElements, CaptureUpdateAction } from '@excalidraw/excalidraw';
-import { supabase } from '../lib/supabase';
+import { BOARD_ID_HEADER, supabase } from '../lib/supabase';
 import {
   Board,
   CollaboratorUser,
@@ -109,6 +109,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           .from('boards')
           .select('*')
           .eq('id', boardId)
+          .setHeader(BOARD_ID_HEADER, boardId)
           .single();
 
         if (data && !error) {
@@ -195,6 +196,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         .from('boards')
         .update({ owner_id: user.id })
         .eq('id', boardId)
+        .setHeader(BOARD_ID_HEADER, boardId)
         .is('owner_id', null)
         .then();
     }
@@ -238,6 +240,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           .from('boards')
           .update(thumbnail !== null ? { ...sceneUpdate, thumbnail } : sceneUpdate)
           .eq('id', boardData.id)
+          .setHeader(BOARD_ID_HEADER, boardData.id)
           .select('id');
 
         // Database without the thumbnail migration yet: keep saving the scene without previews
@@ -247,6 +250,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             .from('boards')
             .update(sceneUpdate)
             .eq('id', boardData.id)
+            .setHeader(BOARD_ID_HEADER, boardData.id)
             .select('id'));
         }
 
@@ -294,7 +298,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       renderBoardThumbnail(elements, current.files).then((thumbnail) => {
         if (thumbnail === null) return;
         saveLocalBoard({ ...current, elements, thumbnail });
-        supabase.from('boards').update({ thumbnail }).eq('id', current.id).then();
+        supabase.from('boards').update({ thumbnail }).eq('id', current.id).setHeader(BOARD_ID_HEADER, current.id).then();
       });
     };
   }, [boardId, debouncedSaveToDb]);
@@ -910,7 +914,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         await supabase
           .from('boards')
           .update({ title: trimmed, updated_at: new Date().toISOString() })
-          .eq('id', boardId);
+          .eq('id', boardId)
+          .setHeader(BOARD_ID_HEADER, boardId);
       } catch (err) {
         console.warn('Erro ao atualizar título no banco:', err);
       }
@@ -977,7 +982,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         await supabase
           .from('boards')
           .update({ access_level: level, updated_at: new Date().toISOString() })
-          .eq('id', boardId);
+          .eq('id', boardId)
+          .setHeader(BOARD_ID_HEADER, boardId);
       } catch (err) {
         console.warn('Erro ao atualizar permissão no banco:', err);
       }

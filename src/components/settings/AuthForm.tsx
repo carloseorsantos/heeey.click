@@ -14,6 +14,18 @@ const RATE_LIMIT_MARKERS = [
   'muitas requisições',
 ];
 
+// Signing in creates the account, so the age and terms confirmation lives here.
+// Remembered per browser so returning users are not asked again.
+const CONSENT_KEY = 'heeey_terms_accepted';
+
+function readConsent() {
+  try {
+    return localStorage.getItem(CONSENT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 function isRateLimitError(message: string) {
   const lower = message.toLowerCase();
   return RATE_LIMIT_MARKERS.some((marker) => lower.includes(marker));
@@ -27,6 +39,7 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [consent, setConsent] = useState(readConsent);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +47,13 @@ export function AuthForm() {
       setError(t('auth.invalidEmail'));
       return;
     }
+    if (!consent) {
+      setError(t('auth.consentRequired'));
+      return;
+    }
+    try {
+      localStorage.setItem(CONSENT_KEY, '1');
+    } catch {}
 
     setLoading(true);
     setError(null);
@@ -92,6 +112,27 @@ export function AuthForm() {
               />
             </div>
           </div>
+
+          <label className="flex items-start gap-2.5 text-sm text-label-2">
+            <input
+              type="checkbox"
+              required
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="w-4 h-4 mt-0.5 flex-shrink-0 rounded accent-[rgb(var(--accent))]"
+            />
+            <span>
+              {t('auth.consentBefore')}{' '}
+              <a href="/termos" target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+                {t('auth.terms')}
+              </a>{' '}
+              {t('auth.consentAnd')}{' '}
+              <a href="/privacidade" target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+                {t('auth.privacy')}
+              </a>
+              .
+            </span>
+          </label>
 
           {error &&
             (isRateLimitError(error) ? (
