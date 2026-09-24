@@ -16,13 +16,11 @@
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f5f7" />
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e0e10" />
     <script>
-      // Returning users (signed in, or guests with boards in this browser) go straight to the app.
-      // Crawlers have neither, so they always get this page. ?home skips the redirect.
+      // Signed-in users go straight to the app; crawlers never have a session, so they always
+      // get this page. ?home skips the redirect (the app's "About Heeey" link uses it).
       try {
-        if (!/[?&]home\b/.test(location.search)) {
-          var returning = Object.keys(localStorage).some(function (k) { return /^sb-.+-auth-token$/.test(k); });
-          var guestBoards = JSON.parse(localStorage.getItem('heeey_local_boards') || '[]');
-          if (returning || (Array.isArray(guestBoards) && guestBoards.length > 0)) location.replace('/app');
+        if (!/[?&]home\b/.test(location.search) && Object.keys(localStorage).some(function (k) { return /^sb-.+-auth-token$/.test(k); })) {
+          location.replace('/app');
         }
       } catch (e) {}
     </script>
@@ -63,7 +61,7 @@
             <a href="/app?settings=account" class="inline-flex h-11 items-center justify-center rounded-xl bg-accent px-6 text-base font-semibold text-white shadow-card transition-colors hover:bg-accent-hover">
               Criar conta grátis
             </a>
-            <a href="/app" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
+            <a href="/app" data-guest-label="Abrir meus quadros" class="inline-flex h-11 items-center justify-center rounded-xl px-5 text-base font-medium text-label-2 hover:bg-fill hover:text-label">
               Testar sem conta
             </a>
           </div>
@@ -216,6 +214,17 @@
       </div>
     </footer>
 
+    <script>
+      // Guests who already have boards in this browser: point them back to their boards
+      try {
+        var boards = JSON.parse(localStorage.getItem('heeey_local_boards') || '[]');
+        if (Array.isArray(boards) && boards.length > 0) {
+          document.querySelectorAll('[data-guest-label]').forEach(function (el) {
+            el.textContent = el.getAttribute('data-guest-label');
+          });
+        }
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/landing/main.ts"></script>
   </body>
 </html>

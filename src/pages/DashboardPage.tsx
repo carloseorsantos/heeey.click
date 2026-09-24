@@ -17,6 +17,7 @@ import {
   Folder as FolderIcon,
   BookOpen,
   Settings,
+  Info,
 } from 'lucide-react';
 import { Board } from '../lib/types';
 import { supabase } from '../lib/supabase';
@@ -747,6 +748,8 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
           {onNavigateToDocs && (
             <SidebarItem icon={BookOpen} label={t('dashboard.documentation')} onClick={onNavigateToDocs} />
           )}
+          {/* ?home: signed-in users are otherwise sent from the landing page straight back here */}
+          <SidebarItem icon={Info} label={t('dashboard.aboutHeeey')} onClick={() => window.location.assign('/?home')} />
           <SidebarItem icon={Settings} label={t('settings.title')} onClick={() => openSettings()} />
         </div>
       </aside>
@@ -998,7 +1001,7 @@ export function DashboardPage({ onNavigateToBoard, onNavigateToDocs }: Dashboard
         </main>
 
         <footer className="lg:hidden py-6 px-4 sm:px-8 flex items-center justify-between gap-3 text-xs text-label-2">
-          <span>heeey.click</span>
+          <a href="/?home" className="hover:text-label transition-colors">heeey.click</a>
           <div className="flex items-center gap-4">
             {onNavigateToDocs && (
               <button onClick={onNavigateToDocs} className="hover:text-label transition-colors">

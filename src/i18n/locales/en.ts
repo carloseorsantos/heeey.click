@@ -161,6 +161,7 @@ export const en: Messages = {
     trashGuestNote: " Sign in to delete boards permanently.",
     trashNote: "Boards in the trash are read-only. Restore a board to edit it again.",
     undo: "Undo",
+    aboutHeeey: "About Heeey",
     documentation: "Documentation",
   },
   dates: {

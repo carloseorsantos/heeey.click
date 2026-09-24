@@ -160,6 +160,7 @@ export const ptBR = {
     trashGuestNote: " Entre na sua conta para excluir quadros definitivamente.",
     trashNote: "Quadros na lixeira ficam somente leitura. Restaure um quadro para voltar a editá-lo.",
     undo: "Desfazer",
+    aboutHeeey: "Sobre o Heeey",
     documentation: "Documentação",
   },
   dates: {
