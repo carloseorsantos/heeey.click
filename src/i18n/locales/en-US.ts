@@ -45,6 +45,8 @@ export const enUS: Messages = {
     email: "Email",
     emailPlaceholder: "you@example.com",
     invalidEmail: "Please enter a valid email address.",
+    haveAccount: "Already have an account?",
+    noAccountYet: "Don't have an account?",
     noAccount: "We couldn't find an account with this email. Use \"Create a free account\" to make one.",
     optional: "Signing in is optional. It keeps your boards in your account so you can open them on any device.",
     rateLimitBody: "Try again in a few minutes. Meanwhile, you can keep drawing as a guest.",

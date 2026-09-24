@@ -91,6 +91,16 @@ export function SettingsProvider({ children, onOpenDocs }: { children: React.Rea
       >
         <div className="pt-2">
           <AuthForm mode={authDialog ?? 'signup'} />
+          <p className="mt-5 text-center text-sm text-label-2">
+            {authDialog === 'login' ? t('auth.noAccountYet') : t('auth.haveAccount')}{' '}
+            <button
+              type="button"
+              onClick={() => setAuthDialog(authDialog === 'login' ? 'signup' : 'login')}
+              className="font-medium text-accent-text underline-offset-2 hover:underline"
+            >
+              {authDialog === 'login' ? t('auth.createAccount') : t('dashboard.signIn')}
+            </button>
+          </p>
         </div>
       </Modal>
     </SettingsContext.Provider>

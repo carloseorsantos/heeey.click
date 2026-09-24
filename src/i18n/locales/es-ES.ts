@@ -45,6 +45,8 @@ export const esES: Messages = {
     email: "Correo electrónico",
     emailPlaceholder: "tu@ejemplo.com",
     invalidEmail: "Introduce una dirección de correo válida.",
+    haveAccount: "¿Ya tienes cuenta?",
+    noAccountYet: "¿No tienes cuenta?",
     noAccount: "No encontramos una cuenta con este correo. Usa \"Crear cuenta gratis\" para crear una.",
     optional: "Iniciar sesión es opcional. Guarda tus pizarras en tu cuenta para abrirlas en cualquier dispositivo.",
     rateLimitBody: "Vuelve a intentarlo en unos minutos. Mientras tanto, puedes seguir dibujando como invitado.",

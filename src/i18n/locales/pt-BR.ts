@@ -44,6 +44,8 @@ export const ptBR = {
     email: "E-mail",
     emailPlaceholder: "voce@exemplo.com",
     invalidEmail: "Por favor, digite um e-mail válido.",
+    haveAccount: "Já tem conta?",
+    noAccountYet: "Não tem conta?",
     noAccount: "Não encontramos uma conta com este e-mail. Use \"Criar conta grátis\" para criar uma.",
     optional: "O login é opcional. Ele serve para guardar seus quadros na conta e abri-los em qualquer dispositivo.",
     rateLimitBody: "Tente novamente em alguns minutos. Enquanto isso, você pode continuar desenhando como convidado.",

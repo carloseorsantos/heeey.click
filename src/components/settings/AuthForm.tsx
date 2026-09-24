@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { Mail, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { isAuthApiError } from '@supabase/supabase-js';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,6 +37,14 @@ export function AuthForm({ mode = 'signup' }: { mode?: AuthMode }) {
   const [consent, setConsent] = useState(false);
   const emailId = useId();
   const consentId = useId();
+
+  // Switching between the sign-up and sign-in dialogs keeps the email but starts the rest over,
+  // so the age and terms confirmation is never carried into a sign-up
+  useEffect(() => {
+    setConsent(false);
+    setError(null);
+    setSuccess(false);
+  }, [mode]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
