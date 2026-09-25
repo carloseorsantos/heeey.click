@@ -133,7 +133,7 @@ Para invitar a tus compañeros a la misma pizarra:
 
 ---
 
-## 🔐 Conecta tu cuenta (Magic Link)
+## 🔐 Conecta tu cuenta (Google o Magic Link)
 
 Aunque se puede usar de forma anónima, iniciar sesión con tu cuenta tiene ventajas importantes:
 
@@ -151,6 +151,9 @@ Aunque se puede usar de forma anónima, iniciar sesión con tu cuenta tiene vent
 1. En la página de inicio, en el panel o en el menú de tu avatar, haz clic en **«Iniciar sesión»**.
 2. Escribe el correo de tu cuenta y haz clic en **«Enviar enlace de acceso»**.
 3. Abre el enlace que recibas por correo en este mismo navegador.
+
+### Iniciar sesión con Google:
+En las mismas pantallas, haz clic en **«Continuar con Google»** y elige tu cuenta de Google. Al crear una cuenta, marca antes la confirmación de edad y de los términos. Si ya existe una cuenta de Heeey con el mismo correo, Google inicia sesión en ella; no se crea una cuenta nueva. De Google solo recibimos tu nombre, correo y foto de perfil.
 
 ---
 

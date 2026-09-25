@@ -10,6 +10,7 @@ Controls* (CUECs), e registrar abaixo.
 | **Vercel** | Hospedagem, funções, cron, Web Analytics | Tráfego, conteúdo em trânsito | Sim | SOC 2 Type 2, ISO 27001 | security.vercel.com |
 | **Vercel AI Gateway** | Busca semântica (Jev) | Títulos e textos dos quadros, só quando a busca é usada | Não | Via Vercel; ZDR opcional (`AI_GATEWAY_ZDR`) | security.vercel.com |
 | **PostHog** | Métricas de produto e erros | Eventos de uso, identificadores | Não | SOC 2 Type 2 | posthog.com/handbook/company/security |
+| **Google** | Login opcional (OAuth, via Supabase Auth) | Nome, e-mail e foto de perfil, só de quem escolhe entrar com o Google | Não | SOC 2 Type 2, ISO 27001 | cloud.google.com/security/compliance |
 | **GitHub** | Código, CI, Dependabot | Código-fonte (público) | Sim | SOC 2 Type 2, ISO 27001 | GitHub Trust Center |
 
 ## CUECs que cabem a nós

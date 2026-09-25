@@ -14,6 +14,7 @@ interface AuthContextType {
   effectiveUserName: string;
   isAuthenticated: boolean;
   signInWithMagicLink: (email: string, options?: { createUser?: boolean }) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   setNickname: (name: string, color?: { background: string; stroke: string }) => void;
 }
@@ -93,6 +94,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: window.location.href,
           shouldCreateUser: createUser,
         },
+      });
+      return { error };
+    } catch (err: any) {
+      return { error: err };
+    }
+  }, []);
+
+  // Leaves the page for Google and comes back to the same URL; detectSessionInUrl finishes the sign-in
+  const signInWithGoogle = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.href },
       });
       return { error };
     } catch (err: any) {
@@ -180,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         effectiveUserName,
         isAuthenticated: !!user,
         signInWithMagicLink,
+        signInWithGoogle,
         signOut,
         setNickname,
       }}

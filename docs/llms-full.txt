@@ -133,7 +133,7 @@ Para convidar colegas para o mesmo quadro:
 
 ---
 
-## 🔐 Conectando sua Conta (Magic Link)
+## 🔐 Conectando sua Conta (Google ou Magic Link)
 
 Embora o uso anônimo seja suportado, entrar com sua conta traz vantagens essenciais:
 
@@ -151,6 +151,9 @@ Embora o uso anônimo seja suportado, entrar com sua conta traz vantagens essenc
 1. Na página inicial, no Dashboard ou no menu do seu avatar, clique em **"Entrar"**.
 2. Digite o e-mail da sua conta e clique em **"Enviar link de acesso"**.
 3. Abra o link que chegar no seu e-mail, neste mesmo navegador.
+
+### Entrar com o Google:
+Nas mesmas telas, clique em **"Continuar com o Google"** e escolha sua conta Google. Ao criar conta, marque antes a confirmação de idade e dos termos. Se já existir uma conta Heeey com o mesmo e-mail, o Google entra nela; não é criada uma conta nova. Recebemos do Google apenas seu nome, e-mail e foto de perfil.
 
 ---
 
