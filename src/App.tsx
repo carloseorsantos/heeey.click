@@ -1,11 +1,13 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { MotionConfig } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './hooks/useAuth';
 import { SettingsProvider } from './hooks/useSettings';
 import { ThemeProvider } from './hooks/useTheme';
 import { DashboardPage } from './pages/DashboardPage';
 import { HeeeyLogo } from './components/Logo';
 import { I18nProvider, useI18n } from './i18n';
+import { redactEvent } from './lib/analytics';
 
 // The editor (Excalidraw) is only downloaded when a board is opened
 const BoardPage = lazy(() =>
@@ -87,6 +89,7 @@ export function App() {
       </AuthProvider>
     </ThemeProvider>
     </I18nProvider>
+    <Analytics beforeSend={redactEvent} />
     </MotionConfig>
   );
 }
