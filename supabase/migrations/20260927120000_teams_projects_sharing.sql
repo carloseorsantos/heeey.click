@@ -937,6 +937,12 @@ begin
     if new.owner_id is distinct from old.owner_id and new.owner_id is not null then
       raise exception 'Não é permitido alterar o criador da pasta.';
     end if;
+    -- Backfill: pastas mudam de projeto juntas, na mesma instrução, sem mudar de pai. Dentro dela
+    -- a pasta pai ainda aparece sem projeto, então a árvore não é validada de novo aqui
+    if public.is_system_change() and new.parent_id is not distinct from old.parent_id then
+      new.updated_at = timezone('utc'::text, now());
+      return new;
+    end if;
   end if;
   new.updated_at = timezone('utc'::text, now());
 
@@ -980,6 +986,13 @@ begin
     perform public.create_personal_team(u.id);
   end loop;
 
+  -- Pastas antes dos quadros: a pasta de um quadro precisa estar no mesmo projeto
+  update public.folders f
+  set team_id = p.team_id, project_id = p.id
+  from public.projects p
+  join public.teams t on t.id = p.team_id and t.is_personal and p.is_default
+  where f.project_id is null and t.created_by = f.owner_id;
+
   update public.boards b
   set team_id = p.team_id,
       project_id = p.id,
@@ -988,12 +1001,6 @@ begin
   from public.projects p
   join public.teams t on t.id = p.team_id and t.is_personal and p.is_default
   where b.team_id is null and b.owner_id is not null and t.created_by = b.owner_id;
-
-  update public.folders f
-  set team_id = p.team_id, project_id = p.id
-  from public.projects p
-  join public.teams t on t.id = p.team_id and t.is_personal and p.is_default
-  where f.project_id is null and t.created_by = f.owner_id;
 
   -- Chaves existentes continuam alcançando os mesmos quadros (os do time pessoal)
   insert into public.api_key_teams (api_key_id, team_id)
