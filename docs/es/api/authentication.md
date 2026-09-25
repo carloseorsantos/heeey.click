@@ -25,6 +25,7 @@ Heeey usa **claves personales de API** (*Personal API Keys*) para autorizar las 
   - El `prefix` (p. ej. `hk_1a2b3c4d`), que se muestra en la interfaz para que sepas qué clave es cuál.
   - El `key_hash`: un resumen criptográfico calculado con `sha256(clave)`.
 - **Límite por cuenta**: cada usuario puede tener hasta **20 claves activas a la vez**.
+- **Equipos a los que llega la clave**: al crear la clave eliges en qué equipos lee y cambia pizarras (por defecto, solo tu equipo personal). Las claves antiguas siguen llegando a tu equipo personal. Si sales de un equipo, la clave pierde el acceso a él al instante.
 
 ---
 

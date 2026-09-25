@@ -1,6 +1,9 @@
 # Catálogo completo de herramientas MCP de Heeey
 
-Esta página describe la especificación técnica detallada de las **13 herramientas MCP** que ofrece el servidor de Heeey en `https://heeey.click/api/mcp`.
+Esta página describe la especificación técnica detallada de las **14 herramientas MCP** que ofrece el servidor de Heeey en `https://heeey.click/api/mcp`.
+
+
+Las pizarras están en **proyectos** dentro de **equipos**. Usa `list_projects` para saber dónde puede crear pizarras la clave; `list_boards`, `create_board`, `create_diagram`, `list_folders` y `create_folder` aceptan `project_id`. Las pizarras creadas por MCP empiezan restringidas (solo el equipo/proyecto y las personas invitadas pueden abrirlas).
 
 ---
 
@@ -8,6 +11,7 @@ Esta página describe la especificación técnica detallada de las **13 herramie
 
 | Herramienta | Alcance | Anotación MCP | Finalidad principal |
 |---|---|---|---|
+| [`list_projects`](#14-list_projects) | `read` | `readOnlyHint: true` | Lista los equipos y proyectos a los que llega la clave, con tu acceso. |
 | [`list_boards`](#1-list_boards) | `read` | `readOnlyHint: true` | Lista las pizarras de la cuenta del usuario. |
 | [`search_boards`](#2-search_boards) | `read` | `readOnlyHint: true` | Búsqueda de texto completo en títulos y en el texto dibujado en el lienzo. |
 | [`get_board`](#3-get_board) | `read` | `readOnlyHint: true` | Lee metadatos y elementos (compacto o detallado). |
@@ -337,5 +341,24 @@ Esta página describe la especificación técnica detallada de las **13 herramie
     "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
     "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
   }
+}
+```
+
+---
+
+### 14. `list_projects`
+> Lista los equipos y proyectos a los que llega la clave, con el acceso del usuario en cada proyecto (`manage`, `edit` o `view`).
+
+- **Anotaciones**: `readOnlyHint: true`
+- **Parámetros de entrada (`inputSchema`)**:
+  - Objeto vacío `{}`.
+- **Devuelve**:
+  - `projects`: lista con `id`, `name`, `visibility` (`team` o `private`), `is_default`, `team_id`, `team_name` y `access`.
+
+**Ejemplo de llamada:**
+```json
+{
+  "name": "list_projects",
+  "arguments": {}
 }
 ```

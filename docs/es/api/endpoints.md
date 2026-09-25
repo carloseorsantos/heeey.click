@@ -12,6 +12,7 @@ Authorization: Bearer hk_...
 ## 📌 Índice de endpoints
 
 - [GET /api/v1](#get-apiv1) — Catálogo de la API
+- [GET /api/v1/projects](#get-apiv1projects) — Listar los equipos y proyectos a los que llega la clave
 - [GET /api/v1/boards](#get-apiv1boards) — Listar pizarras
 - [POST /api/v1/boards](#post-apiv1boards) — Crear una pizarra
 - [GET /api/v1/boards/:id](#get-apiv1boardsid) — Obtener una pizarra y su escena completa
@@ -36,15 +37,16 @@ Devuelve información general sobre la API, instrucciones de autenticación y la
   "version": "v1",
   "auth": "Authorization: Bearer <chave de API criada em heeey.click>",
   "endpoints": [
-    "GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=",
-    "POST   /api/v1/boards { title, elements?, folder_id? }",
+    "GET    /api/v1/projects  (times e projetos que a chave alcança)",
+    "GET    /api/v1/boards?project_id=&team_id=&folder_id=&include_trashed=&limit=&offset=",
+    "POST   /api/v1/boards { title, elements?, project_id?, folder_id? }",
     "GET    /api/v1/boards/:id",
     "PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }",
     "DELETE /api/v1/boards/:id  (move para a lixeira)",
     "POST   /api/v1/boards/:id/move { folder_id }",
     "GET    /api/v1/search?q=",
-    "GET    /api/v1/folders",
-    "POST   /api/v1/folders { name, parent_id? }"
+    "GET    /api/v1/folders?project_id=",
+    "POST   /api/v1/folders { name, parent_id?, project_id? }"
   ]
 }
 ```
@@ -55,6 +57,8 @@ Devuelve información general sobre la API, instrucciones de autenticación y la
 Lista las pizarras del usuario de la clave de API, de la editada más recientemente a la más antigua.
 
 **Parámetros de consulta (query params):**
+- `project_id` *(opcional, UUID)*: solo las pizarras de este proyecto.
+- `team_id` *(opcional, UUID)*: solo las pizarras de este equipo.
 - `folder_id` *(opcional, UUID)*: solo las pizarras que están dentro de esta carpeta.
 - `include_trashed` *(opcional, boolean)*: si es `true`, incluye las pizarras de la papelera. Por defecto: `false`.
 - `limit` *(opcional, integer)*: número máximo de resultados (por defecto: `50`, máx.: `200`).
@@ -86,6 +90,7 @@ Crea una pizarra nueva con un título y elementos opcionales.
 
 **Cuerpo de la petición (JSON):**
 - `title` *(opcional, string)*: título de la pizarra (si se omite, se usa el título por defecto del sistema).
+- `project_id` *(opcional, UUID)*: proyecto de destino. Si se omite, se usa el proyecto de la carpeta o el proyecto predeterminado de tu equipo personal (o del primer equipo al que llega la clave). Las pizarras creadas por la API empiezan **restringidas**.
 - `folder_id` *(opcional, UUID)*: carpeta de destino. Si se omite o es `null`, la pizarra se crea en el nivel superior.
 - `elements` *(opcional, array)*: lista de elementos nativos de Excalidraw o de especificaciones abreviadas (`ElementSpec`).
 
@@ -248,6 +253,29 @@ Consulta también la guía de [Paginación](pagination.md).
 
 ---
 
+### `GET /api/v1/projects`
+Lista los equipos y proyectos a los que llega la clave, con tu acceso en cada uno (`manage`, `edit` o `view`). Usa el `id` como `project_id` al crear o listar pizarras y carpetas.
+
+**Ejemplo de respuesta (200 OK):**
+```json
+{
+  "projects": [
+    {
+      "id": "0b1c2d3e-4f50-4a61-8b72-93a4b5c6d7e8",
+      "name": "General",
+      "visibility": "team",
+      "is_default": true,
+      "team_id": "7d0f5b1e-2c3a-4e8b-9f10-1a2b3c4d5e6f",
+      "team_name": "Acme Design",
+      "team_is_personal": false,
+      "access": "edit"
+    }
+  ]
+}
+```
+
+---
+
 ### `GET /api/v1/folders`
 Devuelve todas las carpetas creadas por el usuario, con `parent_id` para construir el árbol (`parent_id: null` indica el nivel superior).
 
@@ -277,6 +305,7 @@ Crea una carpeta nueva en el nivel superior o anidada dentro de otra carpeta exi
 **Cuerpo de la petición (JSON):**
 - `name` *(obligatorio, string)*: nombre de la carpeta (de 1 a 60 caracteres).
 - `parent_id` *(opcional, UUID o null)*: ID de la carpeta padre, para anidarla.
+- `project_id` *(opcional, UUID)*: solo las carpetas de este proyecto (al listar), o el proyecto de la nueva carpeta (al crear).
 
 **Ejemplo de respuesta (201 Created):**
 ```json

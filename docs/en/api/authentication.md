@@ -25,6 +25,7 @@ Heeey uses **Personal API Keys** to authorize requests to the REST API (`/api/v1
   - The `prefix` (e.g. `hk_1a2b3c4d`), shown in the interface so you know which key is which.
   - The `key_hash`: a cryptographic digest computed with `sha256(key)`.
 - **Per-account limit**: Each user can have up to **20 active keys at the same time**.
+- **Teams the key reaches**: When you create a key you choose which teams it reads and changes boards in (by default, only your personal team). Older keys keep reaching your personal team. If you leave a team, the key loses access to it right away.
 
 ---
 

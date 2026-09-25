@@ -1,6 +1,9 @@
 # Catálogo Completo de Ferramentas MCP do Heeey
 
-Esta página descreve a especificação técnica detalhada de todas as **13 ferramentas MCP** disponibilizadas pelo servidor do Heeey em `https://heeey.click/api/mcp`.
+Esta página descreve a especificação técnica detalhada de todas as **14 ferramentas MCP** disponibilizadas pelo servidor do Heeey em `https://heeey.click/api/mcp`.
+
+
+Quadros ficam em **projetos** dentro de **times**. Use `list_projects` para saber onde a chave pode criar quadros; `list_boards`, `create_board`, `create_diagram`, `list_folders` e `create_folder` aceitam `project_id`. Quadros criados pelo MCP nascem restritos (só o time/projeto e quem for convidado abrem).
 
 ---
 
@@ -8,6 +11,7 @@ Esta página descreve a especificação técnica detalhada de todas as **13 ferr
 
 | Ferramenta | Escopo | Anotação MCP | Finalidade Principal |
 |---|---|---|---|
+| [`list_projects`](#14-list_projects) | `read` | `readOnlyHint: true` | Lista times e projetos que a chave alcança, com o seu acesso. |
 | [`list_boards`](#1-list_boards) | `read` | `readOnlyHint: true` | Lista os quadros da conta do usuário. |
 | [`search_boards`](#2-search_boards) | `read` | `readOnlyHint: true` | Busca full-text em títulos e texto desenhado no canvas. |
 | [`get_board`](#3-get_board) | `read` | `readOnlyHint: true` | Lê metadados e elementos (compacto ou detalhado). |
@@ -337,5 +341,24 @@ Esta página descreve a especificação técnica detalhada de todas as **13 ferr
     "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
     "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
   }
+}
+```
+
+---
+
+### 14. `list_projects`
+> Lista os times e projetos que a chave alcança, com o acesso do usuário em cada projeto (`manage`, `edit` ou `view`).
+
+- **Anotações**: `readOnlyHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - Objeto vazio `{}`.
+- **Retorno**:
+  - `projects`: Lista com `id`, `name`, `visibility` (`team` ou `private`), `is_default`, `team_id`, `team_name` e `access`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "list_projects",
+  "arguments": {}
 }
 ```

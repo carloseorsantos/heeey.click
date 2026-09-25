@@ -35,17 +35,26 @@ Nenhum elemento precisa passar por filas lentas ou polling. Quando um colaborado
 
 ## 🔒 Níveis de Acesso e Permissões
 
-Cada quadro possui um campo `access_level`:
+Quem acessa um quadro é a soma de três camadas (vale o maior acesso). Os detalhes estão em [Times, Projetos & Compartilhamento](teams-and-sharing.md):
 
-| Nível de Acesso | Valor no Banco | Descrição |
+1. **Time e projeto**: membros do time veem os quadros dos projetos abertos ao time; projetos privados só para quem foi adicionado (owners e admins sempre veem).
+2. **Convite direto**: pessoas convidadas por e-mail como **Leitor** ou **Editor**, mesmo de fora do time.
+3. **Acesso geral (o link)**, no campo `access_level`:
+
+| Acesso geral | Valor no Banco | Descrição |
 |---|---|---|
-| **Pode Editar** | `'edit'` | Qualquer visitante com o link pode interagir, desenhar e adicionar notas. |
-| **Apenas Leitura** | `'view'` | Visitantes visualizam as alterações em tempo real e os cursores dos colegas, mas o canvas fica bloqueado contra edições locais. O proprietário do quadro mantém permissão irrestrita de edição. |
+| **Restrito** | `'restricted'` | Só quem tem acesso pelo time, projeto ou convite abre o quadro, mesmo com o link. Padrão dos quadros novos. |
+| **Qualquer pessoa com o link · Leitor** | `'view'` | Quem tem o link vê as mudanças e os cursores em tempo real, sem editar. |
+| **Qualquer pessoa com o link · Editor** | `'edit'` | Quem tem o link desenha junto, sem criar conta. |
 
-### Alterando o Nível de Acesso:
+Quadros criados sem conta ficam sempre abertos para edição pelo link até serem guardados num time.
+
+### Alterando o Acesso Geral:
 1. No cabeçalho do quadro, abra o modal de **Compartilhar**.
-2. Alterne entre **"Pode Editar"** e **"Apenas Leitura"**.
-3. A mudança reflete imediatamente para todos os visitantes conectados através de uma mensagem `meta-update`.
+2. Em **Acesso geral**, escolha **Restrito** ou **Qualquer pessoa com o link** (Leitor ou Editor).
+3. A mudança vale na hora; quem está com o quadro aberto recebe uma mensagem `meta-update` e relê a permissão do banco.
+
+A sala ao vivo segue a mesma regra: quem não pode abrir o quadro não entra no canal, e só quem edita altera a cena.
 
 ---
 

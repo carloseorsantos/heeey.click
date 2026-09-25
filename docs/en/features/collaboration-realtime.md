@@ -35,17 +35,26 @@ No element has to go through slow queues or polling. When a collaborator moves t
 
 ## 🔒 Access Levels and Permissions
 
-Every board has an `access_level` field:
+Who can open a board is the sum of three layers (the highest access wins). The details are in [Teams, Projects & Sharing](teams-and-sharing.md):
 
-| Access level | Database value | Description |
+1. **Team and project**: team members see the boards of projects open to the team; private projects only for people added to them (owners and admins always see them).
+2. **Direct invite**: people invited by e-mail as **Viewer** or **Editor**, even from outside the team.
+3. **General access (the link)**, in the `access_level` field:
+
+| General access | Database value | Description |
 |---|---|---|
-| **Can edit** | `'edit'` | Any visitor with the link can interact, draw and add notes. |
-| **View only** | `'view'` | Visitors see changes and teammates' cursors in real time, but the canvas is locked against local edits. The board owner always keeps full edit rights. |
+| **Restricted** | `'restricted'` | Only people with access through the team, project or an invite can open the board, even with the link. Default for new boards. |
+| **Anyone with the link · Viewer** | `'view'` | Anyone with the link sees changes and cursors in real time, without editing. |
+| **Anyone with the link · Editor** | `'edit'` | Anyone with the link draws along, no account needed. |
 
-### Changing the Access Level:
+Boards created without an account stay open for editing by link until they are saved to a team.
+
+### Changing the General Access:
 1. In the board header, open the **Share** dialog.
-2. Switch between **"Can edit"** and **"View only"**.
-3. The change reaches every connected visitor immediately through a `meta-update` message.
+2. Under **General access**, choose **Restricted** or **Anyone with the link** (Viewer or Editor).
+3. The change applies immediately; people with the board open get a `meta-update` message and read the permission again from the database.
+
+The live room follows the same rule: people who cannot open the board cannot join the channel, and only editors change the scene.
 
 ---
 

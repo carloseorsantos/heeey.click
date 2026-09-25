@@ -25,6 +25,7 @@ O Heeey utiliza **Chaves Pessoais de API** (*Personal API Keys*) para autorizar 
   - O `prefix` (ex.: `hk_1a2b3c4d`), exibido na interface para que você saiba qual chave é qual.
   - O `key_hash`: digest criptográfico gerado com `sha256(chave)`.
 - **Limite por Conta**: Cada usuário pode manter até **20 chaves ativas simultaneamente**.
+- **Times que a chave alcança**: Ao criar a chave você escolhe de quais times ela lê e altera quadros (por padrão, só o seu time pessoal). Chaves antigas continuam alcançando o time pessoal. Se você sair de um time, a chave perde o acesso a ele na hora.
 
 ---
 

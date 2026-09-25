@@ -21,8 +21,8 @@ import {
 import { extractPlainFromTokens } from '../components/docs/MarkdownRenderer';
 
 describe('docsData', () => {
-  it('has all 25 documentation items defined', () => {
-    expect(DOC_ITEMS.length).toBe(25);
+  it('has all 26 documentation items defined', () => {
+    expect(DOC_ITEMS.length).toBe(26);
     expect(DOC_CATEGORIES.length).toBe(5);
   });
 
@@ -236,11 +236,11 @@ describe('docsData', () => {
     });
   });
 
-  it('correctly extracts all 23 document files from llms-full.txt', () => {
+  it('correctly extracts all 24 document files from llms-full.txt', () => {
     const doc = getDocBySlug('llms-full');
     expect(doc).not.toBeNull();
     const files = extractDocFiles(doc!.content);
-    expect(files.length).toBe(23);
+    expect(files.length).toBe(24);
     expect(files[0].filePath).toBe('docs/README.md');
     expect(files[0].docSlug).toBe('readme');
     expect(files[0].id).toBe('file-docsreadmemd');
@@ -385,7 +385,7 @@ describe('docs translations', () => {
       expect(read(`${locale.docsDir}/llms-full.txt`), locale.docsDir).toBe(full);
       expect(read(`${locale.publicDir}/llms-full.txt`), locale.publicDir).toBe(full);
       expect(read(`${locale.publicDir}/llms.txt`), locale.publicDir).toBe(read(`${locale.docsDir}/llms.txt`));
-      expect(extractDocFiles(full).length).toBe(23);
+      expect(extractDocFiles(full).length).toBe(24);
       // What the docs page shows is the same file
       expect(getDocRawContent(`/${locale.docsDir}/llms-full.txt`)).toBe(full);
     }

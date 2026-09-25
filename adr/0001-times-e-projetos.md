@@ -31,8 +31,8 @@ team_members     (team_id, user_id, role owner|admin|member|viewer, PK(team_id, 
 team_invites     (id, team_id, role, token_hash, invited_by, expires_at, accepted_at, revoked_at)
 projects         (id, team_id, name, visibility team|private, created_by, archived_at)
 project_members  (project_id, user_id, role edit|view, PK(project_id, user_id))
-folders          + team_id, project_id   (owner_id vira created_by)
-boards           + team_id, project_id   (owner_id vira created_by, on delete set null)
+folders          + team_id, project_id   (owner_id passa a significar "quem criou")
+boards           + team_id, project_id   (owner_id passa a significar "quem criou", on delete set null)
                  + restrict_link_at timestamptz null   -- migração agendada para restrito
                  access_level: restricted|view|edit   -- "Acesso geral" (restricted é novo)
 board_members    (board_id, user_id null, email, role view|edit, invited_by, created_at,
@@ -64,7 +64,7 @@ api_key_teams    (api_key_id, team_id)   -- times que a chave pode acessar
 7. **Convites.** No v1, o convite é um link copiável: o token fica guardado só como hash, com expiração e papel definidos. O envio por e-mail fica para depois.
 8. **Chaves de API e MCP.** A chave continua sendo do usuário. Ao criá-la, o usuário escolhe quais times ela pode acessar (`api_key_teams`). Cada chamada respeita a interseção entre esses times e a permissão atual do usuário: se o usuário perde acesso, a chave perde junto.
 9. **Mover quadro entre times.** Exige ser admin (ou owner) nos dois times. As imagens não mudam de caminho no Storage, porque o caminho usa o `board_id`.
-10. **Saída e remoção de membros.** Os quadros ficam no time. Se a conta for excluída, `created_by` vira `null`. O único owner de um time que tem outros membros precisa transferir a posse antes de excluir a conta.
+10. **Saída e remoção de membros.** Os quadros ficam no time. Se a conta for excluída, `owner_id` vira `null`. Ver "Diferenças na implementação" sobre o único owner.
 11. **Quadro anônimo reivindicado** vai para o projeto padrão do time ativo de quem o reivindicou.
 12. **Cobrança.** Fora do v1. O time é a unidade natural para cobrar no futuro, mas nenhuma coluna de plano é criada agora.
 
@@ -87,7 +87,7 @@ A lista mostra quem acessa o quadro e por quê:
 - **Criador**, com o rótulo "Criador" em vez de "Proprietário", porque o quadro é do time.
 - **Acesso herdado**, em linhas agrupadas, por exemplo "Time Acme · Editores" ou "Projeto X (privado) · 4 pessoas". Essas linhas só leem; o acesso é ajustado no time ou no projeto.
 - **Convidados diretos**, em que dá para trocar o papel (Leitor ou Editor) ou remover.
-- **Convites pendentes**, com o rótulo "Convite pendente".
+- **Convites pendentes** aparecem como qualquer outro e-mail (ver "Diferenças na implementação").
 
 O convite direto só **soma** acesso. Ele nunca tira o acesso que a pessoa já tem pelo time ou pelo projeto.
 
@@ -149,11 +149,11 @@ A opção A foi escolhida como base. O compartilhamento estilo Drive (convites p
 
 ## Plano de implementação
 
-1. [ ] **Fase 1: schema, backfill e funções auxiliares**, sem mudança visível. Testes em PGlite do backfill e do trigger de time pessoal.
-2. [ ] **Fase 2: permissões.** Reescrever `board_permission`, `realtime_can_edit_board`, `check_board_folder`, `check_folder_parent`, `handle_board_update`, as funções `api_*`, a busca e o Storage. Testes de isolamento entre times e entre projetos privados.
-3. [ ] **Fase 3: UI.** Seletor de time no Header, projetos no Dashboard (`/t/:slug/p/:id`), aba "Time" nas Configurações (membros e papéis) e tela "sem acesso".
-4. [ ] **Fase 4: convites para o time** por link (criar, revogar, aceitar).
-5. [ ] **Fase 5: compartilhar estilo Drive**, nos passos abaixo.
+1. [x] **Fase 1: schema, backfill e funções auxiliares**, sem mudança visível. Testes em PGlite do backfill e do trigger de time pessoal.
+2. [x] **Fase 2: permissões.** Reescrever `board_permission`, `realtime_can_edit_board`, `check_board_folder`, `check_folder_parent`, `handle_board_update`, as funções `api_*`, a busca e o Storage. Testes de isolamento entre times e entre projetos privados.
+3. [x] **Fase 3: UI.** Seletor de time no Header, projetos no Dashboard (`/t/:slug/p/:id`), aba "Time" nas Configurações (membros e papéis) e tela "sem acesso".
+4. [x] **Fase 4: convites para o time** por link (criar, revogar, aceitar).
+5. [x] **Fase 5: compartilhar estilo Drive**, nos passos abaixo.
    1. Adicionar `restricted` em `access_level`, criar `board_members` e a RPC `share_board`, e ativar os convites pendentes ao verificar o e-mail.
    2. Migração com aviso: preencher `restrict_link_at` (+30 dias), mostrar os avisos ao dono e ao visitante e criar o cron que aplica a restrição.
    3. Diálogo ao reivindicar um quadro anônimo: escolher time, projeto e acesso geral.
@@ -161,5 +161,18 @@ A opção A foi escolhida como base. O compartilhamento estilo Drive (convites p
    5. Refazer o `ShareModal`: pessoas com acesso, acesso geral e engrenagem com `editors_can_share`.
    6. Criar a seção "Compartilhados comigo" e a tela "Você precisa de acesso".
    7. Testes em PGlite: restrito com o link, migração agendada e opção de manter aberto, convite pendente e ativação, editor que não consegue promover além do próprio papel, convidado que não vê o resto do projeto.
-6. [ ] **Fase 6: API e MCP.** Seleção de times na criação da chave (`api_key_teams`) e parâmetro de time nas chamadas.
+6. [x] **Fase 6: API e MCP.** Seleção de times na criação da chave (`api_key_teams`) e parâmetro de time nas chamadas.
 7. [ ] **Depois:** notificação por e-mail (convite para o time e compartilhamento), "Pedir acesso", biblioteca do time e cobrança.
+
+## Diferenças na implementação
+
+Decididas durante a implementação (branch `feat/teams`, migration `20260927120000_teams_projects_sharing.sql`):
+
+1. **`owner_id` não foi renomeado para `created_by`.** A coluna continua com o nome antigo e passa a significar "quem criou". Renomear quebraria os clientes já publicados durante o deploy.
+2. **Convites pendentes não têm rótulo próprio.** A lista mostra só o e-mail e o papel de cada convite direto. Um rótulo "Convite pendente" revelaria quais e-mails ainda não têm conta, justamente o que a regra de não enumerar usuários proíbe.
+3. **A exclusão de conta não é bloqueada.** O banco não consegue impedir a exclusão feita no Supabase Auth. Por isso: o time pessoal e os quadros dele são apagados; num time com outras pessoas, se a conta era a única owner, a posse passa para um admin (ou para o membro mais antigo). As imagens do time pessoal precisam ser apagadas antes; ver `compliance/data-management.md`.
+4. **O link de convite para o time vale para uma pessoa.** Depois de aceito, não serve para mais ninguém. Continua expirando em 7 dias e pode ser revogado.
+5. **Escritas privilegiadas só por funções.** Criador, time, projeto e agendamento da restrição do link não são graváveis pelos clientes: há permissões por coluna e uma checagem no gatilho. Reivindicar, mover e manter o link aberto passam por `claim_board`, `move_board` e `keep_board_link_open`, que ligam o sinal interno `heeey.system`.
+6. **Quem pode enviar para a lixeira:** quem edita o quadro pelo time/projeto, ou quem o administra. Convidados diretos e quem entra pelo link não enviam.
+7. **Excluir time ou projeto exige que estejam vazios,** incluindo a lixeira. O projeto padrão não pode ser excluído nem ficar privado.
+

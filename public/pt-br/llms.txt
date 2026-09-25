@@ -41,7 +41,7 @@ O Heeey é uma aplicação web de lousa colaborativa e diagramação construída
 - [Primeiros passos com a API](https://heeey.click/docs/api/getting-started): Crie seu primeiro quadro pela API em 3 minutos.
 - [Esquema de conteúdo da cena](https://heeey.click/docs/api/scene-content-schema): Referência legível do formato compartilhado ElementSpec.
 - [Visão geral do MCP](https://heeey.click/docs/mcp/overview): Como agentes de IA se conectam ao Heeey pelo MCP.
-- [Catálogo de ferramentas MCP](https://heeey.click/docs/mcp/tools): Especificação das 13 ferramentas MCP.
+- [Catálogo de ferramentas MCP](https://heeey.click/docs/mcp/tools): Especificação das 14 ferramentas MCP.
 - [Documentação completa para LLMs](https://heeey.click/pt-br/llms-full.txt): Exportação em texto de toda a documentação, em português.
 
 ## Índice da documentação
@@ -50,6 +50,7 @@ O Heeey é uma aplicação web de lousa colaborativa e diagramação construída
 - [Começando](https://heeey.click/docs/getting-started): Crie seu primeiro quadro em 3 minutos
 - [Editor da lousa](https://heeey.click/docs/features/whiteboard-editor): Ferramentas do canvas, texto vinculado e atalhos
 - [Colaboração em tempo real](https://heeey.click/docs/features/collaboration-realtime): Multiplayer, broadcast e cursores
+- [Times, projetos e compartilhamento](https://heeey.click/docs/features/teams-and-sharing): Times com papéis, projetos privados, convites por e-mail e acesso geral do link
 - [Pastas e organização](https://heeey.click/docs/features/folders-and-organization): Pastas hierárquicas, breadcrumbs, templates e lixeira
 - [Histórico de versões](https://heeey.click/docs/features/version-history): Snapshots automáticos, retenção e restauração sem conflitos
 - [Internacionalização](https://heeey.click/docs/features/i18n): Suporte nativo a pt-BR, en-US e es-ES, detecção e sincronização com o Excalidraw
@@ -67,5 +68,5 @@ O Heeey é uma aplicação web de lousa colaborativa e diagramação construída
 - [Visão geral do MCP](https://heeey.click/docs/mcp/overview): Como agentes de IA se conectam ao Heeey pelo MCP
 - [Configurando o MCP](https://heeey.click/docs/mcp/getting-started): Conecte Claude Code, Claude Desktop e Cursor
 - [Autenticação e permissões MCP](https://heeey.click/docs/mcp/auth-and-permissions): Autorização MCP e anotações de segurança das ferramentas
-- [Catálogo de ferramentas MCP](https://heeey.click/docs/mcp/tools): Catálogo detalhado das 13 ferramentas MCP
+- [Catálogo de ferramentas MCP](https://heeey.click/docs/mcp/tools): Catálogo detalhado das 14 ferramentas MCP
 - [Motor de layout de diagramas](https://heeey.click/docs/mcp/diagram-layout): Layout automático de diagramas em camadas com Dagre/Sugiyama

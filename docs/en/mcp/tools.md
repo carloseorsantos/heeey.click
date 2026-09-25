@@ -1,6 +1,9 @@
 # Full Catalog of Heeey MCP Tools
 
-This page gives the detailed technical spec of all **13 MCP tools** provided by the Heeey server at `https://heeey.click/api/mcp`.
+This page gives the detailed technical spec of all **14 MCP tools** provided by the Heeey server at `https://heeey.click/api/mcp`.
+
+
+Boards live in **projects** inside **teams**. Use `list_projects` to see where the key can create boards; `list_boards`, `create_board`, `create_diagram`, `list_folders` and `create_folder` accept `project_id`. Boards created through MCP start restricted (only the team/project and invited people can open them).
 
 ---
 
@@ -8,6 +11,7 @@ This page gives the detailed technical spec of all **13 MCP tools** provided by 
 
 | Tool | Scope | MCP annotation | Main purpose |
 |---|---|---|---|
+| [`list_projects`](#14-list_projects) | `read` | `readOnlyHint: true` | Lists the teams and projects the key reaches, with your access. |
 | [`list_boards`](#1-list_boards) | `read` | `readOnlyHint: true` | Lists the boards in the user's account. |
 | [`search_boards`](#2-search_boards) | `read` | `readOnlyHint: true` | Full-text search across titles and text drawn on the canvas. |
 | [`get_board`](#3-get_board) | `read` | `readOnlyHint: true` | Reads metadata and elements (compact or detailed). |
@@ -337,5 +341,24 @@ This page gives the detailed technical spec of all **13 MCP tools** provided by 
     "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
     "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
   }
+}
+```
+
+---
+
+### 14. `list_projects`
+> Lists the teams and projects the key reaches, with the user's access in each project (`manage`, `edit` or `view`).
+
+- **Annotations**: `readOnlyHint: true`
+- **Input Parameters (`inputSchema`)**:
+  - Empty object `{}`.
+- **Returns**:
+  - `projects`: A list with `id`, `name`, `visibility` (`team` or `private`), `is_default`, `team_id`, `team_name` and `access`.
+
+**Example Call:**
+```json
+{
+  "name": "list_projects",
+  "arguments": {}
 }
 ```

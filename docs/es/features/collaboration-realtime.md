@@ -35,17 +35,26 @@ Ningún elemento tiene que pasar por colas lentas ni por sondeos. Cuando un cola
 
 ## 🔒 Niveles de acceso y permisos
 
-Cada pizarra tiene un campo `access_level`:
+Quién puede abrir una pizarra es la suma de tres capas (gana el mayor acceso). Los detalles están en [Equipos, proyectos y uso compartido](teams-and-sharing.md):
 
-| Nivel de acceso | Valor en la base de datos | Descripción |
+1. **Equipo y proyecto**: los miembros del equipo ven las pizarras de los proyectos abiertos al equipo; los proyectos privados, solo quienes fueron añadidos (owners y admins siempre los ven).
+2. **Invitación directa**: personas invitadas por correo como **Lector** o **Editor**, incluso de fuera del equipo.
+3. **Acceso general (el enlace)**, en el campo `access_level`:
+
+| Acceso general | Valor en la base de datos | Descripción |
 |---|---|---|
-| **Puede editar** | `'edit'` | Cualquier visitante con el enlace puede interactuar, dibujar y añadir notas. |
-| **Solo lectura** | `'view'` | Los visitantes ven los cambios y los cursores de los demás en tiempo real, pero el lienzo queda bloqueado para ediciones locales. La persona propietaria de la pizarra conserva siempre todos los permisos de edición. |
+| **Restringido** | `'restricted'` | Solo quien tiene acceso por el equipo, el proyecto o una invitación abre la pizarra, incluso con el enlace. Predeterminado en las pizarras nuevas. |
+| **Cualquiera con el enlace · Lector** | `'view'` | Quien tiene el enlace ve los cambios y los cursores en tiempo real, sin editar. |
+| **Cualquiera con el enlace · Editor** | `'edit'` | Quien tiene el enlace dibuja a la vez, sin crear cuenta. |
 
-### Cambiar el nivel de acceso:
+Las pizarras creadas sin cuenta siguen abiertas para edición por enlace hasta que se guardan en un equipo.
+
+### Cambiar el acceso general:
 1. En la cabecera de la pizarra, abre el diálogo **Compartir**.
-2. Alterna entre **«Puede editar»** y **«Solo lectura»**.
-3. El cambio llega al instante a todos los visitantes conectados mediante un mensaje `meta-update`.
+2. En **Acceso general**, elige **Restringido** o **Cualquiera con el enlace** (Lector o Editor).
+3. El cambio vale al instante; quien tiene la pizarra abierta recibe un mensaje `meta-update` y vuelve a leer el permiso de la base de datos.
+
+La sala en vivo sigue la misma regla: quien no puede abrir la pizarra no entra en el canal, y solo quien edita cambia la escena.
 
 ---
 

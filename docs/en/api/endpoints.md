@@ -12,6 +12,7 @@ Authorization: Bearer hk_...
 ## 📌 Endpoint Index
 
 - [GET /api/v1](#get-apiv1) — API catalog
+- [GET /api/v1/projects](#get-apiv1projects) — List the teams and projects the key reaches
 - [GET /api/v1/boards](#get-apiv1boards) — List boards
 - [POST /api/v1/boards](#post-apiv1boards) — Create a board
 - [GET /api/v1/boards/:id](#get-apiv1boardsid) — Get a board and its full scene
@@ -36,15 +37,16 @@ Returns general information about the API, authentication instructions and the s
   "version": "v1",
   "auth": "Authorization: Bearer <chave de API criada em heeey.click>",
   "endpoints": [
-    "GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=",
-    "POST   /api/v1/boards { title, elements?, folder_id? }",
+    "GET    /api/v1/projects  (times e projetos que a chave alcança)",
+    "GET    /api/v1/boards?project_id=&team_id=&folder_id=&include_trashed=&limit=&offset=",
+    "POST   /api/v1/boards { title, elements?, project_id?, folder_id? }",
     "GET    /api/v1/boards/:id",
     "PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }",
     "DELETE /api/v1/boards/:id  (move para a lixeira)",
     "POST   /api/v1/boards/:id/move { folder_id }",
     "GET    /api/v1/search?q=",
-    "GET    /api/v1/folders",
-    "POST   /api/v1/folders { name, parent_id? }"
+    "GET    /api/v1/folders?project_id=",
+    "POST   /api/v1/folders { name, parent_id?, project_id? }"
   ]
 }
 ```
@@ -55,6 +57,8 @@ Returns general information about the API, authentication instructions and the s
 Lists the boards owned by the API key's user, most recently edited first.
 
 **Query parameters:**
+- `project_id` *(optional, UUID)*: Only boards in this project.
+- `team_id` *(optional, UUID)*: Only boards of this team.
 - `folder_id` *(optional, UUID)*: Only boards inside this folder.
 - `include_trashed` *(optional, boolean)*: When `true`, includes boards in the trash. Default: `false`.
 - `limit` *(optional, integer)*: Maximum number of results (default: `50`, max: `200`).
@@ -86,6 +90,7 @@ Creates a new board with a title and optional elements.
 
 **Request body (JSON):**
 - `title` *(optional, string)*: Board title (when omitted, the system's default title is used).
+- `project_id` *(optional, UUID)*: Target project. When omitted, the folder's project is used, or the default project of your personal team (or of the first team the key reaches). Boards created through the API start **restricted**.
 - `folder_id` *(optional, UUID)*: Target folder. When omitted or `null`, the board is created at the top level.
 - `elements` *(optional, array)*: A list of native Excalidraw elements or short-form specs (`ElementSpec`).
 
@@ -248,6 +253,29 @@ See also the [Pagination](pagination.md) guide.
 
 ---
 
+### `GET /api/v1/projects`
+Lists the teams and projects the key reaches, with your access in each one (`manage`, `edit` or `view`). Use the `id` as `project_id` when creating or listing boards and folders.
+
+**Example Response (200 OK):**
+```json
+{
+  "projects": [
+    {
+      "id": "0b1c2d3e-4f50-4a61-8b72-93a4b5c6d7e8",
+      "name": "General",
+      "visibility": "team",
+      "is_default": true,
+      "team_id": "7d0f5b1e-2c3a-4e8b-9f10-1a2b3c4d5e6f",
+      "team_name": "Acme Design",
+      "team_is_personal": false,
+      "access": "edit"
+    }
+  ]
+}
+```
+
+---
+
 ### `GET /api/v1/folders`
 Returns every folder the user created, including `parent_id` for building the tree (`parent_id: null` means top level).
 
@@ -277,6 +305,7 @@ Creates a new folder at the top level or nested inside an existing folder.
 **Request body (JSON):**
 - `name` *(required, string)*: Folder name (1 to 60 characters).
 - `parent_id` *(optional, UUID or null)*: ID of the parent folder, for nesting.
+- `project_id` *(optional, UUID)*: Only folders of this project (when listing), or the project of the new folder (when creating).
 
 **Example response (201 Created):**
 ```json
