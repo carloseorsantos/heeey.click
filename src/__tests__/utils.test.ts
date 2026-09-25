@@ -10,7 +10,9 @@ import {
   getBrainstormingTemplate,
   getFlowchartTemplate,
   getWireframeTemplate,
+  fitTextHeights,
 } from '../lib/utils';
+import { t } from '../i18n';
 
 
 describe('utils', () => {
@@ -130,6 +132,11 @@ describe('utils', () => {
     expect(brainstorming[0].type).toBe('text');
     expect(brainstorming.some((el) => el.type === 'rectangle')).toBe(true);
 
+    // Multi-line template texts get a box tall enough for every line
+    for (const el of brainstorming.filter((e) => e.type === 'text')) {
+      expect(el.height).toBe(el.text.split('\n').length * el.fontSize * el.lineHeight);
+    }
+
     const flowchart = getFlowchartTemplate();
     expect(flowchart.length).toBeGreaterThan(2);
     expect(flowchart.some((el) => el.type === 'arrow')).toBe(true);
@@ -137,6 +144,31 @@ describe('utils', () => {
     const wireframe = getWireframeTemplate();
     expect(wireframe.length).toBeGreaterThan(4);
     expect(wireframe.some((el) => el.text && el.text.includes('Heeey'))).toBe(true);
+    // Nav stays inside the header bar (x 80 → 760) whatever its length
+    const nav = wireframe.find((el) => el.text === t('templates.wireframe.nav'));
+    expect(nav.x + nav.width).toBeLessThanOrEqual(760);
+  });
+
+  it('fitTextHeights grows only free-standing text boxes that are too small', () => {
+    const short = { type: 'text', text: 'a\nb\nc', fontSize: 16, lineHeight: 1.25, width: 5, height: 24, containerId: null };
+    const bound = { ...short, containerId: 'rect-1' };
+    const rect = { type: 'rectangle', height: 10 };
+    const [fixed, keptBound, keptRect] = fitTextHeights<Record<string, any>>([short, bound, rect]);
+    expect(fixed.height).toBe(60);
+    expect(fixed.width).toBe(5);
+    expect(keptBound).toBe(bound);
+    expect(keptRect).toBe(rect);
+    expect(fitTextHeights([fixed])[0]).toBe(fixed);
+  });
+
+  it('fitTextHeights survives untrusted board elements', () => {
+    // Huge line counts must not overflow the stack (board page would crash for every viewer)
+    const huge = { type: 'text', text: 'x\n'.repeat(300_000), fontSize: 16, lineHeight: 1.25, height: 20 };
+    expect(fitTextHeights([huge])[0].height).toBe(300_001 * 20);
+    // Invalid sizes are left untouched instead of turning into NaN/Infinity
+    for (const bad of [{ fontSize: '16' }, { lineHeight: NaN }, { height: undefined }, { fontSize: -1 }]) {
+      const el = { type: 'text', text: 'a\nb', fontSize: 16, lineHeight: 1.25, height: 20, ...bad };
+      expect(fitTextHeights([el])[0]).toBe(el);
+    }
   });
 });
-
