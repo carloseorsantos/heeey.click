@@ -480,6 +480,19 @@ describe('database schema and migrations', () => {
       expect(renamed.rows).toHaveLength(0);
     });
 
+    it('does not let anyone list the version history without the link', async () => {
+      // Counts A's board history as the policy sees it (the filter only narrows to that board)
+      const count = async (user: string | null, link: string | null) =>
+        (await as(user, `select count(*) filter (where board_id = $1)::int as n from public.board_versions`, [BOARD], link)).rows[0].n;
+      expect(await count(A, null)).toBeGreaterThan(0);
+      expect((await as(null, `select count(*)::int as n from public.board_versions`, [], null)).rows[0].n).toBe(0);
+      expect(await count(B, null)).toBe(0);
+      expect(await count(null, BOARD)).toBe(await count(A, null));
+
+      expect((await as(B, `select public.snapshot_board($1)`, [BOARD], null)).error).toMatch(/Sem permissão/);
+      expect((await as(B, `select public.snapshot_board($1)`, [BOARD])).error).toBeUndefined();
+    });
+
     it('does not let anyone list board-media, but keeps uploads on editable boards', async () => {
       const upload = (user: string | null, name: string) =>
         as(user, `insert into storage.objects (bucket_id, name) values ('board-media', $1)`, [name], null);

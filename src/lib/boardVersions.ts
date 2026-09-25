@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { BOARD_ID_HEADER, supabase } from './supabase';
 
 export interface BoardVersionSummary {
   id: string;
@@ -21,7 +21,8 @@ export async function listBoardVersions(boardId: string): Promise<BoardVersionSu
     .select('id,created_at,reason,element_count,thumbnail')
     .eq('board_id', boardId)
     .order('created_at', { ascending: false })
-    .limit(30);
+    .limit(30)
+    .setHeader(BOARD_ID_HEADER, boardId);
   if (error) {
     console.warn('Erro ao carregar histórico de versões:', error.message);
     return null;
@@ -29,11 +30,13 @@ export async function listBoardVersions(boardId: string): Promise<BoardVersionSu
   return (data || []) as BoardVersionSummary[];
 }
 
-export async function fetchBoardVersion(versionId: string): Promise<BoardVersion | null> {
+export async function fetchBoardVersion(boardId: string, versionId: string): Promise<BoardVersion | null> {
   const { data, error } = await supabase
     .from('board_versions')
     .select('*')
     .eq('id', versionId)
+    .eq('board_id', boardId)
+    .setHeader(BOARD_ID_HEADER, boardId)
     .single();
   if (error || !data) return null;
   return data as BoardVersion;
@@ -41,7 +44,7 @@ export async function fetchBoardVersion(versionId: string): Promise<BoardVersion
 
 /** Saves the current board state to the history (so a restore can be undone) */
 export async function snapshotBoard(boardId: string): Promise<boolean> {
-  const { error } = await supabase.rpc('snapshot_board', { p_board_id: boardId });
+  const { error } = await supabase.rpc('snapshot_board', { p_board_id: boardId }).setHeader(BOARD_ID_HEADER, boardId);
   if (error) {
     console.warn('Erro ao salvar versão atual:', error.message);
     return false;

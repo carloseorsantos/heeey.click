@@ -1025,7 +1025,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       const api = apiRef.current;
       if (!api || !canEdit) return false;
 
-      const version = await fetchBoardVersion(versionId);
+      const version = await fetchBoardVersion(boardId, versionId);
       if (!version) return false;
       await debouncedSaveToDb.flush();
       if (!(await snapshotBoard(boardId))) return false;
