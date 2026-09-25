@@ -38,10 +38,11 @@ function saveLastTeam(teamId: string) {
 }
 
 export function TeamsProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [available, setAvailable] = useState(false);
-  const [loading, setLoading] = useState(false);
+  // Until the session and the teams are known, screens wait instead of loading the wrong scope
+  const [loading, setLoading] = useState(true);
   const [activeTeamId, setActiveTeamIdState] = useState<string | null>(readLastTeam);
   const [projects, setProjects] = useState<Project[]>([]);
 
@@ -54,10 +55,12 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+    if (authLoading) return;
     if (!user?.id) {
       setTeams([]);
       setProjects([]);
       setAvailable(false);
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -74,7 +77,7 @@ export function TeamsProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
 
   const activeTeam = useMemo(
     () => teams.find((team) => team.id === activeTeamId) ?? teams.find((team) => team.is_personal) ?? teams[0] ?? null,

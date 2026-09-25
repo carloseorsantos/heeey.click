@@ -383,7 +383,7 @@ export const esES: Messages = {
     linkEditHint: "Cualquiera en internet con el enlace puede editar, sin crear cuenta.",
     linkRole: "Rol de quien abre el enlace",
     linkViewHint: "Cualquiera en internet con el enlace puede ver.",
-    linkWillRestrict: "El enlace de esta pizarra pasará a restringido el {date}. Después, solo el equipo y las personas invitadas podrán abrirla.",
+    linkWillRestrict: "El enlace de esta pizarra pasará a restringido el {date}: después, solo el equipo y las personas invitadas podrán abrirla.",
     loadError: "No se pudo cargar quién tiene acceso.",
     people: "{count, plural, one {# persona} other {# personas}}",
     peopleWithAccess: "Personas con acceso",
@@ -446,7 +446,7 @@ export const esES: Messages = {
   },
   access: {
     backToBoards: "Volver a mis pizarras",
-    linkWillStop: "Este enlace dejará de ser público el {date}. Pide acceso a quien lo compartió.",
+    linkWillStop: "Este enlace dejará de ser público el {date}: pide acceso a quien lo compartió.",
     needAccessGuest: "Esta pizarra está restringida. Inicia sesión con la cuenta que recibió la invitación para abrirla.",
     needAccessSignedIn: "Esta pizarra está restringida y {email} no tiene acceso. Pide a quien la compartió que te invite.",
     needAccessTitle: "Necesitas acceso",

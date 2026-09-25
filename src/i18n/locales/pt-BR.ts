@@ -382,7 +382,7 @@ export const ptBR = {
     linkEditHint: "Qualquer pessoa na internet com o link pode editar, sem criar conta.",
     linkRole: "Papel de quem abre pelo link",
     linkViewHint: "Qualquer pessoa na internet com o link pode ver.",
-    linkWillRestrict: "O link deste quadro vai virar restrito em {date}. Depois disso, só o time e as pessoas convidadas abrem o quadro.",
+    linkWillRestrict: "O link deste quadro vai virar restrito em {date}: depois disso, só o time e as pessoas convidadas abrem o quadro.",
     loadError: "Não foi possível carregar quem tem acesso.",
     people: "{count, plural, one {# pessoa} other {# pessoas}}",
     peopleWithAccess: "Pessoas com acesso",
@@ -445,7 +445,7 @@ export const ptBR = {
   },
   access: {
     backToBoards: "Voltar aos meus quadros",
-    linkWillStop: "Este link deixará de ser público em {date}. Peça acesso a quem compartilhou.",
+    linkWillStop: "Este link deixará de ser público em {date}: peça acesso a quem compartilhou.",
     needAccessGuest: "Este quadro é restrito. Entre com a conta que recebeu o convite para abri-lo.",
     needAccessSignedIn: "Este quadro é restrito e {email} não tem acesso. Peça a quem compartilhou que convide você.",
     needAccessTitle: "Você precisa de acesso",

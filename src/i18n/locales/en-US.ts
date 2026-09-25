@@ -383,7 +383,7 @@ export const enUS: Messages = {
     linkEditHint: "Anyone on the internet with the link can edit, no account needed.",
     linkRole: "Role of people who open the link",
     linkViewHint: "Anyone on the internet with the link can view.",
-    linkWillRestrict: "This board's link becomes restricted on {date}. After that, only the team and invited people can open it.",
+    linkWillRestrict: "This board's link becomes restricted on {date}: after that, only the team and invited people can open it.",
     loadError: "Couldn't load who has access.",
     people: "{count, plural, one {# person} other {# people}}",
     peopleWithAccess: "People with access",
@@ -446,7 +446,7 @@ export const enUS: Messages = {
   },
   access: {
     backToBoards: "Back to my boards",
-    linkWillStop: "This link stops being public on {date}. Ask whoever shared it for access.",
+    linkWillStop: "This link stops being public on {date}: ask whoever shared it for access.",
     needAccessGuest: "This board is restricted. Sign in with the account that was invited to open it.",
     needAccessSignedIn: "This board is restricted and {email} doesn't have access. Ask whoever shared it to invite you.",
     needAccessTitle: "You need access",

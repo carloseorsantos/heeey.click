@@ -278,7 +278,7 @@ export function DashboardPage({
     createFolder,
     renameFolder,
     deleteFolder,
-  } = useFolders(user?.id, usesTeams ? project?.id : null, !usesTeams || (!!project && !isSharedView));
+  } = useFolders(user?.id, usesTeams ? project?.id : null, !teamsLoading && (!usesTeams || (!!project && !isSharedView)));
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [folderModal, setFolderModal] = useState<{ mode: 'create' } | { mode: 'rename'; folder: Folder } | null>(null);
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
@@ -443,8 +443,8 @@ export function DashboardPage({
       setLoading(false);
     }
 
-    // Signed in: wait for the teams before deciding what to show
-    if (user?.id && teamsLoading) return;
+    // Wait for the session and the teams before deciding what to show
+    if (teamsLoading) return;
     loadBoards();
     return () => {
       cancelled = true;
@@ -1469,13 +1469,14 @@ export function DashboardPage({
             project={editingProject}
             userId={user?.id}
             onClose={() => setProjectModal(null)}
-            onSaved={(saved) => {
-              refreshProjects();
+            onSaved={async (saved) => {
+              // The list must know the new project before the URL points at it
+              await refreshProjects();
               if (!projectModal?.projectId) go(`/t/${team.slug}/p/${saved.id}`);
               else setProjectModal({ projectId: saved.id });
             }}
-            onDeleted={(deletedId) => {
-              refreshProjects();
+            onDeleted={async (deletedId) => {
+              await refreshProjects();
               if (project?.id === deletedId) go(`/t/${team.slug}`);
             }}
           />
