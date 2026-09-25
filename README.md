@@ -5,6 +5,8 @@ Aplicação web moderna de whiteboard e lousa vetorial baseada no componente ofi
 > 📚 **Documentação Oficial**: Consulte a pasta [`docs/`](docs/README.md) para a documentação técnica detalhada, referências da API REST v1 e guia do servidor MCP para agentes de IA.
 >
 > 🔒 **Segurança e compliance**: políticas e controles (SOC 2) em [`compliance/`](compliance/README.md); para reportar vulnerabilidades, veja [`SECURITY.md`](SECURITY.md).
+>
+> 🤝 **Como contribuir**: regras e convenções do projeto, para pessoas e agentes de IA, em [`rules.md`](rules.md).
 
 ---
 
