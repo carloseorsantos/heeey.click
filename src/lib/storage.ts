@@ -248,6 +248,7 @@ function toIndexEntry(board: Board): Board {
     id: board.id,
     title: board.title,
     owner_id: board.owner_id,
+    ...(board.team_id ? { team_id: board.team_id, project_id: board.project_id } : {}),
     access_level: board.access_level,
     created_at: board.created_at,
     updated_at: board.updated_at,
@@ -359,58 +360,31 @@ export function deleteLocalBoard(id: string): void {
 }
 
 /**
- * When a guest logs in with Supabase auth, associate their local created boards
- * to their account by assigning owner_id = userId both locally and in Supabase.
+ * Boards created without an account in the active guest session of this browser, not claimed
+ * yet. After signing in, ClaimBoardsDialog asks which team/project they go to and whether the
+ * link stays open.
  *
  * PREVENTS THEFT ON SHARED DEVICES:
  * Only boards created by the active guest session (matching activeGuestId or current profile)
- * are claimed. Boards left by previous users or earlier guest sessions are not stolen.
+ * are listed. Boards left by previous users or earlier guest sessions are not offered.
  */
-export async function claimLocalBoardsForUser(
-  userId: string,
-  activeGuestId?: string
-): Promise<void> {
-  if (!userId) return;
+export function getClaimableLocalBoards(activeGuestId?: string): Board[] {
+  const createdIds = new Set(getCreatedBoardIds());
+  const currentGuestId = activeGuestId || getGuestProfile().id;
+  return getLocalBoards().filter((b) => {
+    if (!createdIds.has(b.id) || b.owner_id || b.team_id || b.deleted_at) return false;
+    // If creator was recorded, it must match current active guest
+    const boardCreator = getBoardCreatorGuestId(b.id);
+    return !boardCreator || boardCreator === currentGuestId;
+  });
+}
 
-  try {
-    const localBoards = getLocalBoards();
-    const createdIds = new Set(getCreatedBoardIds());
-    const currentGuestId = activeGuestId || getGuestProfile().id;
-
-    const boardsToClaim = localBoards.filter((b) => {
-      if (!createdIds.has(b.id)) return false;
-      if (b.owner_id && b.owner_id !== userId) return false;
-
-      // Check creator guest ID
-      const boardCreator = getBoardCreatorGuestId(b.id);
-      // If creator was recorded, it must match current active guest
-      if (boardCreator && boardCreator !== currentGuestId) {
-        return false;
-      }
-      return true;
-    });
-
-    if (boardsToClaim.length === 0) return;
-
-    for (const board of boardsToClaim) {
-      if (board.owner_id !== userId) {
-        board.owner_id = userId;
-        saveLocalBoard(board);
-
-        // Update in Supabase
-        try {
-          await supabase
-            .from('boards')
-            .update({ owner_id: userId })
-            .eq('id', board.id)
-            .setHeader(BOARD_ID_HEADER, board.id)
-            .is('owner_id', null);
-        } catch (err) {
-          console.warn(`Erro ao vincular board ${board.id} ao usuário no Supabase:`, err);
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Erro no claimLocalBoardsForUser:', e);
-  }
+/** Records locally that a board now belongs to the user, in the given team and project */
+export function markLocalBoardClaimed(
+  board: Board,
+  claim: Pick<Board, 'owner_id' | 'team_id' | 'project_id' | 'access_level'>
+): Board {
+  const updated = { ...board, ...claim, folder_id: null };
+  saveLocalBoard(updated);
+  return updated;
 }

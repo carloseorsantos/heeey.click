@@ -119,15 +119,16 @@ const API_INDEX = {
   version: 'v1',
   auth: 'Authorization: Bearer <chave de API criada em heeey.click>',
   endpoints: [
-    'GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=',
-    'POST   /api/v1/boards { title, elements?, folder_id? }',
+    'GET    /api/v1/projects  (times e projetos que a chave alcança)',
+    'GET    /api/v1/boards?project_id=&team_id=&folder_id=&include_trashed=&limit=&offset=',
+    'POST   /api/v1/boards { title, elements?, project_id?, folder_id? }',
     'GET    /api/v1/boards/:id',
     'PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }',
     'DELETE /api/v1/boards/:id  (move para a lixeira)',
     'POST   /api/v1/boards/:id/move { folder_id }',
     'GET    /api/v1/search?q=',
-    'GET    /api/v1/folders',
-    'POST   /api/v1/folders { name, parent_id? }',
+    'GET    /api/v1/folders?project_id=',
+    'POST   /api/v1/folders { name, parent_id?, project_id? }',
   ],
 };
 
@@ -151,6 +152,8 @@ export async function handleApiRequest(request: Request, rpc: Rpc, ctx: ApiConte
     if (resource === 'boards' && !id) {
       if (method === 'GET') {
         const boards = await call('api_list_boards', {
+          p_project_id: uuidParam(url.searchParams.get('project_id'), 'project_id', true),
+          p_team_id: uuidParam(url.searchParams.get('team_id'), 'team_id', true),
           p_folder_id: uuidParam(url.searchParams.get('folder_id'), 'folder_id', true),
           p_include_trashed: url.searchParams.get('include_trashed') === 'true',
           p_limit: intParam(url.searchParams.get('limit'), 50),
@@ -164,6 +167,7 @@ export async function handleApiRequest(request: Request, rpc: Rpc, ctx: ApiConte
           p_title: typeof body.title === 'string' ? body.title : null,
           p_elements: elementsParam(body.elements) ?? [],
           p_folder_id: uuidParam(body.folder_id, 'folder_id', true),
+          p_project_id: uuidParam(body.project_id, 'project_id', true),
         });
         return json({ board: withUrl(board, ctx) }, 201);
       }
@@ -214,8 +218,16 @@ export async function handleApiRequest(request: Request, rpc: Rpc, ctx: ApiConte
       return json({ results: (results as any[]).map((r) => withUrl(r, ctx)) });
     }
 
+    if (resource === 'projects' && !id && method === 'GET') {
+      return json({ projects: await call('api_list_projects') });
+    }
+
     if (resource === 'folders' && !id) {
-      if (method === 'GET') return json({ folders: await call('api_list_folders') });
+      if (method === 'GET') {
+        return json({
+          folders: await call('api_list_folders', { p_project_id: uuidParam(url.searchParams.get('project_id'), 'project_id', true) }),
+        });
+      }
       if (method === 'POST') {
         const body = await readBody(request);
         if (typeof body.name !== 'string' || !body.name.trim()) {
@@ -224,6 +236,7 @@ export async function handleApiRequest(request: Request, rpc: Rpc, ctx: ApiConte
         const folder = await call('api_create_folder', {
           p_name: body.name,
           p_parent_id: uuidParam(body.parent_id, 'parent_id', true),
+          p_project_id: uuidParam(body.project_id, 'project_id', true),
         });
         return json({ folder }, 201);
       }

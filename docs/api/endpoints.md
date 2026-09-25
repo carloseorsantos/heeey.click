@@ -12,6 +12,7 @@ Authorization: Bearer hk_...
 ## 📌 Índice de Endpoints
 
 - [GET /api/v1](#get-apiv1) — Catálogo da API
+- [GET /api/v1/projects](#get-apiv1projects) — Listar times e projetos que a chave alcança
 - [GET /api/v1/boards](#get-apiv1boards) — Listar quadros
 - [POST /api/v1/boards](#post-apiv1boards) — Criar quadro
 - [GET /api/v1/boards/:id](#get-apiv1boardsid) — Obter quadro e cena completa
@@ -36,15 +37,16 @@ Retorna informações gerais sobre a API, instruções de autenticação e rotas
   "version": "v1",
   "auth": "Authorization: Bearer <chave de API criada em heeey.click>",
   "endpoints": [
-    "GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=",
-    "POST   /api/v1/boards { title, elements?, folder_id? }",
+    "GET    /api/v1/projects  (times e projetos que a chave alcança)",
+    "GET    /api/v1/boards?project_id=&team_id=&folder_id=&include_trashed=&limit=&offset=",
+    "POST   /api/v1/boards { title, elements?, project_id?, folder_id? }",
     "GET    /api/v1/boards/:id",
     "PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }",
     "DELETE /api/v1/boards/:id  (move para a lixeira)",
     "POST   /api/v1/boards/:id/move { folder_id }",
     "GET    /api/v1/search?q=",
-    "GET    /api/v1/folders",
-    "POST   /api/v1/folders { name, parent_id? }"
+    "GET    /api/v1/folders?project_id=",
+    "POST   /api/v1/folders { name, parent_id?, project_id? }"
   ]
 }
 ```
@@ -55,6 +57,8 @@ Retorna informações gerais sobre a API, instruções de autenticação e rotas
 Lista os quadros pertencentes ao usuário da chave de API, ordenados pelos editados mais recentemente.
 
 **Parâmetros de Consulta (Query Params):**
+- `project_id` *(opcional, UUID)*: Filtra apenas quadros deste projeto.
+- `team_id` *(opcional, UUID)*: Filtra apenas quadros deste time.
 - `folder_id` *(opcional, UUID)*: Filtra apenas quadros localizados dentro desta pasta.
 - `include_trashed` *(opcional, boolean)*: Quando `true`, inclui quadros que estão na lixeira. Padrão: `false`.
 - `limit` *(opcional, integer)*: Quantidade máxima de resultados (padrão: `50`, máx: `200`).
@@ -86,6 +90,7 @@ Cria um novo quadro com título e elementos opcionais.
 
 **Corpo da Requisição (JSON):**
 - `title` *(opcional, string)*: Título do quadro (se omitido, recebe o título padrão do sistema).
+- `project_id` *(opcional, UUID)*: Projeto de destino. Se omitido, usa o projeto da pasta ou o projeto padrão do seu time pessoal (ou do primeiro time que a chave alcança). Quadros criados pela API nascem **restritos**.
 - `folder_id` *(opcional, UUID)*: Pasta de destino. Se omitido ou `null`, o quadro é criado na raiz.
 - `elements` *(opcional, array)*: Lista de elementos nativos do Excalidraw ou especificações resumidas (`ElementSpec`).
 
@@ -248,6 +253,29 @@ Consulte também o guia de [Paginação](pagination.md).
 
 ---
 
+### `GET /api/v1/projects`
+Lista os times e projetos que a chave alcança, com o seu acesso em cada um (`manage`, `edit` ou `view`). Use o `id` como `project_id` ao criar ou listar quadros e pastas.
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "projects": [
+    {
+      "id": "0b1c2d3e-4f50-4a61-8b72-93a4b5c6d7e8",
+      "name": "Geral",
+      "visibility": "team",
+      "is_default": true,
+      "team_id": "7d0f5b1e-2c3a-4e8b-9f10-1a2b3c4d5e6f",
+      "team_name": "Acme Design",
+      "team_is_personal": false,
+      "access": "edit"
+    }
+  ]
+}
+```
+
+---
+
 ### `GET /api/v1/folders`
 Retorna a lista de todas as pastas criadas pelo usuário, incluindo `parent_id` para montagem de árvore (onde `parent_id: null` indica raiz).
 
@@ -277,6 +305,7 @@ Cria uma nova pasta na raiz ou aninhada dentro de outra pasta existente.
 **Corpo da Requisição (JSON):**
 - `name` *(obrigatório, string)*: Nome da pasta (1 a 60 caracteres).
 - `parent_id` *(opcional, UUID ou null)*: ID da pasta pai para aninhamento.
+- `project_id` *(opcional, UUID)*: Filtra apenas pastas deste projeto (na listagem) ou define o projeto da nova pasta (na criação).
 
 **Exemplo de Resposta (201 Created):**
 ```json

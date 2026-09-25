@@ -2,7 +2,9 @@
 export const SUPABASE_STUBS = `
 create schema if not exists extensions;
 create schema auth;
-create table auth.users (id uuid primary key);
+create table auth.users (id uuid primary key, email text, email_confirmed_at timestamptz, encrypted_password text default '',
+  raw_user_meta_data jsonb not null default '{}'::jsonb);
+create role service_role;
 create function auth.uid() returns uuid language sql stable as $$
   select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
 create schema storage;

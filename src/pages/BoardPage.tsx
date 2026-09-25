@@ -9,7 +9,7 @@ import {
 } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
 import { AnimatePresence, motion } from 'motion/react';
-import { Loader2, X, Trash2, RotateCcw } from 'lucide-react';
+import { Loader2, X, Trash2, RotateCcw, Lock, Clock } from 'lucide-react';
 import { spring } from '../lib/motion';
 import { Button } from '../components/ui/Button';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
@@ -27,6 +27,7 @@ import { fitTextHeights, generateId } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { createLibraryAdapter, createGuestLibraryMigration } from '../lib/libraryAdapter';
 import { useI18n } from '../i18n';
+import { formatDateShort } from '../lib/utils';
 
 function safeGetStorage(storage: Storage, key: string): string | null {
   try {
@@ -46,7 +47,8 @@ function safeSetStorage(storage: Storage, key: string, value: string): void {
 
 interface BoardPageProps {
   boardId: string;
-  onBackToDashboard: () => void;
+  /** path: where to go back to (the board's project); the dashboard's default otherwise */
+  onBackToDashboard: (path?: string) => void;
   onOpenBoard: (boardId: string) => void;
   onNavigateToDocs?: () => void;
 }
@@ -59,7 +61,12 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
     onlineCollaborators,
     isViewMode,
     isTrashed,
-    isOwner,
+    canShare,
+    canRestore,
+    access,
+    accessDenied,
+    isAnonymousBoard,
+    refreshAccess,
     excalidrawAPI,
     setExcalidrawAPI,
     handleCanvasChange,
@@ -70,12 +77,12 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
     restoreVersion,
   } = useRealtimeBoard({ boardId });
 
-  const { user, effectiveUserId, effectiveUserName, guestProfile } = useAuth();
+  const { user, effectiveUserId, effectiveUserName, guestProfile, signOut } = useAuth();
   const { theme } = useTheme();
   const { t, excalidrawLangCode } = useI18n();
 
   const [isShareOpen, setIsShareOpen] = useState(false);
-  const { openSettings } = useSettings();
+  const { openSettings, openAuthDialog } = useSettings();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -93,6 +100,11 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
   const [restoreState, setRestoreState] = useState<'idle' | 'restoring' | 'error'>('idle');
+  // Back to the project the board is in, when the user is in its team
+  const backToDashboard = () =>
+    onBackToDashboard(
+      access?.team?.slug ? `/t/${access.team.slug}${access.project && !access.project.is_default ? `/p/${access.project.id}` : ''}` : undefined
+    );
 
   const handleRestore = async () => {
     setRestoreState('restoring');
@@ -363,6 +375,37 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
     };
   }, [boardId, excalidrawAPI, isViewMode]);
 
+  // Restricted board and no access: never show (or create) a blank board in its place
+  if (accessDenied) {
+    return (
+      <div className="h-screen w-screen flex items-center justify-center bg-app px-4">
+        <main className="w-full max-w-sm text-center">
+          <div className="w-14 h-14 rounded-2xl bg-fill text-label-2 flex items-center justify-center mx-auto mb-4">
+            <Lock className="w-7 h-7" strokeWidth={1.75} />
+          </div>
+          <h1 className="text-xl font-semibold text-label">{t('access.needAccessTitle')}</h1>
+          <p className="mt-2 text-sm text-label-2 text-pretty">
+            {user ? t('access.needAccessSignedIn', { email: user.email ?? '' }) : t('access.needAccessGuest')}
+          </p>
+          <div className="mt-6 flex flex-col gap-2">
+            {user ? (
+              <Button variant="secondary" onClick={() => signOut()}>
+                {t('access.switchAccount')}
+              </Button>
+            ) : (
+              <Button variant="primary" onClick={() => openAuthDialog('login')}>
+                {t('access.signIn')}
+              </Button>
+            )}
+            <Button variant="plain" onClick={() => onBackToDashboard()}>
+              {t('access.backToBoards')}
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (loading || !board) {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-app">
@@ -389,7 +432,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         isTrashed={isTrashed}
         onlineCollaborators={onlineCollaborators}
         onOpenShare={() => setIsShareOpen(true)}
-        onBackToDashboard={onBackToDashboard}
+        onBackToDashboard={backToDashboard}
         onOpenDocs={onNavigateToDocs}
         onExport={handleExport}
         onOpenHistory={isViewMode ? undefined : () => setIsHistoryOpen(true)}
@@ -443,11 +486,11 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
                 <span className="text-sm text-label">
                   {restoreState === 'error'
                     ? t('board.restoreError')
-                    : isOwner
+                    : canRestore
                       ? t('board.trashedOwner')
                       : t('board.trashedViewer')}
                 </span>
-                {isOwner && (
+                {canRestore && (
                   <Button variant="primary" size="sm" onClick={handleRestore} disabled={restoreState === 'restoring'}>
                     {restoreState === 'restoring' ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -457,6 +500,25 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
                     <span>{t('common.restore')}</span>
                   </Button>
                 )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Migration with notice: visitors who only have the link learn it will stop working */}
+        <AnimatePresence>
+          {!isTrashed && board.restrict_link_at && !access?.member_permission && (board.access_level === 'edit' || board.access_level === 'view') && (
+            <motion.div key="link-notice" className="absolute top-3 inset-x-3 z-30 flex justify-center pointer-events-none">
+              <motion.div
+                role="status"
+                initial={{ opacity: 0, y: -12, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -12, scale: 0.97 }}
+                transition={spring.default}
+                className="pointer-events-auto w-full sm:w-max max-w-full flex items-center gap-2.5 px-3.5 py-2 rounded-2xl material-regular shadow-popover"
+              >
+                <Clock className="w-4 h-4 text-warning flex-shrink-0" />
+                <span className="text-sm text-label">{t('access.linkWillStop', { date: formatDateShort(board.restrict_link_at) })}</span>
               </motion.div>
             </motion.div>
           )}
@@ -549,9 +611,12 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         isOpen={isShareOpen}
         onClose={() => setIsShareOpen(false)}
         boardId={board.id}
+        boardTitle={board.title}
         accessLevel={board.access_level}
-        isOwner={isOwner}
+        isAnonymous={isAnonymousBoard}
+        isMember={!!access?.member_permission || canShare}
         onUpdateAccessLevel={updateAccessLevel}
+        onAccessChanged={refreshAccess}
       />
 
       <BoardSearchModal

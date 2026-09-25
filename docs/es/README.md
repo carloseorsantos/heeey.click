@@ -59,6 +59,7 @@ Heeey es una aplicación web moderna de colaboración visual pensada para ser r�
 2. **Funciones de la pizarra y de la aplicación**:
    - [Lienzo y herramientas de dibujo](features/whiteboard-editor.md)
    - [Colaboración y tiempo real](features/collaboration-realtime.md)
+   - [Equipos, proyectos y uso compartido](features/teams-and-sharing.md)
    - [Carpetas, organización y papelera](features/folders-and-organization.md)
    - [Historial de versiones y restauración](features/version-history.md)
    - [Internacionalización (i18n)](features/i18n.md)
@@ -78,7 +79,7 @@ Heeey es una aplicación web moderna de colaboración visual pensada para ser r�
    - [Visión general de MCP](mcp/overview.md)
    - [Configurar agentes (Claude Code, Desktop, Cursor)](mcp/getting-started.md)
    - [Autenticación y permisos MCP](mcp/auth-and-permissions.md)
-   - [Catálogo completo de las 13 herramientas MCP](mcp/tools.md)
+   - [Catálogo completo de las 14 herramientas MCP](mcp/tools.md)
    - [Motor de disposición automática de diagramas](mcp/diagram-layout.md)
 5. **Descubrimiento por agentes y modelos de lenguaje**:
    - [Índice resumido para LLMs (`llms.txt`)](llms.txt)

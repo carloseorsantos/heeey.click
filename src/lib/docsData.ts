@@ -69,6 +69,14 @@ export const DOC_ITEMS: DocItem[] = [
     filePath: '/docs/features/collaboration-realtime.md',
   },
   {
+    slug: 'features/teams-and-sharing',
+    category: 'features',
+    title: 'Times, Projetos & Compartilhamento',
+    description: 'Times com papéis, projetos abertos ou privados, convites por e-mail e acesso geral do link, como no Google Drive.',
+    order: 12,
+    filePath: '/docs/features/teams-and-sharing.md',
+  },
+  {
     slug: 'features/folders-and-organization',
     category: 'features',
     title: 'Pastas, Organização & Lixeira',
@@ -268,6 +276,10 @@ export const DOC_TRANSLATIONS: Record<Exclude<Locale, 'pt-BR'>, Record<string, D
       title: 'Collaboration & Real Time',
       description: 'Multiplayer with Supabase Realtime, delta broadcast, presence, live cursors and permissions.',
     },
+    'features/teams-and-sharing': {
+      title: 'Teams, Projects & Sharing',
+      description: 'Teams with roles, open or private projects, e-mail invites and the link\'s general access, like Google Drive.',
+    },
     'features/folders-and-organization': {
       title: 'Folders, Organization & Trash',
       description: 'Nested folders, breadcrumb navigation, board templates and a safety net with the trash.',
@@ -369,6 +381,10 @@ export const DOC_TRANSLATIONS: Record<Exclude<Locale, 'pt-BR'>, Record<string, D
     'features/collaboration-realtime': {
       title: 'Colaboración y tiempo real',
       description: 'Multijugador con Supabase Realtime, difusión de deltas, presencia, cursores en directo y permisos.',
+    },
+    'features/teams-and-sharing': {
+      title: 'Equipos, proyectos y uso compartido',
+      description: 'Equipos con roles, proyectos abiertos o privados, invitaciones por correo y acceso general del enlace, como en Google Drive.',
     },
     'features/folders-and-organization': {
       title: 'Carpetas, organización y papelera',

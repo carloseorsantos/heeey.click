@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path'
 // Mirrors the rewrites in vercel.json: `/` is the static landing page, the other static pages
 // (MCP, terms, privacy, and their English and Spanish versions) are HTML files of their own, and
 // the React app (dashboard, boards, docs) is served from app/index.html.
-const APP_ROUTE = /^\/(app|b|docs)(\/|$)/
+const APP_ROUTE = /^\/(app|b|docs|t|shared|invite)(\/|$)/
 export const STATIC_PAGES = [
   'mcp', 'termos', 'privacidade',
   'en', 'en/terms', 'en/privacy',

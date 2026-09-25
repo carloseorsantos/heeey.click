@@ -90,7 +90,7 @@ describe('upgrading a pre-hardening database with the migrations', () => {
   });
 
   it('enforces the trash rules', async () => {
-    expect((await as(B, `update public.boards set deleted_at = now() where id = $1`, [BOARD])).error).toMatch(/proprietário/);
+    expect((await as(B, `update public.boards set deleted_at = now() where id = $1`, [BOARD])).error).toMatch(/lixeira/);
     await as(A, `update public.boards set deleted_at = now() where id = $1`, [BOARD]);
     expect((await as(A, `update public.boards set elements = '[]' where id = $1`, [BOARD])).error).toMatch(/lixeira/);
     await as(A, `update public.boards set deleted_at = null where id = $1`, [BOARD]);
@@ -101,8 +101,79 @@ describe('upgrading a pre-hardening database with the migrations', () => {
     expect((await as(A, `delete from storage.objects where name like $1 returning id`, [`${BOARD}/%`])).rows).toHaveLength(1);
   });
 
+  it('gives every existing user a personal team and moves their boards into it, restricting open links in 30 days', async () => {
+    const teams = (await db.query<any>(`select created_by, is_personal from public.teams order by created_by`)).rows;
+    expect(teams).toEqual([
+      { created_by: A, is_personal: true },
+      { created_by: B, is_personal: true },
+    ]);
+    const board = (await db.query<any>(
+      `select b.access_level, round(extract(epoch from b.restrict_link_at - now()) / 86400)::int as remaining_days, p.is_default, t.created_by
+       from public.boards b join public.projects p on p.id = b.project_id join public.teams t on t.id = b.team_id
+       where b.id = $1`,
+      [BOARD]
+    )).rows[0];
+    expect(board).toMatchObject({ access_level: 'edit', is_default: true, created_by: A });
+    expect(board.remaining_days).toBe(30);
+    // The link keeps working meanwhile, and the owner still manages the board
+    expect((await as(null, `select id from public.boards where id = $1`, [BOARD])).rows).toHaveLength(1);
+    expect((await as(A, `select public.get_board_access($1) as a`, [BOARD])).rows[0].a.permission).toBe('manage');
+  });
+
   it('keeps existing data and indexes it for search', async () => {
     expect((await db.query<any>(`select title from public.boards where id = $1`, [BOARD])).rows[0].title).toBe('Existente');
     expect((await as(A, `select id from public.search_boards('ola mun')`)).rows).toHaveLength(1);
   });
 });
+
+/**
+ * The production state before the teams migration (2026-09-25): every earlier migration
+ * applied, users with nested folders and boards inside them, plus anonymous boards.
+ */
+describe('upgrading to teams with folders and boards inside them', () => {
+  const FOLDER = '30000000-0000-4000-8000-000000000001';
+  const CHILD = '30000000-0000-4000-8000-000000000002';
+  const IN_CHILD = '10000000-0000-4000-8000-000000000011';
+  const ANON = '10000000-0000-4000-8000-000000000012';
+
+  beforeAll(async () => {
+    db = new PGlite({ extensions: { unaccent, pgcrypto } });
+    await db.exec(SUPABASE_STUBS);
+    await db.exec(fs.readFileSync(path.join(root, 'schema.sql'), 'utf8'));
+    await db.exec(fs.readFileSync(path.join(root, 'storage.sql'), 'utf8'));
+    const migrations = fs.readdirSync(path.join(root, 'migrations')).filter((f) => f.endsWith('.sql')).sort();
+    const teams = migrations.findIndex((f) => f.includes('teams_projects_sharing'));
+    for (const file of migrations.slice(0, teams)) await db.exec(fs.readFileSync(path.join(root, 'migrations', file), 'utf8'));
+    await db.exec(`
+      insert into auth.users (id) values ('${A}'), ('${B}');
+      insert into public.folders (id, owner_id, name) values ('${FOLDER}', '${A}', 'Pai');
+      insert into public.folders (id, owner_id, name, parent_id) values ('${CHILD}', '${A}', 'Filha', '${FOLDER}');
+      insert into public.boards (id, title, owner_id, folder_id) values ('${IN_CHILD}', 'Na pasta filha', '${A}', '${CHILD}');
+      insert into public.boards (id, title) values ('${ANON}', 'Anônimo');
+    `);
+    for (const file of migrations.slice(teams)) await db.exec(fs.readFileSync(path.join(root, 'migrations', file), 'utf8'));
+  }, 60_000);
+
+  it('moves folders and the boards inside them to the personal project, keeping the tree', async () => {
+    const rows = (await db.query<any>(
+      `select f.id, f.parent_id, p.is_default, t.created_by from public.folders f
+       join public.projects p on p.id = f.project_id join public.teams t on t.id = f.team_id order by f.name`
+    )).rows;
+    expect(rows).toEqual([
+      { id: CHILD, parent_id: FOLDER, is_default: true, created_by: A },
+      { id: FOLDER, parent_id: null, is_default: true, created_by: A },
+    ]);
+    const board = (await db.query<any>(`select folder_id, project_id is not null as has_project from public.boards where id = $1`, [IN_CHILD])).rows[0];
+    expect(board).toEqual({ folder_id: CHILD, has_project: true });
+    expect((await as(A, `select count(*)::int as n from public.folders`)).rows[0].n).toBe(2);
+    expect((await as(B, `select count(*)::int as n from public.folders`)).rows[0].n).toBe(0);
+  });
+
+  it('leaves boards created without an account open and without a team', async () => {
+    expect((await db.query<any>(`select team_id, access_level from public.boards where id = $1`, [ANON])).rows[0]).toEqual({
+      team_id: null,
+      access_level: 'edit',
+    });
+  });
+});
+

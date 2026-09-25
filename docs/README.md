@@ -59,6 +59,7 @@ O Heeey é uma aplicação web moderna de colaboração visual desenvolvida com 
 2. **Funcionalidades da Lousa & Aplicação**:
    - [Canvas & Ferramentas de Desenho](features/whiteboard-editor.md)
    - [Colaboração & Tempo Real](features/collaboration-realtime.md)
+   - [Times, Projetos & Compartilhamento](features/teams-and-sharing.md)
    - [Pastas, Organização & Lixeira](features/folders-and-organization.md)
    - [Histórico de Versões & Restauração](features/version-history.md)
    - [Internacionalização (i18n)](features/i18n.md)
@@ -78,7 +79,7 @@ O Heeey é uma aplicação web moderna de colaboração visual desenvolvida com 
    - [Visão Geral do MCP](mcp/overview.md)
    - [Configurando Agentes (Claude Code, Desktop, Cursor)](mcp/getting-started.md)
    - [Autenticação & Permissões MCP](mcp/auth-and-permissions.md)
-   - [Catálogo Completo das 13 Ferramentas MCP](mcp/tools.md)
+   - [Catálogo Completo das 14 Ferramentas MCP](mcp/tools.md)
    - [Motor de Layout Automático de Diagramas](mcp/diagram-layout.md)
 5. **Descoberta por Agentes & Modelos de Linguagem**:
    - [Índice Resumido para LLMs (`llms.txt`)](llms.txt)

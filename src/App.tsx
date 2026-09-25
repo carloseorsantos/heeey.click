@@ -3,6 +3,8 @@ import { MotionConfig } from 'motion/react';
 import { Analytics } from '@vercel/analytics/react';
 import { AuthProvider } from './hooks/useAuth';
 import { SettingsProvider } from './hooks/useSettings';
+import { TeamsProvider } from './hooks/useTeams';
+import { ClaimBoardsDialog } from './components/ClaimBoardsDialog';
 import { ThemeProvider } from './hooks/useTheme';
 import { DashboardPage } from './pages/DashboardPage';
 import { HeeeyLogo } from './components/Logo';
@@ -12,6 +14,10 @@ import { redactEvent } from './lib/analytics';
 // The editor (Excalidraw) is only downloaded when a board is opened
 const BoardPage = lazy(() =>
   import('./pages/BoardPage').then((module) => ({ default: module.BoardPage }))
+);
+
+const InvitePage = lazy(() =>
+  import('./pages/InvitePage').then((module) => ({ default: module.InvitePage }))
 );
 
 const DocsPage = lazy(() =>
@@ -40,14 +46,22 @@ export function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
-  const navigate = useCallback((path: string) => {
-    window.history.pushState({}, '', path);
+  const navigate = useCallback((path: string, options?: { replace?: boolean }) => {
+    if (options?.replace) window.history.replaceState({}, '', path);
+    else window.history.pushState({}, '', path);
     setCurrentPath(path);
   }, []);
 
-  // Parse path: /b/:boardId, /docs (with optional slug), or /
+  // Parse path: /b/:boardId, /docs (with optional slug), /t/:team(/p/:project), /shared, /invite/:token or /
   const boardMatch = currentPath.match(/^\/b\/([^/]+)/);
   const boardId = boardMatch ? boardMatch[1] : null;
+
+  const teamMatch = currentPath.match(/^\/t\/([^/]+)(?:\/p\/([^/]+))?\/?$/);
+  const teamSlug = teamMatch ? decodeURIComponent(teamMatch[1]) : null;
+  const projectId = teamMatch?.[2] ?? null;
+  const isShared = /^\/shared\/?$/.test(currentPath);
+  const inviteMatch = currentPath.match(/^\/invite\/([^/]+)/);
+  const inviteToken = inviteMatch ? inviteMatch[1] : null;
 
   const docsMatch = currentPath.match(/^\/docs(?:\/(.*))?$/);
   const isDocs = Boolean(docsMatch);
@@ -58,6 +72,7 @@ export function App() {
     <I18nProvider>
     <ThemeProvider>
       <AuthProvider>
+      <TeamsProvider>
       <SettingsProvider onOpenDocs={() => navigate('/docs')}>
         {boardId ? (
           <Suspense fallback={<BoardLoadingScreen />}>
@@ -65,9 +80,17 @@ export function App() {
             <BoardPage
               key={boardId}
               boardId={boardId}
-              onBackToDashboard={() => navigate('/app')}
+              onBackToDashboard={(path) => navigate(path ?? '/app')}
               onOpenBoard={(id) => navigate(`/b/${id}`)}
               onNavigateToDocs={() => navigate('/docs')}
+            />
+          </Suspense>
+        ) : inviteToken ? (
+          <Suspense fallback={<BoardLoadingScreen />}>
+            <InvitePage
+              token={inviteToken}
+              onOpenTeam={(slug) => navigate(`/t/${slug}`, { replace: true })}
+              onBackToDashboard={() => navigate('/app')}
             />
           </Suspense>
         ) : isDocs ? (
@@ -83,9 +106,16 @@ export function App() {
           <DashboardPage
             onNavigateToBoard={(id) => navigate(`/b/${id}`)}
             onNavigateToDocs={() => navigate('/docs')}
+            onNavigate={navigate}
+            teamSlug={teamSlug}
+            projectId={projectId}
+            section={isShared ? 'shared' : null}
           />
         )}
+        {/* Boards created before signing in: ask where they go (any screen) */}
+        <ClaimBoardsDialog />
       </SettingsProvider>
+      </TeamsProvider>
       </AuthProvider>
     </ThemeProvider>
     </I18nProvider>

@@ -5,11 +5,14 @@ export interface PurgeDeps {
   purge: () => Promise<{ purged_board_ids: string[]; audit_events_purged: number }>;
   /** Removes every file under board-media/{boardId}/ */
   removeBoardMedia: (boardId: string) => Promise<void>;
+  /** Runs public.apply_scheduled_link_restrictions(): open links whose notice period ended become restricted */
+  restrictLinks: () => Promise<number>;
 }
 
 /**
  * Daily retention job (Vercel Cron): permanently deletes boards trashed over 30 days ago,
- * then their images, and audit events over a year old. Only Vercel Cron, which sends
+ * then their images, and audit events over a year old; also restricts the open links whose
+ * 30-day notice ended (teams migration). Only Vercel Cron, which sends
  * `Authorization: Bearer $CRON_SECRET`, may call it.
  */
 export async function handlePurge(request: Request, cronSecret: string | undefined, deps: PurgeDeps | null): Promise<Response> {
@@ -20,6 +23,7 @@ export async function handlePurge(request: Request, cronSecret: string | undefin
     return Response.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 503 });
   }
 
+  const linksRestricted = await deps.restrictLinks();
   const result = await deps.purge();
   const mediaErrors: string[] = [];
   for (const id of result.purged_board_ids) {
@@ -30,7 +34,12 @@ export async function handlePurge(request: Request, cronSecret: string | undefin
     }
   }
   return Response.json(
-    { boards_purged: result.purged_board_ids.length, audit_events_purged: result.audit_events_purged, media_errors: mediaErrors },
+    {
+      boards_purged: result.purged_board_ids.length,
+      audit_events_purged: result.audit_events_purged,
+      links_restricted: linksRestricted,
+      media_errors: mediaErrors,
+    },
     { status: mediaErrors.length ? 500 : 200 }
   );
 }
@@ -48,6 +57,11 @@ export function createPurgeDeps(env: Record<string, string | undefined>): PurgeD
       const { data, error } = await client.rpc('purge_expired_data');
       if (error) throw new Error(error.message);
       return data;
+    },
+    async restrictLinks() {
+      const { data, error } = await client.rpc('apply_scheduled_link_restrictions');
+      if (error) throw new Error(error.message);
+      return (data as number) ?? 0;
     },
     async removeBoardMedia(boardId) {
       for (;;) {

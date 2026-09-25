@@ -8,6 +8,8 @@ import { useI18n } from '../i18n';
 interface MoveToFolderModalProps {
   isOpen: boolean;
   itemName: string;
+  /** Name of the top level (the project, or "My boards") */
+  rootName?: string;
   folders: Folder[];
   currentFolderId: string | null;
   onClose: () => void;
@@ -17,6 +19,7 @@ interface MoveToFolderModalProps {
 export function MoveToFolderModal({
   isOpen,
   itemName,
+  rootName,
   folders,
   currentFolderId,
   onClose,
@@ -37,7 +40,7 @@ export function MoveToFolderModal({
   }
 
   const options: { id: string | null; name: string; depth: number }[] = [
-    { id: null, name: t('folders.root'), depth: 0 },
+    { id: null, name: rootName ?? t('folders.root'), depth: 0 },
     ...tree.map(({ folder, depth }) => ({ id: folder.id, name: folder.name, depth: depth + 1 })),
   ];
 

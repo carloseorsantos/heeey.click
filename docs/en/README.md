@@ -59,6 +59,7 @@ Heeey is a modern visual collaboration web app built for speed, simplicity and o
 2. **Whiteboard & App Features**:
    - [Canvas & Drawing Tools](features/whiteboard-editor.md)
    - [Collaboration & Real Time](features/collaboration-realtime.md)
+   - [Teams, Projects & Sharing](features/teams-and-sharing.md)
    - [Folders, Organization & Trash](features/folders-and-organization.md)
    - [Version History & Restore](features/version-history.md)
    - [Internationalization (i18n)](features/i18n.md)
@@ -78,7 +79,7 @@ Heeey is a modern visual collaboration web app built for speed, simplicity and o
    - [MCP Overview](mcp/overview.md)
    - [Setting Up Agents (Claude Code, Desktop, Cursor)](mcp/getting-started.md)
    - [MCP Authentication & Permissions](mcp/auth-and-permissions.md)
-   - [Full Catalog of the 13 MCP Tools](mcp/tools.md)
+   - [Full Catalog of the 14 MCP Tools](mcp/tools.md)
    - [Automatic Diagram Layout Engine](mcp/diagram-layout.md)
 5. **Discovery by Agents & Language Models**:
    - [Short Index for LLMs (`llms.txt`)](llms.txt)

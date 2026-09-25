@@ -69,6 +69,7 @@ Heeey is a modern visual collaboration web app built for speed, simplicity and o
 2. **Whiteboard & App Features**:
    - [Canvas & Drawing Tools](features/whiteboard-editor.md)
    - [Collaboration & Real Time](features/collaboration-realtime.md)
+   - [Teams, Projects & Sharing](features/teams-and-sharing.md)
    - [Folders, Organization & Trash](features/folders-and-organization.md)
    - [Version History & Restore](features/version-history.md)
    - [Internationalization (i18n)](features/i18n.md)
@@ -88,7 +89,7 @@ Heeey is a modern visual collaboration web app built for speed, simplicity and o
    - [MCP Overview](mcp/overview.md)
    - [Setting Up Agents (Claude Code, Desktop, Cursor)](mcp/getting-started.md)
    - [MCP Authentication & Permissions](mcp/auth-and-permissions.md)
-   - [Full Catalog of the 13 MCP Tools](mcp/tools.md)
+   - [Full Catalog of the 14 MCP Tools](mcp/tools.md)
    - [Automatic Diagram Layout Engine](mcp/diagram-layout.md)
 5. **Discovery by Agents & Language Models**:
    - [Short Index for LLMs (`llms.txt`)](llms.txt)
@@ -301,17 +302,26 @@ No element has to go through slow queues or polling. When a collaborator moves t
 
 ## 🔒 Access Levels and Permissions
 
-Every board has an `access_level` field:
+Who can open a board is the sum of three layers (the highest access wins). The details are in [Teams, Projects & Sharing](teams-and-sharing.md):
 
-| Access level | Database value | Description |
+1. **Team and project**: team members see the boards of projects open to the team; private projects only for people added to them (owners and admins always see them).
+2. **Direct invite**: people invited by e-mail as **Viewer** or **Editor**, even from outside the team.
+3. **General access (the link)**, in the `access_level` field:
+
+| General access | Database value | Description |
 |---|---|---|
-| **Can edit** | `'edit'` | Any visitor with the link can interact, draw and add notes. |
-| **View only** | `'view'` | Visitors see changes and teammates' cursors in real time, but the canvas is locked against local edits. The board owner always keeps full edit rights. |
+| **Restricted** | `'restricted'` | Only people with access through the team, project or an invite can open the board, even with the link. Default for new boards. |
+| **Anyone with the link · Viewer** | `'view'` | Anyone with the link sees changes and cursors in real time, without editing. |
+| **Anyone with the link · Editor** | `'edit'` | Anyone with the link draws along, no account needed. |
 
-### Changing the Access Level:
+Boards created without an account stay open for editing by link until they are saved to a team.
+
+### Changing the General Access:
 1. In the board header, open the **Share** dialog.
-2. Switch between **"Can edit"** and **"View only"**.
-3. The change reaches every connected visitor immediately through a `meta-update` message.
+2. Under **General access**, choose **Restricted** or **Anyone with the link** (Viewer or Editor).
+3. The change applies immediately; people with the board open get a `meta-update` message and read the permission again from the database.
+
+The live room follows the same rule: people who cannot open the board cannot join the channel, and only editors change the scene.
 
 ---
 
@@ -334,6 +344,110 @@ Guests can customize how they appear at any time:
 - Click your identifying avatar in the top-right corner.
 - Choose a nickname and pick your favorite color from the palette.
 - Your choice is remembered in the browser and applied automatically to every board you visit next.
+
+
+================================================================================
+FILE: docs/en/features/teams-and-sharing.md
+================================================================================
+
+# Teams, Projects & Sharing
+
+Heeey boards are organized in **teams** and **projects**, and sharing works like Google Drive: you invite people by e-mail and choose the general access of the link.
+
+```
+User ↔ Teams → Projects → Folders → Boards
+```
+
+---
+
+## 👥 Teams
+
+- **Personal team**: every account gets a personal team at sign-up, with a default project (**General**). Its owner can't delete or leave it, but it accepts guests like any other team.
+- **Create a team**: in the team switcher (top of the sidebar), choose **Create team**. Whoever creates it becomes **owner**.
+- **Switch teams**: the same switcher lists all your teams. The dashboard address is `/t/<team>` and, inside a project, `/t/<team>/p/<project>`.
+
+### Team roles
+
+| Role | What they can do |
+|---|---|
+| **Owner** | Everything an admin does, plus promoting other owners and deleting the team. A team always has at least one owner. |
+| **Admin** | Invites and removes people, changes roles (except owners'), sees every project, including private ones, and manages every board. |
+| **Member** | Creates projects and boards and edits the boards of projects they can access. |
+| **Viewer** | Only views the boards of projects they can access. |
+
+### Team invites
+
+In **Settings › Team**, owners and admins create an **invite link** with the chosen role. Each link works for **one person** and expires in **7 days**. Whoever opens it sees the team name and the role, signs in (or signs up) and accepts. Active links can be revoked.
+
+### Leaving or deleting
+
+- **Leave the team**: boards you created stay in the team.
+- **Delete the team**: owners only, and only when the team is empty (no boards, not even in the trash).
+- **Deleting an account**: the personal team and its boards are deleted. In teams with other people, ownership goes to an admin (or, if there is none, to the longest-standing member).
+
+---
+
+## 📁 Projects
+
+Projects organize a team's boards. Inside each project you can create folders.
+
+- **Open to the team** (default): every team member sees the boards. Team viewers can only view.
+- **Private**: only the people added to the project (as Editor or Viewer) and the team's owners and admins.
+- The default project (**General**) is always open to the team and can't be deleted.
+- **Moving boards**: from the board menu, **Move to project**. Between projects of the same team, you need to edit both. Between teams, you need to be an owner or admin in both.
+
+---
+
+## 🔗 Sharing (Google Drive style)
+
+The board's **Share** button opens three sections:
+
+### 1. Add people
+Type an e-mail, choose **Viewer** or **Editor** and click **Invite**. It works for any e-mail: if the person has no account yet, the invite is kept and applies as soon as they sign up with that e-mail **verified**. The screen never reveals whether an e-mail has an account.
+
+There's no notification e-mail: send the link with **Copy link**. Boards shared with you show up in **Shared with me**.
+
+### 2. People with access
+Shows who created the board, the inherited access (the team's or the private project's members) and people invited directly. A direct invite only **adds** access: it never removes what someone has through the team. Guests from outside the team only see that board, not the project or its other boards.
+
+### 3. General access
+
+| Option | Effect |
+|---|---|
+| **Restricted** | Only people with access through the team, project or an invite can open the board, even with the link. Default for new boards. |
+| **Anyone with the link · Viewer** | Anyone with the link sees the board, no account needed. |
+| **Anyone with the link · Editor** | Anyone with the link edits along, no account needed. |
+
+Opening a restricted board without access shows **You need access**, with the option to sign in with another account.
+
+### Who can share
+By default, **editors** can invite people and change the general access. Team owners and admins can turn that off (the gear in the dialog or **Settings › Team**); then only the board's creator and admins share. People who only have the link never change the access.
+
+---
+
+## ⏳ Old links: migration with notice
+
+Boards that were open by link before teams got **30 days** before becoming restricted. During that time:
+
+- People who can share see the notice in the dialog, with **Keep link open** (for that board only) and **Restrict now**.
+- People who only visit through the link see a banner with the date the link stops being public.
+- Changing the general access by hand cancels the migration for that board.
+
+A daily job applies the restrictions that are due and records each one in the audit trail.
+
+---
+
+## 📝 Boards created without an account
+
+Without an account, boards stay open for editing by link. After signing in, Heeey asks **which team and project to keep them in** and whether the link **stays open** or becomes **restricted**; nothing is preselected. If you answer **Not now**, a notice in the dashboard lets you save them later.
+
+---
+
+## 🔒 Security
+
+- Every rule is enforced in the database (PostgreSQL RLS and functions), not only in the interface: the API, MCP, Realtime and Storage follow the same permission.
+- Changes to teams, roles, invites, projects and sharing go into the audit trail, without storing invited e-mails.
+- API keys only reach the teams chosen when they were created (see [Authentication](../api/authentication.md)).
 
 
 ================================================================================
@@ -954,6 +1068,7 @@ Heeey uses **Personal API Keys** to authorize requests to the REST API (`/api/v1
   - The `prefix` (e.g. `hk_1a2b3c4d`), shown in the interface so you know which key is which.
   - The `key_hash`: a cryptographic digest computed with `sha256(key)`.
 - **Per-account limit**: Each user can have up to **20 active keys at the same time**.
+- **Teams the key reaches**: When you create a key you choose which teams it reads and changes boards in (by default, only your personal team). Older keys keep reaching your personal team. If you leave a team, the key loses access to it right away.
 
 ---
 
@@ -1475,6 +1590,7 @@ Authorization: Bearer hk_...
 ## 📌 Endpoint Index
 
 - [GET /api/v1](#get-apiv1) — API catalog
+- [GET /api/v1/projects](#get-apiv1projects) — List the teams and projects the key reaches
 - [GET /api/v1/boards](#get-apiv1boards) — List boards
 - [POST /api/v1/boards](#post-apiv1boards) — Create a board
 - [GET /api/v1/boards/:id](#get-apiv1boardsid) — Get a board and its full scene
@@ -1499,15 +1615,16 @@ Returns general information about the API, authentication instructions and the s
   "version": "v1",
   "auth": "Authorization: Bearer <chave de API criada em heeey.click>",
   "endpoints": [
-    "GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=",
-    "POST   /api/v1/boards { title, elements?, folder_id? }",
+    "GET    /api/v1/projects  (times e projetos que a chave alcança)",
+    "GET    /api/v1/boards?project_id=&team_id=&folder_id=&include_trashed=&limit=&offset=",
+    "POST   /api/v1/boards { title, elements?, project_id?, folder_id? }",
     "GET    /api/v1/boards/:id",
     "PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }",
     "DELETE /api/v1/boards/:id  (move para a lixeira)",
     "POST   /api/v1/boards/:id/move { folder_id }",
     "GET    /api/v1/search?q=",
-    "GET    /api/v1/folders",
-    "POST   /api/v1/folders { name, parent_id? }"
+    "GET    /api/v1/folders?project_id=",
+    "POST   /api/v1/folders { name, parent_id?, project_id? }"
   ]
 }
 ```
@@ -1518,6 +1635,8 @@ Returns general information about the API, authentication instructions and the s
 Lists the boards owned by the API key's user, most recently edited first.
 
 **Query parameters:**
+- `project_id` *(optional, UUID)*: Only boards in this project.
+- `team_id` *(optional, UUID)*: Only boards of this team.
 - `folder_id` *(optional, UUID)*: Only boards inside this folder.
 - `include_trashed` *(optional, boolean)*: When `true`, includes boards in the trash. Default: `false`.
 - `limit` *(optional, integer)*: Maximum number of results (default: `50`, max: `200`).
@@ -1549,6 +1668,7 @@ Creates a new board with a title and optional elements.
 
 **Request body (JSON):**
 - `title` *(optional, string)*: Board title (when omitted, the system's default title is used).
+- `project_id` *(optional, UUID)*: Target project. When omitted, the folder's project is used, or the default project of your personal team (or of the first team the key reaches). Boards created through the API start **restricted**.
 - `folder_id` *(optional, UUID)*: Target folder. When omitted or `null`, the board is created at the top level.
 - `elements` *(optional, array)*: A list of native Excalidraw elements or short-form specs (`ElementSpec`).
 
@@ -1711,6 +1831,29 @@ See also the [Pagination](pagination.md) guide.
 
 ---
 
+### `GET /api/v1/projects`
+Lists the teams and projects the key reaches, with your access in each one (`manage`, `edit` or `view`). Use the `id` as `project_id` when creating or listing boards and folders.
+
+**Example Response (200 OK):**
+```json
+{
+  "projects": [
+    {
+      "id": "0b1c2d3e-4f50-4a61-8b72-93a4b5c6d7e8",
+      "name": "General",
+      "visibility": "team",
+      "is_default": true,
+      "team_id": "7d0f5b1e-2c3a-4e8b-9f10-1a2b3c4d5e6f",
+      "team_name": "Acme Design",
+      "team_is_personal": false,
+      "access": "edit"
+    }
+  ]
+}
+```
+
+---
+
 ### `GET /api/v1/folders`
 Returns every folder the user created, including `parent_id` for building the tree (`parent_id: null` means top level).
 
@@ -1740,6 +1883,7 @@ Creates a new folder at the top level or nested inside an existing folder.
 **Request body (JSON):**
 - `name` *(required, string)*: Folder name (1 to 60 characters).
 - `parent_id` *(optional, UUID or null)*: ID of the parent folder, for nesting.
+- `project_id` *(optional, UUID)*: Only folders of this project (when listing), or the project of the new folder (when creating).
 
 **Example response (201 Created):**
 ```json
@@ -2024,7 +2168,10 @@ FILE: docs/en/mcp/tools.md
 
 # Full Catalog of Heeey MCP Tools
 
-This page gives the detailed technical spec of all **13 MCP tools** provided by the Heeey server at `https://heeey.click/api/mcp`.
+This page gives the detailed technical spec of all **14 MCP tools** provided by the Heeey server at `https://heeey.click/api/mcp`.
+
+
+Boards live in **projects** inside **teams**. Use `list_projects` to see where the key can create boards; `list_boards`, `create_board`, `create_diagram`, `list_folders` and `create_folder` accept `project_id`. Boards created through MCP start restricted (only the team/project and invited people can open them).
 
 ---
 
@@ -2032,6 +2179,7 @@ This page gives the detailed technical spec of all **13 MCP tools** provided by 
 
 | Tool | Scope | MCP annotation | Main purpose |
 |---|---|---|---|
+| [`list_projects`](#14-list_projects) | `read` | `readOnlyHint: true` | Lists the teams and projects the key reaches, with your access. |
 | [`list_boards`](#1-list_boards) | `read` | `readOnlyHint: true` | Lists the boards in the user's account. |
 | [`search_boards`](#2-search_boards) | `read` | `readOnlyHint: true` | Full-text search across titles and text drawn on the canvas. |
 | [`get_board`](#3-get_board) | `read` | `readOnlyHint: true` | Reads metadata and elements (compact or detailed). |
@@ -2361,6 +2509,25 @@ This page gives the detailed technical spec of all **13 MCP tools** provided by 
     "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
     "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
   }
+}
+```
+
+---
+
+### 14. `list_projects`
+> Lists the teams and projects the key reaches, with the user's access in each project (`manage`, `edit` or `view`).
+
+- **Annotations**: `readOnlyHint: true`
+- **Input Parameters (`inputSchema`)**:
+  - Empty object `{}`.
+- **Returns**:
+  - `projects`: A list with `id`, `name`, `visibility` (`team` or `private`), `is_default`, `team_id`, `team_name` and `access`.
+
+**Example Call:**
+```json
+{
+  "name": "list_projects",
+  "arguments": {}
 }
 ```
 

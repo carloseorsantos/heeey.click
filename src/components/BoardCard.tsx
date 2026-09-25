@@ -1,6 +1,6 @@
 import { forwardRef, useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { MoreHorizontal, Copy, Trash2, Edit3, RotateCcw, FolderInput } from 'lucide-react';
+import { MoreHorizontal, Copy, Trash2, Edit3, RotateCcw, FolderInput, FolderKanban, Globe } from 'lucide-react';
 import { Board } from '../lib/types';
 import { BoardSnippet } from '../lib/search';
 import { cn, formatDateRelative } from '../lib/utils';
@@ -15,8 +15,13 @@ interface BoardCardProps {
   board: Board;
   onOpen: (id: string) => void;
   onRename: (id: string, newTitle: string) => void;
-  onDuplicate: (board: Board) => void;
+  /** Absent when the user cannot create boards here (e.g. team viewers) */
+  onDuplicate?: (board: Board) => void;
   onDelete: (id: string) => void;
+  /** The user only reads this board: no rename, move or trash */
+  readOnly?: boolean;
+  /** Move to another project (or team) */
+  onMoveToProject?: (board: Board) => void;
   onThumbnailGenerated?: (boardId: string, thumbnail: string) => void;
   /** Present when folders are available (signed-in owners) */
   onMove?: (board: Board) => void;
@@ -24,14 +29,15 @@ interface BoardCardProps {
   snippet?: BoardSnippet;
   /** Present when the card is shown in the trash */
   trash?: {
-    onRestore: (id: string) => void;
+    /** Absent when the user cannot restore it (only people who edit it) */
+    onRestore?: (id: string) => void;
     /** Only the authenticated owner can delete permanently */
     onDeletePermanently?: (board: Board) => void;
   };
 }
 
 export const BoardCard = forwardRef<HTMLElement, BoardCardProps>(function BoardCard(
-  { board, onOpen, onRename, onDuplicate, onDelete, onThumbnailGenerated, onMove, snippet, trash },
+  { board, onOpen, onRename, onDuplicate, onDelete, onThumbnailGenerated, onMove, snippet, trash, readOnly, onMoveToProject },
   forwardedRef
 ) {
   const { isDark } = useTheme();
@@ -133,7 +139,10 @@ export const BoardCard = forwardRef<HTMLElement, BoardCardProps>(function BoardC
               </button>
             </h3>
           )}
-          <p className="text-xs text-label-2 mt-0.5 truncate">
+          <p className="text-xs text-label-2 mt-0.5 truncate flex items-center gap-1">
+            {!trash && (board.access_level === 'edit' || board.access_level === 'view') && board.team_id && (
+              <Globe className="w-3 h-3 flex-shrink-0" aria-label={t('boardCard.linkOpen')} />
+            )}
             {trash && board.deleted_at
               ? t('boardCard.inTrashSince', { time: formatDateRelative(board.deleted_at) })
               : t('boardCard.edited', { time: formatDateRelative(board.updated_at || board.created_at) })}
@@ -167,9 +176,14 @@ export const BoardCard = forwardRef<HTMLElement, BoardCardProps>(function BoardC
           <Menu open={showMenu} className="w-56">
             {trash ? (
               <>
-                <MenuItem icon={RotateCcw} onClick={() => run(() => trash.onRestore(board.id))}>
-                  {t('common.restore')}
-                </MenuItem>
+                {trash.onRestore && (
+                  <MenuItem icon={RotateCcw} onClick={() => run(() => trash.onRestore?.(board.id))}>
+                    {t('common.restore')}
+                  </MenuItem>
+                )}
+                {!trash.onRestore && !trash.onDeletePermanently && (
+                  <p className="px-2.5 py-2 text-xs text-label-2">{t('boardCard.noTrashActions')}</p>
+                )}
                 {trash.onDeletePermanently && (
                   <>
                     <MenuSeparator />
@@ -181,21 +195,35 @@ export const BoardCard = forwardRef<HTMLElement, BoardCardProps>(function BoardC
               </>
             ) : (
               <>
-                <MenuItem icon={Edit3} onClick={() => run(() => setIsRenaming(true))}>
-                  {t('common.rename')}
-                </MenuItem>
-                <MenuItem icon={Copy} onClick={() => run(() => onDuplicate(board))}>
-                  {t('boardCard.duplicate')}
-                </MenuItem>
-                {onMove && (
+                {!readOnly && (
+                  <MenuItem icon={Edit3} onClick={() => run(() => setIsRenaming(true))}>
+                    {t('common.rename')}
+                  </MenuItem>
+                )}
+                {onDuplicate && (
+                  <MenuItem icon={Copy} onClick={() => run(() => onDuplicate(board))}>
+                    {t('boardCard.duplicate')}
+                  </MenuItem>
+                )}
+                {onMove && !readOnly && (
                   <MenuItem icon={FolderInput} onClick={() => run(() => onMove(board))}>
                     {t('boardCard.moveToFolder')}
                   </MenuItem>
                 )}
-                <MenuSeparator />
-                <MenuItem icon={Trash2} destructive onClick={() => run(() => onDelete(board.id))}>
-                  {t('boardCard.moveToTrash')}
-                </MenuItem>
+                {onMoveToProject && !readOnly && (
+                  <MenuItem icon={FolderKanban} onClick={() => run(() => onMoveToProject(board))}>
+                    {t('boardCard.moveToProject')}
+                  </MenuItem>
+                )}
+                {!readOnly && (
+                  <>
+                    <MenuSeparator />
+                    <MenuItem icon={Trash2} destructive onClick={() => run(() => onDelete(board.id))}>
+                      {t('boardCard.moveToTrash')}
+                    </MenuItem>
+                  </>
+                )}
+                {readOnly && !onDuplicate && <p className="px-2.5 py-2 text-xs text-label-2">{t('boardCard.readOnly')}</p>}
               </>
             )}
           </Menu>

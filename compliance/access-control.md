@@ -32,10 +32,11 @@ O secret scanning com push protection do GitHub bloqueia commits com segredos co
 
 ## 4. Acesso dos usuários do produto
 
-- Leitura de um quadro: dono ou quem tem o link (cabeçalho `x-board-id`); nunca listagem pública.
-- Escrita: dono, ou qualquer pessoa com o link se o quadro estiver como editável.
-- Alterar o acesso, mover para a lixeira ou excluir: só o dono. Esses eventos vão para `audit_log`.
-- Tudo é garantido por RLS e testado em `supabase/tests/database.test.ts`.
+- Acesso a um quadro: o maior entre o papel no time e no projeto (owner/admin/membro/leitor; projetos privados só para quem foi adicionado), o convite direto por e-mail (Leitor/Editor) e o acesso geral do link (`restricted`, `view` ou `edit`, este último pelo cabeçalho `x-board-id`). Nunca há listagem pública.
+- Alterar o acesso geral e convidar pessoas: quem administra o quadro ou, se o time permitir, quem o edita. Mover para a lixeira: quem edita pelo time. Excluir: quem administra (criador ou owner/admin do time).
+- Times: owners e admins convidam (link de uso único, 7 dias), mudam papéis e removem pessoas; o time sempre tem um owner.
+- Mudanças de acesso, lixeira, exclusão, reivindicação, movimentação entre projetos/times, membros, convites, projetos e compartilhamentos vão para `audit_log`.
+- Tudo é garantido por RLS e funções do banco, testado em `supabase/tests/database.test.ts` e `supabase/tests/teams.test.ts`.
 
 ## 5. Revisão trimestral de acessos
 

@@ -9,21 +9,20 @@ import {
 } from '../lib/folders';
 
 /**
- * Folders of the signed-in user. `available` is false for guests and when the
- * database does not have the folders migration yet, so the UI can hide them.
+ * Folders of a project (or of the signed-in user when the database has no teams yet).
+ * `available` is false for guests, in the all-boards view and when the database does not
+ * have the folders migration yet, so the UI can hide them.
  */
-export function useFolders(userId: string | null | undefined) {
+export function useFolders(userId: string | null | undefined, projectId?: string | null, enabled = true) {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [available, setAvailable] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    if (!userId) {
-      setFolders([]);
-      setAvailable(false);
-      return;
-    }
-    fetchFolders(userId).then((result) => {
+    setFolders([]);
+    setAvailable(false);
+    if (!userId || !enabled) return;
+    fetchFolders(projectId ? { projectId } : { ownerId: userId }).then((result) => {
       if (cancelled) return;
       setFolders(result || []);
       setAvailable(result !== null);
@@ -31,16 +30,16 @@ export function useFolders(userId: string | null | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [userId]);
+  }, [userId, projectId, enabled]);
 
   const createFolder = useCallback(
     async (name: string, parentId: string | null) => {
       if (!userId) return null;
-      const folder = await createFolderRemote(userId, name, parentId);
+      const folder = await createFolderRemote(userId, name, parentId, projectId);
       if (folder) setFolders((prev) => [...prev, folder]);
       return folder;
     },
-    [userId]
+    [userId, projectId]
   );
 
   const renameFolder = useCallback(async (id: string, name: string) => {

@@ -69,6 +69,7 @@ O Heeey é uma aplicação web moderna de colaboração visual desenvolvida com 
 2. **Funcionalidades da Lousa & Aplicação**:
    - [Canvas & Ferramentas de Desenho](features/whiteboard-editor.md)
    - [Colaboração & Tempo Real](features/collaboration-realtime.md)
+   - [Times, Projetos & Compartilhamento](features/teams-and-sharing.md)
    - [Pastas, Organização & Lixeira](features/folders-and-organization.md)
    - [Histórico de Versões & Restauração](features/version-history.md)
    - [Internacionalização (i18n)](features/i18n.md)
@@ -88,7 +89,7 @@ O Heeey é uma aplicação web moderna de colaboração visual desenvolvida com 
    - [Visão Geral do MCP](mcp/overview.md)
    - [Configurando Agentes (Claude Code, Desktop, Cursor)](mcp/getting-started.md)
    - [Autenticação & Permissões MCP](mcp/auth-and-permissions.md)
-   - [Catálogo Completo das 13 Ferramentas MCP](mcp/tools.md)
+   - [Catálogo Completo das 14 Ferramentas MCP](mcp/tools.md)
    - [Motor de Layout Automático de Diagramas](mcp/diagram-layout.md)
 5. **Descoberta por Agentes & Modelos de Linguagem**:
    - [Índice Resumido para LLMs (`llms.txt`)](llms.txt)
@@ -301,17 +302,26 @@ Nenhum elemento precisa passar por filas lentas ou polling. Quando um colaborado
 
 ## 🔒 Níveis de Acesso e Permissões
 
-Cada quadro possui um campo `access_level`:
+Quem acessa um quadro é a soma de três camadas (vale o maior acesso). Os detalhes estão em [Times, Projetos & Compartilhamento](teams-and-sharing.md):
 
-| Nível de Acesso | Valor no Banco | Descrição |
+1. **Time e projeto**: membros do time veem os quadros dos projetos abertos ao time; projetos privados só para quem foi adicionado (owners e admins sempre veem).
+2. **Convite direto**: pessoas convidadas por e-mail como **Leitor** ou **Editor**, mesmo de fora do time.
+3. **Acesso geral (o link)**, no campo `access_level`:
+
+| Acesso geral | Valor no Banco | Descrição |
 |---|---|---|
-| **Pode Editar** | `'edit'` | Qualquer visitante com o link pode interagir, desenhar e adicionar notas. |
-| **Apenas Leitura** | `'view'` | Visitantes visualizam as alterações em tempo real e os cursores dos colegas, mas o canvas fica bloqueado contra edições locais. O proprietário do quadro mantém permissão irrestrita de edição. |
+| **Restrito** | `'restricted'` | Só quem tem acesso pelo time, projeto ou convite abre o quadro, mesmo com o link. Padrão dos quadros novos. |
+| **Qualquer pessoa com o link · Leitor** | `'view'` | Quem tem o link vê as mudanças e os cursores em tempo real, sem editar. |
+| **Qualquer pessoa com o link · Editor** | `'edit'` | Quem tem o link desenha junto, sem criar conta. |
 
-### Alterando o Nível de Acesso:
+Quadros criados sem conta ficam sempre abertos para edição pelo link até serem guardados num time.
+
+### Alterando o Acesso Geral:
 1. No cabeçalho do quadro, abra o modal de **Compartilhar**.
-2. Alterne entre **"Pode Editar"** e **"Apenas Leitura"**.
-3. A mudança reflete imediatamente para todos os visitantes conectados através de uma mensagem `meta-update`.
+2. Em **Acesso geral**, escolha **Restrito** ou **Qualquer pessoa com o link** (Leitor ou Editor).
+3. A mudança vale na hora; quem está com o quadro aberto recebe uma mensagem `meta-update` e relê a permissão do banco.
+
+A sala ao vivo segue a mesma regra: quem não pode abrir o quadro não entra no canal, e só quem edita altera a cena.
 
 ---
 
@@ -334,6 +344,110 @@ Visitantes convidados podem personalizar sua presença a qualquer momento:
 - Clique no avatar de identificação no canto superior direito.
 - Escolha um apelido (*nickname*) e selecione sua cor favorita na paleta.
 - A personalização é memorizada no navegador e aplicada automaticamente em todos os quadros futuros que você visitar.
+
+
+================================================================================
+FILE: docs/features/teams-and-sharing.md
+================================================================================
+
+# Times, Projetos & Compartilhamento
+
+Os quadros do Heeey ficam organizados em **times** e **projetos**, e o compartilhamento funciona como no Google Drive: você convida pessoas por e-mail e escolhe o acesso geral do link.
+
+```
+Usuário ↔ Times → Projetos → Pastas → Quadros
+```
+
+---
+
+## 👥 Times
+
+- **Time pessoal**: toda conta ganha um time pessoal no cadastro, com um projeto padrão (**Geral**). Ele não pode ser excluído nem abandonado pelo dono, mas aceita convidados como qualquer outro time.
+- **Criar um time**: no seletor de times (topo da barra lateral), escolha **Criar time**. Quem cria vira **owner**.
+- **Trocar de time**: o mesmo seletor lista todos os seus times. O endereço do painel é `/t/<time>` e, dentro de um projeto, `/t/<time>/p/<projeto>`.
+
+### Papéis no time
+
+| Papel | O que pode fazer |
+|---|---|
+| **Owner** | Tudo o que um admin faz, além de promover outros owners e excluir o time. O time sempre tem pelo menos um owner. |
+| **Admin** | Convida e remove pessoas, muda papéis (exceto de owners), vê todos os projetos, inclusive os privados, e administra todos os quadros. |
+| **Membro** | Cria projetos e quadros e edita os quadros dos projetos a que tem acesso. |
+| **Leitor** | Só visualiza os quadros dos projetos a que tem acesso. |
+
+### Convites para o time
+
+Em **Configurações › Time**, owners e admins criam um **link de convite** com o papel desejado. Cada link vale para **uma pessoa** e expira em **7 dias**. Quem abre o link vê o nome do time e o papel, entra na conta (ou cria uma) e aceita. Os links ativos podem ser revogados.
+
+### Sair ou excluir
+
+- **Sair do time**: os quadros que você criou continuam no time.
+- **Excluir o time**: só owners, e só com o time vazio (sem quadros, nem na lixeira).
+- **Exclusão de conta**: o time pessoal e os quadros dele são apagados. Em times com outras pessoas, a posse passa para um admin (ou, na falta dele, para o membro mais antigo).
+
+---
+
+## 📁 Projetos
+
+Projetos organizam os quadros de um time. Dentro de cada projeto você pode criar pastas.
+
+- **Aberto ao time** (padrão): todos os membros do time veem os quadros. Leitores do time só visualizam.
+- **Privado**: só as pessoas adicionadas ao projeto (como Editor ou Leitor) e os owners e admins do time.
+- O projeto padrão (**Geral**) fica sempre aberto ao time e não pode ser excluído.
+- **Mover quadros**: pelo menu do quadro, **Mover para projeto**. Entre projetos do mesmo time, basta editar os dois. Entre times, é preciso ser owner ou admin nos dois.
+
+---
+
+## 🔗 Compartilhar (estilo Google Drive)
+
+O botão **Compartilhar** do quadro abre três blocos:
+
+### 1. Adicionar pessoas
+Digite um e-mail, escolha **Leitor** ou **Editor** e clique em **Convidar**. Funciona para qualquer e-mail: se a pessoa ainda não tem conta, o convite fica guardado e vale assim que ela criar a conta com esse e-mail **verificado**. A tela nunca mostra se um e-mail já tem conta.
+
+Não há e-mail de notificação: envie o link com **Copiar link**. Os quadros compartilhados com você aparecem em **Compartilhados comigo**.
+
+### 2. Pessoas com acesso
+Mostra quem criou o quadro, o acesso herdado (os membros do time ou do projeto privado) e as pessoas convidadas diretamente. O convite direto só **soma** acesso: nunca tira o que a pessoa já tem pelo time. Convidados de fora do time veem só aquele quadro, não o projeto nem os outros quadros.
+
+### 3. Acesso geral
+
+| Opção | Efeito |
+|---|---|
+| **Restrito** | Só quem tem acesso pelo time, projeto ou convite abre o quadro, mesmo com o link. Padrão dos quadros novos. |
+| **Qualquer pessoa com o link · Leitor** | Quem tem o link vê o quadro, sem criar conta. |
+| **Qualquer pessoa com o link · Editor** | Quem tem o link edita junto, sem criar conta. |
+
+Quem abre um quadro restrito sem acesso vê a tela **Você precisa de acesso**, com a opção de entrar com outra conta.
+
+### Quem pode compartilhar
+Por padrão, **editores** podem convidar pessoas e mudar o acesso geral. Owners e admins do time podem desligar isso (engrenagem do modal ou **Configurações › Time**); então só quem criou o quadro e os admins compartilham. Quem entra só pelo link nunca altera o acesso.
+
+---
+
+## ⏳ Links antigos: migração com aviso
+
+Quadros que já estavam abertos por link antes dos times ganharam **30 dias** até virarem restritos. Durante esse prazo:
+
+- Quem pode compartilhar vê o aviso no modal, com **Manter link aberto** (vale só para aquele quadro) e **Restringir agora**.
+- Quem só visita pelo link vê uma faixa com a data em que o link deixará de ser público.
+- Mudar o acesso geral manualmente cancela a migração daquele quadro.
+
+Uma rotina diária aplica as restrições vencidas e registra cada uma na trilha de auditoria.
+
+---
+
+## 📝 Quadros criados sem conta
+
+Sem conta, os quadros ficam abertos para edição por link. Ao entrar, o Heeey pergunta **em qual time e projeto guardá-los** e se o link **continua aberto** ou fica **restrito**; nenhuma opção vem marcada. Se você responder **Agora não**, um aviso no painel permite guardar depois.
+
+---
+
+## 🔒 Segurança
+
+- Todas as regras são aplicadas no banco (RLS e funções do PostgreSQL), não só na interface: API, MCP, Realtime e Storage seguem a mesma permissão.
+- Mudanças de time, papéis, convites, projetos e compartilhamentos entram na trilha de auditoria, sem guardar os e-mails convidados.
+- Chaves de API alcançam só os times escolhidos na criação (veja [Autenticação](../api/authentication.md)).
 
 
 ================================================================================
@@ -954,6 +1068,7 @@ O Heeey utiliza **Chaves Pessoais de API** (*Personal API Keys*) para autorizar 
   - O `prefix` (ex.: `hk_1a2b3c4d`), exibido na interface para que você saiba qual chave é qual.
   - O `key_hash`: digest criptográfico gerado com `sha256(chave)`.
 - **Limite por Conta**: Cada usuário pode manter até **20 chaves ativas simultaneamente**.
+- **Times que a chave alcança**: Ao criar a chave você escolhe de quais times ela lê e altera quadros (por padrão, só o seu time pessoal). Chaves antigas continuam alcançando o time pessoal. Se você sair de um time, a chave perde o acesso a ele na hora.
 
 ---
 
@@ -1473,6 +1588,7 @@ Authorization: Bearer hk_...
 ## 📌 Índice de Endpoints
 
 - [GET /api/v1](#get-apiv1) — Catálogo da API
+- [GET /api/v1/projects](#get-apiv1projects) — Listar times e projetos que a chave alcança
 - [GET /api/v1/boards](#get-apiv1boards) — Listar quadros
 - [POST /api/v1/boards](#post-apiv1boards) — Criar quadro
 - [GET /api/v1/boards/:id](#get-apiv1boardsid) — Obter quadro e cena completa
@@ -1497,15 +1613,16 @@ Retorna informações gerais sobre a API, instruções de autenticação e rotas
   "version": "v1",
   "auth": "Authorization: Bearer <chave de API criada em heeey.click>",
   "endpoints": [
-    "GET    /api/v1/boards?folder_id=&include_trashed=&limit=&offset=",
-    "POST   /api/v1/boards { title, elements?, folder_id? }",
+    "GET    /api/v1/projects  (times e projetos que a chave alcança)",
+    "GET    /api/v1/boards?project_id=&team_id=&folder_id=&include_trashed=&limit=&offset=",
+    "POST   /api/v1/boards { title, elements?, project_id?, folder_id? }",
     "GET    /api/v1/boards/:id",
     "PATCH  /api/v1/boards/:id { title?, elements?, delete_element_ids? }",
     "DELETE /api/v1/boards/:id  (move para a lixeira)",
     "POST   /api/v1/boards/:id/move { folder_id }",
     "GET    /api/v1/search?q=",
-    "GET    /api/v1/folders",
-    "POST   /api/v1/folders { name, parent_id? }"
+    "GET    /api/v1/folders?project_id=",
+    "POST   /api/v1/folders { name, parent_id?, project_id? }"
   ]
 }
 ```
@@ -1516,6 +1633,8 @@ Retorna informações gerais sobre a API, instruções de autenticação e rotas
 Lista os quadros pertencentes ao usuário da chave de API, ordenados pelos editados mais recentemente.
 
 **Parâmetros de Consulta (Query Params):**
+- `project_id` *(opcional, UUID)*: Filtra apenas quadros deste projeto.
+- `team_id` *(opcional, UUID)*: Filtra apenas quadros deste time.
 - `folder_id` *(opcional, UUID)*: Filtra apenas quadros localizados dentro desta pasta.
 - `include_trashed` *(opcional, boolean)*: Quando `true`, inclui quadros que estão na lixeira. Padrão: `false`.
 - `limit` *(opcional, integer)*: Quantidade máxima de resultados (padrão: `50`, máx: `200`).
@@ -1547,6 +1666,7 @@ Cria um novo quadro com título e elementos opcionais.
 
 **Corpo da Requisição (JSON):**
 - `title` *(opcional, string)*: Título do quadro (se omitido, recebe o título padrão do sistema).
+- `project_id` *(opcional, UUID)*: Projeto de destino. Se omitido, usa o projeto da pasta ou o projeto padrão do seu time pessoal (ou do primeiro time que a chave alcança). Quadros criados pela API nascem **restritos**.
 - `folder_id` *(opcional, UUID)*: Pasta de destino. Se omitido ou `null`, o quadro é criado na raiz.
 - `elements` *(opcional, array)*: Lista de elementos nativos do Excalidraw ou especificações resumidas (`ElementSpec`).
 
@@ -1709,6 +1829,29 @@ Consulte também o guia de [Paginação](pagination.md).
 
 ---
 
+### `GET /api/v1/projects`
+Lista os times e projetos que a chave alcança, com o seu acesso em cada um (`manage`, `edit` ou `view`). Use o `id` como `project_id` ao criar ou listar quadros e pastas.
+
+**Exemplo de Resposta (200 OK):**
+```json
+{
+  "projects": [
+    {
+      "id": "0b1c2d3e-4f50-4a61-8b72-93a4b5c6d7e8",
+      "name": "Geral",
+      "visibility": "team",
+      "is_default": true,
+      "team_id": "7d0f5b1e-2c3a-4e8b-9f10-1a2b3c4d5e6f",
+      "team_name": "Acme Design",
+      "team_is_personal": false,
+      "access": "edit"
+    }
+  ]
+}
+```
+
+---
+
 ### `GET /api/v1/folders`
 Retorna a lista de todas as pastas criadas pelo usuário, incluindo `parent_id` para montagem de árvore (onde `parent_id: null` indica raiz).
 
@@ -1738,6 +1881,7 @@ Cria uma nova pasta na raiz ou aninhada dentro de outra pasta existente.
 **Corpo da Requisição (JSON):**
 - `name` *(obrigatório, string)*: Nome da pasta (1 a 60 caracteres).
 - `parent_id` *(opcional, UUID ou null)*: ID da pasta pai para aninhamento.
+- `project_id` *(opcional, UUID)*: Filtra apenas pastas deste projeto (na listagem) ou define o projeto da nova pasta (na criação).
 
 **Exemplo de Resposta (201 Created):**
 ```json
@@ -2022,7 +2166,10 @@ FILE: docs/mcp/tools.md
 
 # Catálogo Completo de Ferramentas MCP do Heeey
 
-Esta página descreve a especificação técnica detalhada de todas as **13 ferramentas MCP** disponibilizadas pelo servidor do Heeey em `https://heeey.click/api/mcp`.
+Esta página descreve a especificação técnica detalhada de todas as **14 ferramentas MCP** disponibilizadas pelo servidor do Heeey em `https://heeey.click/api/mcp`.
+
+
+Quadros ficam em **projetos** dentro de **times**. Use `list_projects` para saber onde a chave pode criar quadros; `list_boards`, `create_board`, `create_diagram`, `list_folders` e `create_folder` aceitam `project_id`. Quadros criados pelo MCP nascem restritos (só o time/projeto e quem for convidado abrem).
 
 ---
 
@@ -2030,6 +2177,7 @@ Esta página descreve a especificação técnica detalhada de todas as **13 ferr
 
 | Ferramenta | Escopo | Anotação MCP | Finalidade Principal |
 |---|---|---|---|
+| [`list_projects`](#14-list_projects) | `read` | `readOnlyHint: true` | Lista times e projetos que a chave alcança, com o seu acesso. |
 | [`list_boards`](#1-list_boards) | `read` | `readOnlyHint: true` | Lista os quadros da conta do usuário. |
 | [`search_boards`](#2-search_boards) | `read` | `readOnlyHint: true` | Busca full-text em títulos e texto desenhado no canvas. |
 | [`get_board`](#3-get_board) | `read` | `readOnlyHint: true` | Lê metadados e elementos (compacto ou detalhado). |
@@ -2359,6 +2507,25 @@ Esta página descreve a especificação técnica detalhada de todas as **13 ferr
     "board_id": "e67e3a1e-8e89-4089-a5f1-382a39281a92",
     "folder_id": "8bb38d33-9fb4-4c4f-a7f4-ea30fb5b8822"
   }
+}
+```
+
+---
+
+### 14. `list_projects`
+> Lista os times e projetos que a chave alcança, com o acesso do usuário em cada projeto (`manage`, `edit` ou `view`).
+
+- **Anotações**: `readOnlyHint: true`
+- **Parâmetros de Entrada (`inputSchema`)**:
+  - Objeto vazio `{}`.
+- **Retorno**:
+  - `projects`: Lista com `id`, `name`, `visibility` (`team` ou `private`), `is_default`, `team_id`, `team_name` e `access`.
+
+**Exemplo de Chamada:**
+```json
+{
+  "name": "list_projects",
+  "arguments": {}
 }
 ```
 

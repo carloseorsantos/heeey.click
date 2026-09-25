@@ -100,10 +100,11 @@ export function searchLoadedBoards(boards: readonly Board[], query: string): Boa
  * Server-side fulltext search over the signed-in user's boards (title + canvas text).
  * Returns null when unavailable (e.g. database without the search migration).
  */
-export async function searchBoardsRemote(query: string, limit = 20): Promise<BoardSearchHit[] | null> {
+export async function searchBoardsRemote(query: string, limit = 20, teamId?: string | null): Promise<BoardSearchHit[] | null> {
   const terms = getSearchTerms(query);
   if (terms.length === 0) return [];
-  const { data, error } = await supabase.rpc('search_boards', { p_query: query, p_limit: limit });
+  // teamId: only that team's boards; without it, every team plus boards shared with me
+  const { data, error } = await supabase.rpc('search_boards', { p_query: query, p_limit: limit, ...(teamId ? { p_team_id: teamId } : {}) });
   if (error) {
     console.warn('Busca no conteúdo indisponível:', error.message);
     return null;
@@ -113,7 +114,7 @@ export async function searchBoardsRemote(query: string, limit = 20): Promise<Boa
     snippet: buildSnippet(content || '', terms),
   }));
   if (hits.length >= SEMANTIC_SEARCH_MIN_HITS) return hits;
-  const related = await searchBoardsSemantic(query, hits.map((hit) => hit.board.id));
+  const related = await searchBoardsSemantic(query, hits.map((hit) => hit.board.id), teamId);
   return [...hits, ...related];
 }
 
@@ -121,7 +122,11 @@ export async function searchBoardsRemote(query: string, limit = 20): Promise<Boa
  * Boards related to the query by meaning, ranked by Jev on the server (/api/ai-search).
  * Returns [] when unavailable (signed out, not configured, `vite dev` without functions).
  */
-export async function searchBoardsSemantic(query: string, exclude: readonly string[] = []): Promise<BoardSearchHit[]> {
+export async function searchBoardsSemantic(
+  query: string,
+  exclude: readonly string[] = [],
+  teamId?: string | null
+): Promise<BoardSearchHit[]> {
   try {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -129,7 +134,7 @@ export async function searchBoardsSemantic(query: string, exclude: readonly stri
     const res = await fetch('/api/ai-search', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, exclude }),
+      body: JSON.stringify({ query, exclude, ...(teamId ? { team_id: teamId } : {}) }),
     });
     if (!res.ok || !res.headers.get('Content-Type')?.includes('application/json')) return [];
     const { results } = await res.json();

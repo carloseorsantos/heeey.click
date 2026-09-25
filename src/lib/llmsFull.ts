@@ -9,6 +9,7 @@ export const LLMS_FILES = [
   'getting-started.md',
   'features/whiteboard-editor.md',
   'features/collaboration-realtime.md',
+  'features/teams-and-sharing.md',
   'features/folders-and-organization.md',
   'features/version-history.md',
   'features/i18n.md',

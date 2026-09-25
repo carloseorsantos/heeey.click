@@ -3,7 +3,9 @@ import { getLocale } from '../i18n';
 
 export interface Folder {
   id: string;
-  owner_id: string;
+  /** Who created the folder (null after that account was deleted) */
+  owner_id: string | null;
+  project_id?: string | null;
   parent_id: string | null;
   name: string;
   created_at: string;
@@ -61,12 +63,13 @@ export function flattenFolderTree(folders: readonly Folder[]): { folder: Folder;
   return result;
 }
 
-export async function fetchFolders(ownerId: string): Promise<Folder[] | null> {
-  const { data, error } = await supabase
-    .from('folders')
-    .select('*')
-    .eq('owner_id', ownerId)
-    .order('name', { ascending: true });
+/** Folders of a project (teams), or of an owner on databases without teams yet */
+export async function fetchFolders(scope: { projectId: string } | { ownerId: string }): Promise<Folder[] | null> {
+  const query = supabase.from('folders').select('*');
+  const { data, error } = await ('projectId' in scope ? query.eq('project_id', scope.projectId) : query.eq('owner_id', scope.ownerId)).order(
+    'name',
+    { ascending: true }
+  );
   if (error) {
     console.warn('Erro ao carregar pastas:', error.message);
     return null;
@@ -77,11 +80,12 @@ export async function fetchFolders(ownerId: string): Promise<Folder[] | null> {
 export async function createFolder(
   ownerId: string,
   name: string,
-  parentId: string | null
+  parentId: string | null,
+  projectId?: string | null
 ): Promise<Folder | null> {
   const { data, error } = await supabase
     .from('folders')
-    .insert({ owner_id: ownerId, name: name.trim(), parent_id: parentId })
+    .insert({ owner_id: ownerId, name: name.trim(), parent_id: parentId, ...(projectId ? { project_id: projectId } : {}) })
     .select('*')
     .single();
   if (error || !data) {
