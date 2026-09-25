@@ -3,8 +3,8 @@ import type { Rpc } from './apiHandler';
 
 // Same public project settings as the web app (src/lib/supabase.ts). The API needs no
 // secret: callers authenticate with their personal API key inside each api_* function.
-const DEFAULT_SUPABASE_URL = 'https://nsczplggnyuljosvvlml.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_DcFYEb25HZ7S7qym6K8TxA_ismhm5Sv';
+export const DEFAULT_SUPABASE_URL = 'https://nsczplggnyuljosvvlml.supabase.co';
+export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_DcFYEb25HZ7S7qym6K8TxA_ismhm5Sv';
 
 /** accessToken: a user's Supabase session JWT, so RLS and auth.uid() apply to that user */
 export function createRpc(env: Record<string, string | undefined>, accessToken?: string): Rpc {
