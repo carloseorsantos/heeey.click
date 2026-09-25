@@ -31,7 +31,7 @@ To invite colleagues to the same board:
 
 ---
 
-## 🔐 Connecting Your Account (Magic Link)
+## 🔐 Connecting Your Account (Google or Magic Link)
 
 Anonymous use is supported, but signing in to your account brings key advantages:
 
@@ -49,6 +49,9 @@ Anonymous use is supported, but signing in to your account brings key advantages
 1. On the home page, on the dashboard or in your avatar menu, click **"Sign in"**.
 2. Enter your account's email and click **"Send sign-in link"**.
 3. Open the link you receive by email in this same browser.
+
+### Sign in with Google:
+On the same screens, click **"Continue with Google"** and pick your Google account. When creating an account, check the age and terms confirmation first. If a Heeey account with the same email already exists, Google signs you in to it; no new account is created. We only receive your name, email and profile picture from Google.
 
 ---
 

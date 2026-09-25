@@ -22,16 +22,30 @@ function isRateLimitError(message: string) {
 
 export type AuthMode = 'signup' | 'login';
 
+/** Google's "G", in its brand colors (Google asks for the official mark on sign-in buttons) */
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" className="w-[18px] h-[18px] flex-shrink-0" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  );
+}
+
 /**
- * Magic-link sign-in, inline in Settings › Account and in the sign-up / sign-in dialogs.
+ * Magic-link and Google sign-in, inline in Settings › Account and in the sign-up / sign-in dialogs.
  * "signup" creates the account, so it asks for the age and terms confirmation every time;
- * "login" never creates one, so it can skip it.
+ * "login" never creates one by email, so it can skip it. Google always creates the account when
+ * there is none, so in "login" it states the same terms next to its button.
  */
 export function AuthForm({ mode = 'signup', onSwitchMode }: { mode?: AuthMode; onSwitchMode?: () => void }) {
-  const { signInWithMagicLink } = useAuth();
+  const { signInWithMagicLink, signInWithGoogle } = useAuth();
   const { t, locale } = useI18n();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [consent, setConsent] = useState(false);
@@ -71,6 +85,21 @@ export function AuthForm({ mode = 'signup', onSwitchMode }: { mode?: AuthMode; o
       else setError(t('auth.sendError'));
     } else {
       setSuccess(true);
+    }
+  }
+
+  async function handleGoogle() {
+    if (mode === 'signup' && !consent) {
+      setError(t('auth.consentRequired'));
+      return;
+    }
+    setGoogleLoading(true);
+    setError(null);
+    // On success the browser is already on its way to Google, so the spinner stays until it leaves
+    const { error: err } = await signInWithGoogle();
+    if (err) {
+      setGoogleLoading(false);
+      setError(t('auth.googleError'));
     }
   }
 
@@ -159,7 +188,7 @@ export function AuthForm({ mode = 'signup', onSwitchMode }: { mode?: AuthMode; o
             ))}
 
           <div className="pt-1">
-            <Button type="submit" variant="primary" size="lg" disabled={loading || (mode === 'signup' && !consent)}
+            <Button type="submit" variant="primary" size="lg" disabled={loading || googleLoading || (mode === 'signup' && !consent)}
               // Says why it is disabled: the age and terms confirmation is still unchecked
               aria-describedby={mode === 'signup' && !consent ? consentId : undefined}
               className="w-full"
@@ -175,6 +204,39 @@ export function AuthForm({ mode = 'signup', onSwitchMode }: { mode?: AuthMode; o
             </Button>
           </div>
 
+          <div className="flex items-center gap-3 text-xs text-label-3" aria-hidden="true">
+            <span className="h-px flex-1 bg-separator" />
+            {t('auth.orDivider')}
+            <span className="h-px flex-1 bg-separator" />
+          </div>
+
+          <div className="space-y-2.5">
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={handleGoogle}
+              disabled={loading || googleLoading || (mode === 'signup' && !consent)}
+              aria-describedby={mode === 'signup' && !consent ? consentId : undefined}
+              className="w-full"
+            >
+              {googleLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <GoogleMark />}
+              <span>{t('auth.google')}</span>
+            </Button>
+            {mode === 'login' && (
+              <p className="text-xs text-label-2 text-center">
+                {t('auth.googleConsentBefore')}{' '}
+                <a href={STATIC_PAGES.terms[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+                  {t('auth.terms')}
+                </a>{' '}
+                {t('auth.consentAnd')}{' '}
+                <a href={STATIC_PAGES.privacy[locale]} target="_blank" rel="noopener" className="text-accent-text underline underline-offset-2">
+                  {t('auth.privacy')}
+                </a>
+                .
+              </p>
+            )}
+          </div>
+
           {/* Hidden once the link is sent, and locked while sending so a late answer
               never lands in the other dialog */}
           {onSwitchMode && (
@@ -183,7 +245,7 @@ export function AuthForm({ mode = 'signup', onSwitchMode }: { mode?: AuthMode; o
               <button
                 type="button"
                 onClick={onSwitchMode}
-                disabled={loading}
+                disabled={loading || googleLoading}
                 className="font-medium text-accent-text underline-offset-2 hover:underline disabled:opacity-50 disabled:no-underline"
               >
                 {mode === 'login' ? t('auth.createAccount') : t('dashboard.signIn')}

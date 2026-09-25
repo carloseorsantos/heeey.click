@@ -79,7 +79,7 @@ export function trackSignIn(user: User) {
       if (localStorage.getItem(flag)) return;
       localStorage.setItem(flag, '1');
     } catch {}
-    ph.capture('signup_completed', { method: 'magic_link' });
+    ph.capture('signup_completed', { method: user.app_metadata?.provider === 'google' ? 'google' : 'magic_link' });
   });
 }
 
