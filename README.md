@@ -34,10 +34,9 @@ heeey.click/
 ├── src/
 │   ├── __tests__/             # Testes unitários automatizados (Vitest)
 │   ├── components/
-│   │   ├── AuthModal.tsx      # Modal de login com Magic Link
 │   │   ├── BoardCard.tsx      # Cartão do quadro no Dashboard (abrir, renomear, duplicar, lixeira)
 │   │   ├── Header.tsx         # Barra superior com título editável, status de sync e avatares
-│   │   ├── NicknameModal.tsx  # Personalização de nome e cor de colaborador
+│   │   ├── settings/          # Configurações: AuthForm (criar conta e entrar com Magic Link), perfil (nome e cor) e chaves de API
 │   │   └── ShareModal.tsx     # Modal de compartilhamento com controle de permissão (Edição/Leitura)
 │   ├── hooks/
 │   │   ├── useAuth.tsx        # Contexto de autenticação e perfil do usuário/convidado
@@ -162,6 +161,6 @@ A implementação (`src/server/mcpHandler.ts`, exposta por `api/mcp.ts`) é sem 
 
 ## 🌐 Idiomas
 
-A interface está em **português** e **inglês**. O idioma vem do navegador na primeira visita e pode ser trocado pelo botão de idioma no dashboard ou pelo menu do perfil dentro do quadro; o editor do Excalidraw acompanha.
+A interface está em **português**, **inglês** e **espanhol**. O idioma vem do navegador na primeira visita e pode ser trocado pelo botão de idioma no dashboard ou pelo menu do perfil dentro do quadro; o editor do Excalidraw acompanha.
 
-Os textos ficam em `src/i18n/locales/` (`pt-BR.ts` é a fonte; `en.ts` precisa ter as mesmas chaves, o que o TypeScript e os testes verificam). Use `const { t } = useI18n()` nos componentes, com parâmetros (`t('dashboard.movedTo', { name })`) e plurais no formato `{count, plural, one {# item} other {# itens}}`.
+Os textos ficam em `src/i18n/locales/` (`pt-BR.ts` é a fonte; `en-US.ts` e `es-ES.ts` precisam ter as mesmas chaves, o que o TypeScript e os testes verificam). Use `const { t } = useI18n()` nos componentes, com parâmetros (`t('dashboard.movedTo', { name })`) e plurais no formato `{count, plural, one {# item} other {# itens}}`.
