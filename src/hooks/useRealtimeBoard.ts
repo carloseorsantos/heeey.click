@@ -26,7 +26,7 @@ import {
 } from '../lib/realtimeUtils';
 import { renderBoardThumbnail, THUMBNAIL_INTERVAL_MS } from '../lib/thumbnail';
 import { useAuth } from './useAuth';
-import { debounce, throttle } from '../lib/utils';
+import { debounce, fitTextHeights, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { setBoardTrashed } from '../lib/boardTrash';
 import { fetchBoardVersion, snapshotBoard, buildRestoredElements } from '../lib/boardVersions';
@@ -1066,7 +1066,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       await debouncedSaveToDb.flush();
       if (!(await snapshotBoard(boardId))) return false;
 
-      const restored = buildRestoredElements(api.getSceneElementsIncludingDeleted(), version.elements || []);
+      const restored = buildRestoredElements(api.getSceneElementsIncludingDeleted(), fitTextHeights(version.elements || []));
       const files = Object.values(version.files || {}).filter(
         (f: any) => f && typeof f.dataURL === 'string' && f.dataURL.length > 0
       );

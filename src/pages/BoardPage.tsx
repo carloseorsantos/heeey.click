@@ -23,7 +23,7 @@ import { BoardSearchModal } from '../components/BoardSearchModal';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
 import { isBoardLocallyCreated } from '../lib/storage';
-import { generateId } from '../lib/utils';
+import { fitTextHeights, generateId } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { createLibraryAdapter, createGuestLibraryMigration } from '../lib/libraryAdapter';
 import { useI18n } from '../i18n';
@@ -87,6 +87,9 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
     adapter: libraryAdapter,
     migrationAdapter: libraryMigrationAdapter,
   });
+  // Boards saved with a single-line text height (e.g. older templates) would show only the first line.
+  // Keyed on the board id: Excalidraw only reads initialData once
+  const initialElements = useMemo(() => fitTextHeights(board?.elements || []), [board?.id]);
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
   const [restoreState, setRestoreState] = useState<'idle' | 'restoring' | 'error'>('idle');
@@ -398,7 +401,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         <Excalidraw
           excalidrawAPI={(api) => setExcalidrawAPI(api)}
           initialData={{
-            elements: board.elements || [],
+            elements: initialElements,
             appState: {
               ...(board.app_state || {}),
               viewBackgroundColor: board.app_state?.viewBackgroundColor || '#ffffff',

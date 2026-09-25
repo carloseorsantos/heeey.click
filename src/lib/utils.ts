@@ -220,10 +220,27 @@ function createBaseElement(type: string, x: number, y: number, width: number, he
   };
 }
 
+// Rough box for hand-drawn text (Excalifont averages ~0.6em per character). Excalidraw clips text
+// to its box, so it has to fit every line, not just the first
+function estimateTextBox(text: string, fontSize: number, lineHeight: number) {
+  // A loop, not Math.max(...lines): spreading a text with ~100k lines overflows the call stack
+  let lineCount = 0;
+  let longestLine = 0;
+  for (const line of text.split('\n')) {
+    lineCount++;
+    if (line.length > longestLine) longestLine = line.length;
+  }
+  return {
+    width: longestLine * (fontSize * 0.6),
+    // Same order as Excalidraw's getTextHeight, so a correctly sized box compares equal
+    height: lineCount * (fontSize * lineHeight),
+  };
+}
+
 function createTextElement(x: number, y: number, text: string, custom: Record<string, any> = {}) {
   const fontSize = custom.fontSize || 20;
-  const height = fontSize * 1.5;
-  const width = text.length * (fontSize * 0.6);
+  const lineHeight = custom.lineHeight || 1.25;
+  const { width, height } = estimateTextBox(text, fontSize, lineHeight);
   return createBaseElement('text', x, y, width, height, {
     text,
     fontSize,
@@ -232,8 +249,25 @@ function createTextElement(x: number, y: number, text: string, custom: Record<st
     verticalAlign: 'top',
     containerId: null,
     originalText: text,
-    lineHeight: 1.25,
+    lineHeight,
     ...custom,
+  });
+}
+
+/**
+ * Grows free-standing text boxes shorter than their lines, so boards saved with a single-line
+ * height (e.g. older templates) show every line. Only the height changes: it is exact, while the
+ * width would be a guess. Board elements are untrusted, so odd sizes are left alone.
+ */
+export function fitTextHeights<T extends Record<string, any>>(elements: readonly T[]): T[] {
+  return elements.map((el) => {
+    if (el.type !== 'text' || el.containerId || typeof el.text !== 'string') return el;
+    const { fontSize, lineHeight, height } = el;
+    if (![fontSize, lineHeight, height].every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0)) {
+      return el;
+    }
+    const needed = estimateTextBox(el.text, fontSize, lineHeight).height;
+    return Number.isFinite(needed) && height < needed ? { ...el, height: needed } : el;
   });
 }
 
@@ -244,7 +278,7 @@ export function getBrainstormingTemplate(): any[] {
       strokeColor: '#6366f1',
     }),
     // Sticky Note 1 (Amarelo)
-    createBaseElement('rectangle', 80, 130, 200, 180, {
+    createBaseElement('rectangle', 80, 130, 280, 180, {
       backgroundColor: '#fef08a',
       strokeColor: '#ca8a04',
       fillStyle: 'solid',
@@ -255,24 +289,24 @@ export function getBrainstormingTemplate(): any[] {
       strokeColor: '#713f12',
     }),
     // Sticky Note 2 (Verde)
-    createBaseElement('rectangle', 320, 130, 200, 180, {
+    createBaseElement('rectangle', 400, 130, 280, 180, {
       backgroundColor: '#bbf7d0',
       strokeColor: '#16a34a',
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(335, 150, t('templates.brainstorming.features'), {
+    createTextElement(415, 150, t('templates.brainstorming.features'), {
       fontSize: 16,
       strokeColor: '#14532d',
     }),
     // Sticky Note 3 (Roxo)
-    createBaseElement('rectangle', 560, 130, 200, 180, {
+    createBaseElement('rectangle', 720, 130, 280, 180, {
       backgroundColor: '#e9d5ff',
       strokeColor: '#9333ea',
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(575, 150, t('templates.brainstorming.nextSteps'), {
+    createTextElement(735, 150, t('templates.brainstorming.nextSteps'), {
       fontSize: 16,
       strokeColor: '#581c87',
     }),
@@ -280,6 +314,14 @@ export function getBrainstormingTemplate(): any[] {
 }
 
 export function getFlowchartTemplate(): any[] {
+  // Each step label spans its card and is centered by Excalidraw, so any locale's text sits in the middle
+  const stepLabel = (cardX: number, cardWidth: number, text: string, strokeColor: string) =>
+    createTextElement(cardX + 10, 140 + (70 - 18 * 1.25) / 2, text, {
+      fontSize: 18,
+      strokeColor,
+      width: cardWidth - 20,
+      textAlign: 'center',
+    });
   return [
     createTextElement(80, 50, t('templates.flowchart.title'), {
       fontSize: 28,
@@ -292,7 +334,7 @@ export function getFlowchartTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(115, 162, t('templates.flowchart.start'), { fontSize: 18, strokeColor: '#065f46' }),
+    stepLabel(80, 160, t('templates.flowchart.start'), '#065f46'),
 
     // Arrow 1 -> 2
     createBaseElement('arrow', 245, 175, 80, 0, {
@@ -308,7 +350,7 @@ export function getFlowchartTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(355, 162, t('templates.flowchart.run'), { fontSize: 18, strokeColor: '#312e81' }),
+    stepLabel(330, 170, t('templates.flowchart.run'), '#312e81'),
 
     // Arrow 2 -> 3
     createBaseElement('arrow', 505, 175, 80, 0, {
@@ -324,11 +366,14 @@ export function getFlowchartTemplate(): any[] {
       fillStyle: 'solid',
       roundness: { type: 3 },
     }),
-    createTextElement(625, 162, t('templates.flowchart.done'), { fontSize: 18, strokeColor: '#78350f' }),
+    stepLabel(590, 160, t('templates.flowchart.done'), '#78350f'),
   ];
 }
 
 export function getWireframeTemplate(): any[] {
+  // Nav is anchored to the right edge of the header bar, since its length varies per locale
+  const nav = t('templates.wireframe.nav');
+  const navX = 80 + 680 - 25 - estimateTextBox(nav, 14, 1.25).width;
   return [
     createTextElement(80, 40, t('templates.wireframe.title'), {
       fontSize: 28,
@@ -348,7 +393,7 @@ export function getWireframeTemplate(): any[] {
     }),
     createTextElement(105, 115, 'Heeey App', { fontSize: 18, strokeColor: '#7c3aed' }),
     // Nav Items
-    createTextElement(500, 117, t('templates.wireframe.nav'), { fontSize: 14, strokeColor: '#64748b' }),
+    createTextElement(navX, 117, nav, { fontSize: 14, strokeColor: '#64748b' }),
     // Hero Card
     createBaseElement('rectangle', 120, 180, 600, 160, {
       backgroundColor: '#ffffff',
