@@ -518,7 +518,29 @@ begin
 end;
 $$;
 
--- Ativa convites pendentes em quadros feitos para o e-mail (verificado) do usuário
+-- E-mail cuja posse o usuário provou (minúsculo), ou null.
+-- email_confirmed_at sozinho não basta: com "Confirm email" desligado no Supabase Auth
+-- (mailer_autoconfirm), qualquer um cria pela API pública (POST /auth/v1/signup) uma conta
+-- com senha já confirmada usando o e-mail de outra pessoa. O app só entra por magic link, e
+-- contas criadas assim não têm senha; então só contas sem senha herdam convites por e-mail.
+create or replace function public.proven_email(p_user uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select lower(u.email)
+  from auth.users u
+  where u.id = p_user
+    and u.email is not null
+    and u.email_confirmed_at is not null
+    and coalesce(u.encrypted_password, '') = '';
+$$;
+
+revoke all on function public.proven_email(uuid) from public, anon, authenticated;
+
+-- Ativa convites pendentes em quadros feitos para o e-mail (comprovado) do usuário
 create or replace function public.activate_board_shares(p_user uuid)
 returns integer
 language plpgsql
@@ -529,8 +551,7 @@ declare
   v_email text;
   v_count integer;
 begin
-  select lower(u.email) into v_email from auth.users u
-  where u.id = p_user and u.email is not null and u.email_confirmed_at is not null;
+  v_email := public.proven_email(p_user);
   if v_email is null then
     return 0;
   end if;
@@ -1945,7 +1966,7 @@ begin
   end if;
 
   select u.id into v_target from auth.users u
-  where lower(u.email) = v_email and u.email_confirmed_at is not null
+  where lower(u.email) = v_email and public.proven_email(u.id) = v_email
   limit 1;
 
   if v_target is not null then

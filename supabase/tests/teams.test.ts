@@ -356,6 +356,19 @@ describe('teams, projects and sharing', () => {
       expect(await canWrite(LATE, board)).toBe(true);
     });
 
+    it('never hands pending invites to an account created with a password (e-mail not proven)', async () => {
+      // With "Confirm email" off, POST /auth/v1/signup creates a confirmed account for any address
+      const squatter = '00000000-0000-4000-8000-0000000000a9';
+      await t.as(MEMBER, `select public.share_board($1, 'victim@client.test', 'edit')`, [board]);
+      await t.sys(`insert into auth.users (id, email, email_confirmed_at, encrypted_password) values ($1, 'victim@client.test', now(), '$2a$10$hash')`, [squatter]);
+      expect(await canSee(squatter, board)).toBe(false);
+      // Sharing again with that address does not link the password account either
+      await t.as(MEMBER, `select public.share_board($1, 'victim@client.test', 'view')`, [board]);
+      expect(await canSee(squatter, board)).toBe(false);
+      expect((await t.sys(`select user_id from public.board_members where email = 'victim@client.test'`))[0].user_id).toBeNull();
+      await t.sys(`delete from public.board_members where email = 'victim@client.test'`);
+    });
+
     it('lists who has access to people with access, including inherited access', async () => {
       const sharing = (await t.as(GUEST, `select public.board_sharing($1) as s`, [board])).rows[0].s;
       expect(sharing).toMatchObject({
