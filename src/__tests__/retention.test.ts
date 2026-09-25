@@ -9,6 +9,7 @@ function deps(ids: string[], failing: string[] = []): PurgeDeps & { removed: str
   return {
     removed,
     purge: vi.fn(async () => ({ purged_board_ids: ids, audit_events_purged: 3 })),
+    restrictLinks: vi.fn(async () => 2),
     removeBoardMedia: vi.fn(async (id: string) => {
       if (failing.includes(id)) throw new Error('storage down');
       removed.push(id);
@@ -24,13 +25,15 @@ describe('retention cron', () => {
     expect((await handlePurge(cron('Bearer '), '', d)).status).toBe(401);
     expect((await handlePurge(cron('Bearer undefined'), undefined, d)).status).toBe(401);
     expect(d.purge).not.toHaveBeenCalled();
+    expect(d.restrictLinks).not.toHaveBeenCalled();
   });
 
-  it('purges expired data and removes the purged boards’ images', async () => {
+  it('purges expired data, removes the purged boards’ images and restricts due links', async () => {
     const d = deps(['a', 'b']);
     const res = await handlePurge(cron('Bearer s3cret'), 's3cret', d);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ boards_purged: 2, audit_events_purged: 3, media_errors: [] });
+    expect(await res.json()).toEqual({ boards_purged: 2, audit_events_purged: 3, links_restricted: 2, media_errors: [] });
+    expect(d.restrictLinks).toHaveBeenCalledOnce();
     expect(d.removed).toEqual(['a', 'b']);
   });
 

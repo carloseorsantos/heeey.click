@@ -24,7 +24,8 @@
 
 - `public.purge_expired_data()` apaga quadros há mais de 30 dias na lixeira e eventos de auditoria com mais de 1 ano. Cada quadro apagado gera um evento `board.purged`.
 - O **Vercel Cron** chama `GET /api/cron/purge` todo dia às 03:17 UTC (`vercel.json`). O endpoint exige `Authorization: Bearer $CRON_SECRET`, roda a função com a `service_role` e apaga as imagens dos quadros expurgados pela API do Storage.
-- Evidência: logs do cron na Vercel (resposta com `boards_purged`, `audit_events_purged` e `media_errors`) e eventos `board.purged` em `audit_log`.
+- O mesmo cron roda `public.apply_scheduled_link_restrictions()`, que restringe os links abertos cujo aviso de 30 dias venceu (migração dos times). Cada restrição gera `board.link_restricted`.
+- Evidência: logs do cron na Vercel (resposta com `boards_purged`, `audit_events_purged`, `links_restricted` e `media_errors`) e eventos `board.purged` e `board.link_restricted` em `audit_log`.
 
 ## 3. Pedidos de titulares (LGPD/GDPR)
 
