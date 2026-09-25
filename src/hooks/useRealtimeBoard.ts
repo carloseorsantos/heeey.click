@@ -26,7 +26,7 @@ import {
 } from '../lib/realtimeUtils';
 import { renderBoardThumbnail, THUMBNAIL_INTERVAL_MS } from '../lib/thumbnail';
 import { useAuth } from './useAuth';
-import { debounce, throttle } from '../lib/utils';
+import { debounce, fitTextHeights, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { setBoardTrashed } from '../lib/boardTrash';
 import { fetchBoardVersion, snapshotBoard, buildRestoredElements } from '../lib/boardVersions';
@@ -54,6 +54,9 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
 
   const isRemoteUpdateRef = useRef<boolean>(false);
   const channelRef = useRef<any>(null);
+  // Cursors and sync requests: a separate channel anyone with the link may send on,
+  // while scene changes on the room channel are limited to editors (Realtime policies)
+  const peersChannelRef = useRef<any>(null);
   const channelStatusRef = useRef<string>('CLOSED');
   const joinedAtRef = useRef<number>(Date.now());
   const collaboratorsMapRef = useRef<Map<SocketId, Collaborator>>(new Map());
@@ -339,10 +342,10 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   // Adjusted from 40ms to 90ms to save >55% bandwidth while preserving smooth visual motion
   const throttledBroadcastCursor = useRef(
     throttle((payload: RealtimeCursorUpdate) => {
-      if (!channelRef.current) return;
+      if (!peersChannelRef.current) return;
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
 
-      channelRef.current.send({
+      peersChannelRef.current.send({
         type: 'broadcast',
         event: 'cursor-update',
         payload,
@@ -354,9 +357,12 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   useEffect(() => {
     if (!boardId) return;
 
+    // Private channels: Realtime checks the realtime.messages policies on join
+    // (supabase/migrations/20260925120000_realtime_channel_authorization.sql)
     const channelName = `heeey:room:${boardId}`;
     const channel = supabase.channel(channelName, {
       config: {
+        private: true,
         presence: {
           key: effectiveUserId,
         },
@@ -367,6 +373,27 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     });
 
     channelRef.current = channel;
+    const peers = supabase.channel(`heeey:peers:${boardId}`, {
+      config: { private: true, broadcast: { self: false } },
+    });
+    peersChannelRef.current = peers;
+
+    // Request the latest scene from existing peers once both channels are joined: the
+    // request goes on the peers channel and the answer comes back on the room channel
+    let roomJoined = false;
+    let peersJoined = false;
+    const requestSync = () => {
+      if (!roomJoined || !peersJoined) return;
+      peers.send({
+        type: 'broadcast',
+        event: 'sync-request',
+        payload: {
+          type: 'sync-request',
+          boardId,
+          senderId: effectiveUserIdRef.current,
+        },
+      });
+    };
 
     // New channel: the next local change is broadcast in full once, then as deltas
     sentVersionsRef.current = new Map();
@@ -503,6 +530,93 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           isRemoteUpdateRef.current = false;
         }
       })
+      // Broadcast: Room Sync Response (received latest scene from existing peer)
+      .on('broadcast', { event: 'sync-response' }, ({ payload }: { payload: RealtimeSyncResponse }) => {
+        if (!payload || payload.senderId === effectiveUserIdRef.current) return;
+        const api = apiRef.current;
+        if (!api) return;
+
+        const currentElements = api.getSceneElementsIncludingDeleted();
+        // If current canvas is empty or peer has more/newer elements, reconcile
+        if (currentElements.length === 0 || payload.elements.length > currentElements.length) {
+          isRemoteUpdateRef.current = true;
+          try {
+            const reconciled = reconcileElements(
+              currentElements,
+              payload.elements as any,
+              api.getAppState()
+            );
+            markReceived(payload.elements, payload.files);
+
+            if (payload.files) {
+              const filesWithData = Object.values(payload.files).filter(
+                (f: any) => f && typeof f.dataURL === 'string' && f.dataURL.length > 0
+              );
+              if (filesWithData.length > 0) {
+                api.addFiles(filesWithData as any);
+              }
+            }
+
+            lastChangeSignatureRef.current = computeSceneSignature(
+              reconciled,
+              payload.appState?.viewBackgroundColor || api.getAppState().viewBackgroundColor,
+              Object.keys(api.getFiles() || {}).length
+            );
+
+            api.updateScene({
+              elements: reconciled,
+              appState: payload.appState?.viewBackgroundColor
+                ? { viewBackgroundColor: payload.appState.viewBackgroundColor }
+                : undefined,
+            });
+          } finally {
+            isRemoteUpdateRef.current = false;
+          }
+        }
+      })
+      // Broadcast: Meta updates (title, access_level, trash state)
+      .on('broadcast', { event: 'meta-update' }, ({ payload }: { payload: RealtimeMetaUpdate }) => {
+        if (!payload || payload.senderId === effectiveUserIdRef.current) return;
+
+        const applyMeta = (changes: Partial<Board>) =>
+          setBoard((prev) => {
+            if (!prev) return prev;
+            const updated = { ...prev, ...changes, updated_at: new Date().toISOString() };
+            saveLocalBoard(updated);
+            return updated;
+          });
+        if (payload.title !== undefined) applyMeta({ title: payload.title });
+        // Permission and trash state come from the database, never from a peer's message
+        if (payload.accessLevel !== undefined || payload.deletedAt !== undefined) {
+          supabase
+            .from('boards')
+            .select('access_level, deleted_at')
+            .eq('id', boardId)
+            .setHeader(BOARD_ID_HEADER, boardId)
+            .maybeSingle()
+            .then(({ data }) => {
+              if (data) applyMeta({ access_level: data.access_level, deleted_at: data.deleted_at });
+            });
+        }
+      })
+      .subscribe(async (status) => {
+        channelStatusRef.current = status;
+        if (status !== 'SUBSCRIBED') roomJoined = false;
+        if (status === 'SUBSCRIBED') {
+          joinedAtRef.current = Date.now();
+          await channel.track({
+            id: effectiveUserIdRef.current,
+            name: effectiveUserNameRef.current,
+            color: guestProfileRef.current.color,
+            joinedAt: joinedAtRef.current,
+          });
+
+          roomJoined = true;
+          requestSync();
+        }
+      });
+
+    peers
       // Broadcast: Cursor updates with reliable nicknames and colors
       .on('broadcast', { event: 'cursor-update' }, ({ payload }: { payload: RealtimeCursorUpdate }) => {
         if (!payload || payload.senderId === effectiveUserId) return;
@@ -573,97 +687,19 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
             });
           }
         }
-      })
-      // Broadcast: Room Sync Response (received latest scene from existing peer)
-      .on('broadcast', { event: 'sync-response' }, ({ payload }: { payload: RealtimeSyncResponse }) => {
-        if (!payload || payload.senderId === effectiveUserIdRef.current) return;
-        const api = apiRef.current;
-        if (!api) return;
-
-        const currentElements = api.getSceneElementsIncludingDeleted();
-        // If current canvas is empty or peer has more/newer elements, reconcile
-        if (currentElements.length === 0 || payload.elements.length > currentElements.length) {
-          isRemoteUpdateRef.current = true;
-          try {
-            const reconciled = reconcileElements(
-              currentElements,
-              payload.elements as any,
-              api.getAppState()
-            );
-            markReceived(payload.elements, payload.files);
-
-            if (payload.files) {
-              const filesWithData = Object.values(payload.files).filter(
-                (f: any) => f && typeof f.dataURL === 'string' && f.dataURL.length > 0
-              );
-              if (filesWithData.length > 0) {
-                api.addFiles(filesWithData as any);
-              }
-            }
-
-            lastChangeSignatureRef.current = computeSceneSignature(
-              reconciled,
-              payload.appState?.viewBackgroundColor || api.getAppState().viewBackgroundColor,
-              Object.keys(api.getFiles() || {}).length
-            );
-
-            api.updateScene({
-              elements: reconciled,
-              appState: payload.appState?.viewBackgroundColor
-                ? { viewBackgroundColor: payload.appState.viewBackgroundColor }
-                : undefined,
-            });
-          } finally {
-            isRemoteUpdateRef.current = false;
-          }
-        }
-      })
-      // Broadcast: Meta updates (title, access_level, trash state)
-      .on('broadcast', { event: 'meta-update' }, ({ payload }: { payload: RealtimeMetaUpdate }) => {
-        if (!payload || payload.senderId === effectiveUserIdRef.current) return;
-
-        setBoard((prev) => {
-          if (!prev) return prev;
-          const updated = {
-            ...prev,
-            ...(payload.title !== undefined ? { title: payload.title } : {}),
-            ...(payload.accessLevel !== undefined ? { access_level: payload.accessLevel } : {}),
-            ...(payload.deletedAt !== undefined ? { deleted_at: payload.deletedAt } : {}),
-            updated_at: new Date().toISOString(),
-          };
-          saveLocalBoard(updated);
-          return updated;
-        });
-      })
-      .subscribe(async (status) => {
-        channelStatusRef.current = status;
-        if (status === 'SUBSCRIBED') {
-          joinedAtRef.current = Date.now();
-          await channel.track({
-            id: effectiveUserIdRef.current,
-            name: effectiveUserNameRef.current,
-            color: guestProfileRef.current.color,
-            joinedAt: joinedAtRef.current,
-          });
-
-          // Request latest scene from existing peers in the room
-          channel.send({
-            type: 'broadcast',
-            event: 'sync-request',
-            payload: {
-              type: 'sync-request',
-              boardId,
-              senderId: effectiveUserIdRef.current,
-            },
-          });
-        }
       });
+    peers.subscribe((status) => {
+      peersJoined = status === 'SUBSCRIBED';
+      requestSync();
+    });
 
     return () => {
       channelStatusRef.current = 'CLOSED';
       channel.untrack();
       supabase.removeChannel(channel);
+      supabase.removeChannel(peers);
       channelRef.current = null;
+      peersChannelRef.current = null;
     };
   }, [boardId, effectiveUserId]);
 
@@ -684,9 +720,9 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         throttledBroadcastCursor.cancel();
-        if (channelRef.current && lastSentCursorRef.current !== null) {
+        if (peersChannelRef.current && lastSentCursorRef.current !== null) {
           lastSentCursorRef.current = null;
-          channelRef.current.send({
+          peersChannelRef.current.send({
             type: 'broadcast',
             event: 'cursor-update',
             payload: {
@@ -817,7 +853,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       button: 'down' | 'up';
       pointersMap: any;
     }) => {
-      if (!channelRef.current) return;
+      if (!peersChannelRef.current) return;
 
       // 1. Pause broadcast when tab is hidden to save realtime quota
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') {
@@ -828,8 +864,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         if (lastSentCursorRef.current !== null) {
           lastSentCursorRef.current = null;
           throttledBroadcastCursor.cancel();
-          if (channelRef.current) {
-            channelRef.current.send({
+          if (peersChannelRef.current) {
+            peersChannelRef.current.send({
               type: 'broadcast',
               event: 'cursor-update',
               payload: {
@@ -1030,7 +1066,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       await debouncedSaveToDb.flush();
       if (!(await snapshotBoard(boardId))) return false;
 
-      const restored = buildRestoredElements(api.getSceneElementsIncludingDeleted(), version.elements || []);
+      const restored = buildRestoredElements(api.getSceneElementsIncludingDeleted(), fitTextHeights(version.elements || []));
       const files = Object.values(version.files || {}).filter(
         (f: any) => f && typeof f.dataURL === 'string' && f.dataURL.length > 0
       );
