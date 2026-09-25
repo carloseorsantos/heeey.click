@@ -27,7 +27,7 @@ Legenda: ✅ implementado no código/repositório · ⚙️ configuração manua
 | # | Controle | Critério | Status | Evidência |
 |---|---|---|---|---|
 | C1 | CI obrigatório (build, tipos, testes, `npm audit`) em todo PR | CC8.1 | ✅ | `.github/workflows/ci.yml`, execuções no GitHub Actions |
-| C2 | Branch `main` protegida: PR + revisão + CI verde | CC8.1 | ⚙️ | Configuração de branch protection / ruleset |
+| C2 | Branch `main` protegida: PR + revisão + CI verde | CC8.1 | ✅ | Branch protection (`compliance/branch-protection.json`), ativa desde 2026-09-24 |
 | C3 | Code owners revisam toda mudança | CC8.1 | ✅ | `.github/CODEOWNERS`, aprovações nos PRs |
 | C4 | Checklist de segurança no PR | CC8.1 | ✅ | `.github/pull_request_template.md` |
 | C5 | Mudanças de banco versionadas e testadas (PGlite) | CC8.1 | ✅ | `supabase/migrations/`, `supabase/tests/` |
@@ -50,19 +50,17 @@ Legenda: ✅ implementado no código/repositório · ⚙️ configuração manua
 
 ## Pendências manuais (fora do código)
 
+Já feitos em 2026-09-24: branch protection na `main`, `CRON_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` na
+Vercel, e a migration `20260926120000_audit_log_and_retention.sql` aplicada em produção.
+
 Coisas que precisam ser feitas por quem administra as contas:
 
-1. **Branch protection na `main`** (C2): exigir PR, 1 aprovação, o check `ci` e resolução de conversas.
-   Veja o comando em [change-management.md](change-management.md#configuração-da-branch-main).
-2. **Dependabot security updates** e **private vulnerability reporting** (C11, C21):
+1. **Dependabot security updates** e **private vulnerability reporting** (C11, C21):
    GitHub → Settings → Code security.
-3. **MFA obrigatório** em todas as contas (C14).
-4. **Vercel**: criar as variáveis `CRON_SECRET` e `SUPABASE_SERVICE_ROLE_KEY` (produção) para o
-   expurgo diário (C10). Sem elas o endpoint responde 503 e nada é apagado.
-5. **Supabase**: aplicar a migration `20260926120000_audit_log_and_retention.sql`; avaliar o plano
-   Pro com PITR (C16).
-6. **Uptime monitor** externo para `https://heeey.click` e `/api/v1` (C17).
-7. Primeira **revisão de acessos** e primeiro **teste de restauração** (C15, C16).
+2. **MFA obrigatório** em todas as contas (C14).
+3. **Supabase**: avaliar o plano Pro com PITR (C16).
+4. **Uptime monitor** externo para `https://heeey.click` e `/api/v1` (C17).
+5. Primeira **revisão de acessos** e primeiro **teste de restauração** (C15, C16).
 
 ## Calendário de controles recorrentes
 
