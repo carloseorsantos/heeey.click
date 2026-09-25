@@ -1,6 +1,6 @@
 import type { PostHog } from 'posthog-js';
 import type { User } from '@supabase/supabase-js';
-import { inject, type BeforeSendEvent } from '@vercel/analytics';
+import type { BeforeSendEvent } from '@vercel/analytics';
 
 // Analytics is opt-in per deploy: without VITE_POSTHOG_KEY nothing is loaded.
 const KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined;
@@ -48,15 +48,14 @@ export function redactUrl(href: string): string {
   return url.toString();
 }
 
-function redactEvent(event: BeforeSendEvent): BeforeSendEvent {
+export function redactEvent(event: BeforeSendEvent): BeforeSendEvent {
   return { ...event, url: redactUrl(event.url) };
 }
 
 export function initAnalytics() {
   void getClient();
-  // Vercel Web Analytics is cookieless; its script is served from our own domain
-  // (/_vercel/insights) and only reports once the project has it enabled.
-  inject({ mode: import.meta.env.DEV ? 'development' : 'production', beforeSend: redactEvent });
+  // Vercel Web Analytics is now initialized via the <Analytics /> component in App.tsx
+  // This function kept for PostHog initialization
 }
 
 export function track(event: string, properties?: Record<string, unknown>) {
