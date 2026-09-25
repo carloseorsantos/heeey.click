@@ -128,8 +128,10 @@
 
       <h2>8. Seguridad</h2>
       <p>
-        Los datos viajan cifrados (HTTPS) y la base de datos aplica reglas de acceso por fila: cada persona solo puede leer
-        sus propias pizarras o aquellas cuyo enlace ha recibido.
+        Tus datos se cifran en reposo con AES-256 por nuestro proveedor de base de datos y almacenamiento (Supabase) y
+        viajan cifrados con TLS (solo HTTPS). Las claves de API nunca se guardan: conservamos solo un hash SHA-256
+        irreversible, y la clave completa se te muestra una única vez. La base de datos aplica reglas de acceso por fila:
+        cada persona solo puede leer sus propias pizarras o aquellas cuyo enlace ha recibido.
       </p>
 
       <h2>9. Cambios</h2>

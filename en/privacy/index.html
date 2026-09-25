@@ -127,8 +127,10 @@
 
       <h2>8. Security</h2>
       <p>
-        Data travels encrypted (HTTPS) and the database enforces row-level access rules: each person can only read their
-        own boards or the boards whose link they received.
+        Your data is encrypted at rest with AES-256 by our database and storage provider (Supabase) and encrypted in
+        transit with TLS (HTTPS only). API keys are never stored: we keep only a one-way SHA-256 hash, and the full key
+        is shown to you once. The database enforces row-level access rules: each person can only read their own boards
+        or the boards whose link they received.
       </p>
 
       <h2>9. Changes</h2>
