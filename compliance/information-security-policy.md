@@ -47,12 +47,21 @@ pessoas que usam o heeey.click, e cumprir a LGPD, o GDPR e os compromissos da
 - Não copiar dados de produção para máquinas locais, exceto para responder a incidentes ou pedidos de titulares, e apagar logo depois.
 - Os testes usam PGlite; nunca apontar testes para o banco de produção.
 
-## 7. Treinamento e ciência
+## 7. Criptografia
+
+- **Em repouso:** banco, Storage e backups ficam criptografados com AES-256 pelo Supabase (controle herdado, ver [vendors.md](vendors.md)).
+- **Em trânsito:** TLS 1.2+ em todo o tráfego (Vercel e Supabase); HTTP é redirecionado e o HSTS está ativo (`vercel.json`).
+- **Credenciais:** chaves de API são guardadas só como hash SHA-256 e mostradas uma única vez; nenhuma credencial fica em texto puro no banco.
+- **Segredos do servidor:** só nas variáveis de ambiente da Vercel/Supabase; nunca no repositório nem no bundle do cliente (variáveis `VITE_*` são públicas).
+- **Tokens de terceiros:** hoje nenhum é armazenado. Se algum passar a ser, precisa ser criptografado na aplicação (AES-256-GCM, chave fora do banco) antes de gravar.
+- **Quadros locais:** quadros de visitantes ficam em texto puro no `localStorage` do próprio dispositivo; não há criptografia ponta a ponta nos links de compartilhamento.
+
+## 8. Treinamento e ciência
 
 Toda pessoa que recebe acesso de escrita ou administrativo lê estas políticas e registra ciência
 na revisão de acessos do trimestre ([access-control.md](access-control.md)).
 
-## 8. Exceções
+## 9. Exceções
 
 Exceções são registradas numa issue com o rótulo `security-exception`, com justificativa, prazo e
 aprovação do responsável de segurança.

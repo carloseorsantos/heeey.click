@@ -47,6 +47,7 @@ Legenda: ✅ implementado no código/repositório · ⚙️ configuração manua
 | C19 | Revisão anual dos fornecedores | CC9.2 | 📋 | Registro em `vendors.md` |
 | C20 | Política de privacidade e termos publicados | P1.1 | ✅ | `/privacidade`, `/termos` (pt, en, es) |
 | C21 | Divulgação responsável de vulnerabilidades | CC2.3 | ✅ ⚙️ | `SECURITY.md` + private vulnerability reporting |
+| C22 | Criptografia em repouso (AES-256) e em trânsito (TLS 1.2+); credenciais só como hash | CC6.1 / CC6.7 | ✅ | [information-security-policy.md §7](information-security-policy.md#7-criptografia), relatório SOC 2 do Supabase, `vercel.json` |
 
 ## Pendências manuais (fora do código)
 
