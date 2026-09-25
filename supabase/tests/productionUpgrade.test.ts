@@ -90,7 +90,7 @@ describe('upgrading a pre-hardening database with the migrations', () => {
   });
 
   it('enforces the trash rules', async () => {
-    expect((await as(B, `update public.boards set deleted_at = now() where id = $1`, [BOARD])).error).toMatch(/proprietário/);
+    expect((await as(B, `update public.boards set deleted_at = now() where id = $1`, [BOARD])).error).toMatch(/lixeira/);
     await as(A, `update public.boards set deleted_at = now() where id = $1`, [BOARD]);
     expect((await as(A, `update public.boards set elements = '[]' where id = $1`, [BOARD])).error).toMatch(/lixeira/);
     await as(A, `update public.boards set deleted_at = null where id = $1`, [BOARD]);
@@ -99,6 +99,25 @@ describe('upgrading a pre-hardening database with the migrations', () => {
   it('protects board images from other users', async () => {
     expect((await as(B, `delete from storage.objects where name like $1 returning id`, [`${BOARD}/%`])).rows).toHaveLength(0);
     expect((await as(A, `delete from storage.objects where name like $1 returning id`, [`${BOARD}/%`])).rows).toHaveLength(1);
+  });
+
+  it('gives every existing user a personal team and moves their boards into it, restricting open links in 30 days', async () => {
+    const teams = (await db.query<any>(`select created_by, is_personal from public.teams order by created_by`)).rows;
+    expect(teams).toEqual([
+      { created_by: A, is_personal: true },
+      { created_by: B, is_personal: true },
+    ]);
+    const board = (await db.query<any>(
+      `select b.access_level, round(extract(epoch from b.restrict_link_at - now()) / 86400)::int as remaining_days, p.is_default, t.created_by
+       from public.boards b join public.projects p on p.id = b.project_id join public.teams t on t.id = b.team_id
+       where b.id = $1`,
+      [BOARD]
+    )).rows[0];
+    expect(board).toMatchObject({ access_level: 'edit', is_default: true, created_by: A });
+    expect(board.remaining_days).toBe(30);
+    // The link keeps working meanwhile, and the owner still manages the board
+    expect((await as(null, `select id from public.boards where id = $1`, [BOARD])).rows).toHaveLength(1);
+    expect((await as(A, `select public.get_board_access($1) as a`, [BOARD])).rows[0].a.permission).toBe('manage');
   });
 
   it('keeps existing data and indexes it for search', async () => {

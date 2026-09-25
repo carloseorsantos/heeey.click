@@ -77,7 +77,7 @@ describe('database schema and migrations', () => {
     });
 
     it('only the owner trashes; trashed boards are read-only until restored', async () => {
-      expect((await as(B, `update public.boards set deleted_at = now() where id = $1`, [BOARD])).error).toMatch(/proprietário/);
+      expect((await as(B, `update public.boards set deleted_at = now() where id = $1`, [BOARD])).error).toMatch(/lixeira/);
       const before = (await board()).updated_at;
       expect((await as(A, `update public.boards set deleted_at = now() where id = $1`, [BOARD])).error).toBeUndefined();
       expect(+(await board()).updated_at).toBe(+before);
@@ -275,7 +275,7 @@ describe('database schema and migrations', () => {
 
     it('keeps internal helpers private', async () => {
       expect((await as(null, `select public.api_authenticate($1, 'read')`, [readKey])).error).toMatch(/permission denied/);
-      expect((await as(A, `select public.api_own_board($1, $2)`, [A, BOARD])).error).toMatch(/permission denied/);
+      expect((await as(A, `select public.api_board($1)`, [BOARD])).error).toMatch(/permission denied/);
     });
   });
 
@@ -554,7 +554,11 @@ describe('database schema and migrations', () => {
     it('records security events without letting clients read or change them', async () => {
       const id = '10000000-0000-4000-8000-000000000031';
       await as(null, `insert into public.boards (id, title) values ($1, 'audit')`, [id], id);
-      await as(A, `update public.boards set owner_id = $2 where id = $1`, [id, A], id);
+      const project = (await db.query<any>(
+        `select p.id from public.projects p join public.teams t on t.id = p.team_id where t.created_by = $1 and t.is_personal and p.is_default`,
+        [A]
+      )).rows[0].id;
+      expect((await as(A, `select public.claim_board($1, $2, 'edit')`, [id, project], id)).error).toBeUndefined();
       await as(A, `update public.boards set elements = $2::jsonb where id = $1`, [id, texts(['edit'])], id);
       await as(A, `update public.boards set access_level = 'view' where id = $1`, [id], id);
       await as(A, `update public.boards set deleted_at = now() where id = $1`, [id], id);
