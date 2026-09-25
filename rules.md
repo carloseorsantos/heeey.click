@@ -16,6 +16,8 @@ Regras gerais para quem contribui com o Heeey, sejam pessoas ou agentes de IA. O
   - **Tipo:** `Feature`, `Fix` ou `Research`
   - **Área de impacto:** `Segurança`, `Integrações`, `Infraestrutura` ou `Geral`
 - Antes de criar a issue, pergunte a quem pediu **a quem atribuir** e **em qual projeto** ela entra. Não presuma nenhum dos dois.
+- Toda issue tem uma seção **Critérios de aceite**, em forma de checklist.
+- Antes de abrir o PR ou encerrar a issue, revise cada critério contra o que foi entregue. Marque só os que foram cumpridos e aponte o que ainda falta.
 
 ## Código
 - Reaproveite o que já existe (`Modal`, `AuthForm`, `Button`, hooks, i18n) antes de criar funções ou componentes novos.
