@@ -67,18 +67,6 @@ export function generateGuestName(locale: Locale = getLocale()): string {
   return `${animal} #${num}`;
 }
 
-export function getInitials(name: string): string {
-  if (!name) return '??';
-  const allParts = name.trim().split(/\s+/);
-  // Skip tokens like "#83" in generated guest names so "Leão #83" becomes "LE", not "L#"
-  const wordParts = allParts.filter((part) => /^\p{L}/u.test(part));
-  const parts = wordParts.length > 0 ? wordParts : allParts;
-  if (parts.length === 1) {
-    return parts[0].substring(0, 2).toUpperCase();
-  }
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 /** Relative time in the given locale ("há 5 minutos" / "5 minutes ago"), dates after a week */
 export function formatDateRelative(dateStr: string | Date, locale: Locale = getLocale()): string {
   try {

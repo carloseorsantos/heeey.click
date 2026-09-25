@@ -70,7 +70,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
     restoreVersion,
   } = useRealtimeBoard({ boardId });
 
-  const { user, effectiveUserName, guestProfile } = useAuth();
+  const { user, effectiveUserId, effectiveUserName, guestProfile } = useAuth();
   const { theme } = useTheme();
   const { t, excalidrawLangCode } = useI18n();
 
@@ -477,7 +477,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
               className="absolute bottom-20 right-3 left-3 sm:left-auto z-30 sm:max-w-sm p-4 rounded-2xl material-regular shadow-popover"
             >
               <div className="flex items-start gap-3">
-                <Avatar name={effectiveUserName} color={guestProfile.color} className="w-10 h-10 text-xs" />
+                <Avatar id={effectiveUserId} color={guestProfile.color} className="w-10 h-10 text-xs" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <h4 className="text-sm font-semibold text-label pt-0.5">{t('board.welcomeTitle')}</h4>

@@ -3,7 +3,6 @@ import {
   generateId,
   getRandomCollaboratorColor,
   generateGuestName,
-  getInitials,
   formatDateRelative,
   debounce,
   throttle,
@@ -36,13 +35,6 @@ describe('utils', () => {
   it('generateGuestName should return non-empty name with number', () => {
     const name = generateGuestName();
     expect(name).toMatch(/\w+\s+#\d+/);
-  });
-
-  it('getInitials should extract uppercase initials correctly', () => {
-    expect(getInitials('Carlos Santos')).toBe('CS');
-    expect(getInitials('Lobo')).toBe('LO');
-    expect(getInitials('')).toBe('??');
-    expect(getInitials('Leão #83')).toBe('LE');
   });
 
   it('formatDateRelative should format recent dates appropriately', () => {
