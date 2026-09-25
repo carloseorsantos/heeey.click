@@ -21,14 +21,14 @@
     "motion": "^13.4.2",
     "posthog-js": "^1.434.11",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.3.0",
     "tailwind-merge": "^3.0.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@types/react": "^18.3.18",
-    "@types/react-dom": "^18.3.5",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.5.3",
