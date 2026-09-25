@@ -30,6 +30,17 @@ function gateway(probabilities: Record<string, number>, status = 200) {
 }
 
 describe('handleSemanticSearch', () => {
+  it('narrows candidates to a team when team_id is a UUID, and ignores anything else', async () => {
+    const team = '7d0f5b1e-2c3a-4e8b-9f10-1a2b3c4d5e6f';
+    const rpc = rpcWith([board('a', 'OKRs Q3')]);
+    await handleSemanticSearch(request({ query: 'q3', team_id: team }), { rpc, gatewayToken: 'gw', fetch: gateway({ b0: 0.9 }) });
+    expect(rpc).toHaveBeenCalledWith('search_candidates', { p_limit: 40, p_team_id: team });
+
+    const other = rpcWith([board('a', 'OKRs Q3')]);
+    await handleSemanticSearch(request({ query: 'q3', team_id: "x' or 1=1" }), { rpc: other, gatewayToken: 'gw', fetch: gateway({ b0: 0.9 }) });
+    expect(other).toHaveBeenCalledWith('search_candidates', { p_limit: 40 });
+  });
+
   it('asks Jev one question per candidate in a single gateway call and ranks by probability', async () => {
     const rpc = rpcWith([board('a', 'Roadmap julho–setembro', 'metas do trimestre'), board('b', 'Receitas'), board('c', 'OKRs Q3')]);
     const fetchImpl = gateway({ b0: 0.9, b1: 0.02, b2: 0.97 });
