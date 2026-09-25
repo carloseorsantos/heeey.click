@@ -381,6 +381,7 @@ Heeey deletes in two steps:
   - The board's row in the `boards` table.
   - Every associated image in the `board-media` bucket in Supabase Storage.
   - Every historical version in `board_versions`.
+- Boards left in the trash for more than **30 days** are deleted permanently and automatically, once a day (Vercel Cron at `/api/cron/purge`, which calls `public.purge_expired_data()`).
 
 ---
 

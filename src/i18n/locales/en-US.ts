@@ -170,7 +170,7 @@ export const enUS: Messages = {
     trashEmpty: "The trash is empty",
     trashError: "Couldn't move the board to the trash.",
     trashGuestNote: " Sign in to delete boards permanently.",
-    trashNote: "Boards in the trash are read-only. Restore a board to edit it again.",
+    trashNote: "Boards in the trash are read-only and are deleted permanently after 30 days. Restore a board to edit it again.",
     undo: "Undo",
     aboutHeeey: "About Heeey",
     documentation: "Documentation",

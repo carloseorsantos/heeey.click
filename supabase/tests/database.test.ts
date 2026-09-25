@@ -546,4 +546,64 @@ describe('database schema and migrations', () => {
       await as(A, `update public.boards set access_level = 'edit' where id = $1`, [BOARD]);
     });
   });
+
+  describe('audit log and retention', () => {
+    const events = async (entity_id: string) =>
+      (await db.query<any>('select action, actor_id from public.audit_log where entity_id = $1 order by id', [entity_id])).rows;
+
+    it('records security events without letting clients read or change them', async () => {
+      const id = '10000000-0000-4000-8000-000000000031';
+      await as(null, `insert into public.boards (id, title) values ($1, 'audit')`, [id], id);
+      await as(A, `update public.boards set owner_id = $2 where id = $1`, [id, A], id);
+      await as(A, `update public.boards set elements = $2::jsonb where id = $1`, [id, texts(['edit'])], id);
+      await as(A, `update public.boards set access_level = 'view' where id = $1`, [id], id);
+      await as(A, `update public.boards set deleted_at = now() where id = $1`, [id], id);
+      await as(A, `update public.boards set deleted_at = null where id = $1`, [id], id);
+      await as(A, `delete from public.boards where id = $1`, [id], id);
+      expect(await events(id)).toEqual([
+        { action: 'board.created', actor_id: null },
+        { action: 'board.claimed', actor_id: A },
+        { action: 'board.access_changed', actor_id: A },
+        { action: 'board.trashed', actor_id: A },
+        { action: 'board.restored', actor_id: A },
+        { action: 'board.deleted', actor_id: A },
+      ]);
+
+      const key = (await as(A, `select * from public.create_api_key('audit')`)).rows[0];
+      await as(A, `select public.revoke_api_key($1)`, [key.id]);
+      expect((await events(key.id)).map((e) => e.action)).toEqual(['api_key.created', 'api_key.revoked']);
+
+      for (const user of [null, A]) {
+        expect((await as(user, `select * from public.audit_log`)).error).toBeDefined();
+        expect((await as(user, `insert into public.audit_log (action, entity) values ('x', 'y')`)).error).toBeDefined();
+        expect((await as(user, `select public.purge_expired_data()`)).error).toBeDefined();
+      }
+      await expect(db.exec(`delete from public.audit_log`)).rejects.toThrow(/somente inserção/);
+      await expect(db.exec(`update public.audit_log set action = 'x'`)).rejects.toThrow(/somente inserção/);
+    });
+
+    it('purges boards trashed over 30 days ago and audit events over a year old', async () => {
+      const old = '10000000-0000-4000-8000-000000000032';
+      const recent = '10000000-0000-4000-8000-000000000033';
+      for (const id of [old, recent]) {
+        await as(A, `insert into public.boards (id, title, owner_id) values ($1, 'x', $2)`, [id, A], id);
+        await as(A, `update public.boards set deleted_at = now() where id = $1`, [id], id);
+      }
+      await sys(`alter table public.boards disable trigger set_boards_updated_at;
+        update public.boards set deleted_at = now() - interval '31 days' where id = '${old}';
+        alter table public.boards enable trigger set_boards_updated_at;
+        alter table public.audit_log disable trigger audit_log_immutable;
+        update public.audit_log set occurred_at = now() - interval '2 years' where entity_id = '${recent}' and action = 'board.created';
+        alter table public.audit_log enable trigger audit_log_immutable;`);
+
+      const purged = (await db.query<any>('select public.purge_expired_data() as r')).rows[0].r;
+      expect(purged).toEqual({ purged_board_ids: [old], audit_events_purged: 1 });
+      expect(await board(old)).toBeUndefined();
+      expect(await board(recent)).toBeDefined();
+      expect((await events(old)).at(-1)).toEqual({ action: 'board.purged', actor_id: null });
+      expect((await events(recent)).map((e) => e.action)).toEqual(['board.trashed']);
+      // The purge flag does not outlive the purge
+      await expect(db.exec(`delete from public.audit_log`)).rejects.toThrow(/somente inserção/);
+    });
+  });
 });
