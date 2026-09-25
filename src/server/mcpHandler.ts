@@ -21,7 +21,10 @@ Coordinates are in pixels (x to the right, y down); leave ~80px between shapes.
 For flowcharts, architectures, org charts, mind maps and other node-and-arrow diagrams,
 prefer create_diagram: describe nodes and edges and the server computes spacing and
 routes the arrows. Use layout_board to tidy up an existing board.
-Every board result includes a url the user can open.`;
+Boards live in projects inside teams. Use list_projects to see where you can create boards;
+without project_id, new boards go to the default project of the user's personal team (or of
+the first team the key reaches). New boards are restricted: only the team and invited people
+open them. Every board result includes a url the user can open.`;
 
 type Json = Record<string, unknown>;
 
@@ -120,14 +123,27 @@ async function upsertElements(call: ReturnType<typeof caller>, boardId: string, 
   });
 }
 
+const optionalUuid = (args: Json, name: string) => (typeof args[name] === 'string' && args[name] ? (args[name] as string) : null);
+
 export const MCP_TOOLS: ToolDefinition[] = [
+  {
+    name: 'list_projects',
+    title: 'List teams and projects',
+    description:
+      "List the teams and projects this key can reach, with the user's access in each (manage, edit or view). Use a project_id to create or list boards and folders there.",
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { readOnlyHint: true },
+    run: async (_args, call) => ({ projects: await call('api_list_projects') }),
+  },
   {
     name: 'list_boards',
     title: 'List boards',
-    description: "List the user's boards, most recently edited first.",
+    description: "List the boards of the user's teams, most recently edited first.",
     inputSchema: {
       type: 'object',
       properties: {
+        project_id: { ...uuid, description: 'Only boards in this project' },
+        team_id: { ...uuid, description: 'Only boards of this team' },
         folder_id: { ...uuid, description: 'Only boards in this folder' },
         limit: { type: 'integer', minimum: 1, maximum: 200 },
       },
@@ -135,7 +151,9 @@ export const MCP_TOOLS: ToolDefinition[] = [
     annotations: { readOnlyHint: true },
     run: async (args, call, ctx) => {
       const boards = await call('api_list_boards', {
-        p_folder_id: (args.folder_id as string) || null,
+        p_project_id: optionalUuid(args, 'project_id'),
+        p_team_id: optionalUuid(args, 'team_id'),
+        p_folder_id: optionalUuid(args, 'folder_id'),
         p_limit: (args.limit as number) || 50,
       });
       return { boards: (boards as any[]).map((b) => withUrl(b, ctx)) };
@@ -175,12 +193,13 @@ export const MCP_TOOLS: ToolDefinition[] = [
   {
     name: 'create_board',
     title: 'Create a board',
-    description: 'Create a new board, optionally with elements. Returns the board with its url.',
+    description: 'Create a new board, optionally with elements, in a project (see list_projects). Returns the board with its url.',
     inputSchema: {
       type: 'object',
       properties: {
         title: { type: 'string' },
         elements: { type: 'array', items: ELEMENT_SPEC_SCHEMA },
+        project_id: { ...uuid, description: 'Project for the new board (default: the default project)' },
         folder_id: uuid,
       },
       required: ['title'],
@@ -190,7 +209,8 @@ export const MCP_TOOLS: ToolDefinition[] = [
       const board = await call('api_create_board', {
         p_title: requireString(args, 'title'),
         p_elements: elements,
-        p_folder_id: (args.folder_id as string) || null,
+        p_folder_id: optionalUuid(args, 'folder_id'),
+        p_project_id: optionalUuid(args, 'project_id'),
       });
       return { board: withUrl(board, ctx) };
     },
@@ -260,6 +280,7 @@ export const MCP_TOOLS: ToolDefinition[] = [
       properties: {
         title: { type: 'string', description: 'Title of the new board (when board_id is not given)' },
         board_id: { ...uuid, description: 'Add the diagram to this existing board instead' },
+        project_id: { ...uuid, description: 'Project for the new board' },
         folder_id: { ...uuid, description: 'Folder for the new board' },
         direction: DIRECTION_SCHEMA,
         nodes: {
@@ -297,7 +318,8 @@ export const MCP_TOOLS: ToolDefinition[] = [
         const board = await call('api_create_board', {
           p_title: requireString(args, 'title'),
           p_elements: toExcalidrawElements(specs),
-          p_folder_id: (args.folder_id as string) || null,
+          p_folder_id: optionalUuid(args, 'folder_id'),
+          p_project_id: optionalUuid(args, 'project_id'),
         });
         return { board: withUrl(board, ctx) };
       }
@@ -338,18 +360,26 @@ export const MCP_TOOLS: ToolDefinition[] = [
   {
     name: 'list_folders',
     title: 'List folders',
-    description: "List the user's folders (parent_id null = top level).",
-    inputSchema: { type: 'object', properties: {} },
+    description: "List the folders of the user's projects (parent_id null = top level of the project).",
+    inputSchema: { type: 'object', properties: { project_id: { ...uuid, description: 'Only folders of this project' } } },
     annotations: { readOnlyHint: true },
-    run: async (_args, call) => ({ folders: await call('api_list_folders') }),
+    run: async (args, call) => ({ folders: await call('api_list_folders', { p_project_id: optionalUuid(args, 'project_id') }) }),
   },
   {
     name: 'create_folder',
     title: 'Create a folder',
-    description: 'Create a folder, optionally inside another one.',
-    inputSchema: { type: 'object', properties: { name: { type: 'string' }, parent_id: uuid }, required: ['name'] },
+    description: 'Create a folder in a project, optionally inside another folder.',
+    inputSchema: {
+      type: 'object',
+      properties: { name: { type: 'string' }, parent_id: uuid, project_id: { ...uuid, description: 'Project of the folder (default: the default project)' } },
+      required: ['name'],
+    },
     run: async (args, call) => ({
-      folder: await call('api_create_folder', { p_name: requireString(args, 'name'), p_parent_id: (args.parent_id as string) || null }),
+      folder: await call('api_create_folder', {
+        p_name: requireString(args, 'name'),
+        p_parent_id: optionalUuid(args, 'parent_id'),
+        p_project_id: optionalUuid(args, 'project_id'),
+      }),
     }),
   },
   {

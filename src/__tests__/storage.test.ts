@@ -10,7 +10,8 @@ import {
   isBoardLocallyCreated,
   getCreatedBoardIds,
   removeCreatedBoardId,
-  claimLocalBoardsForUser,
+  getClaimableLocalBoards,
+  markLocalBoardClaimed,
 } from '../lib/storage';
 import { Board } from '../lib/types';
 
@@ -111,7 +112,7 @@ describe('storage', () => {
     expect(isBoardLocallyCreated('board-abc')).toBe(false);
   });
 
-  it('claimLocalBoardsForUser should associate locally created guest boards to authenticated user', async () => {
+  it('offers locally created guest boards for claiming, once', async () => {
     const guestBoard1: Board = {
       id: 'guest-board-1',
       title: 'Quadro 1',
@@ -127,11 +128,13 @@ describe('storage', () => {
     saveLocalBoard(guestBoard1);
     markBoardAsCreated('guest-board-1');
 
-    // Claim for user
-    await claimLocalBoardsForUser('user-uuid-999');
+    expect(getClaimableLocalBoards().map((b) => b.id)).toEqual(['guest-board-1']);
 
+    // Claimed into a team: not offered again
+    markLocalBoardClaimed(guestBoard1, { owner_id: 'user-uuid-999', team_id: 't1', project_id: 'p1', access_level: 'restricted' });
     const updated = getLocalBoards();
-    expect(updated[0].owner_id).toBe('user-uuid-999');
+    expect(updated[0]).toMatchObject({ owner_id: 'user-uuid-999', team_id: 't1', project_id: 'p1', access_level: 'restricted' });
+    expect(getClaimableLocalBoards()).toEqual([]);
   });
 
   it('shared device protection: should NOT claim boards created by a previous guest session after reset', async () => {
@@ -156,13 +159,9 @@ describe('storage', () => {
     const guestProfile2 = resetGuestProfile();
     expect(guestProfile2.id).not.toBe(guestProfile1.id);
 
-    // Person 2 logs in with user-uuid-888
-    await claimLocalBoardsForUser('user-uuid-888', guestProfile2.id);
-
-    // The board must NOT be claimed by Person 2!
-    const boards = getLocalBoards();
-    const board = boards.find((b) => b.id === 'shared-board-1');
-    expect(board?.owner_id).toBeNull();
+    // Person 2 logs in: the board must NOT be offered to them
+    expect(getClaimableLocalBoards(guestProfile2.id).map((b) => b.id)).not.toContain('shared-board-1');
+    expect(getClaimableLocalBoards(guestProfile1.id).map((b) => b.id)).toContain('shared-board-1');
   });
 
   it('resilient storage: saves individual board content and cleans up on delete', () => {

@@ -10,19 +10,24 @@ export interface ApiKey {
   created_at: string;
   last_used_at: string | null;
   revoked_at: string | null;
+  /** Teams the key can reach (empty on databases without teams yet) */
+  team_ids: string[];
 }
 
 export async function listApiKeys(): Promise<ApiKey[] | null> {
-  const { data, error } = await supabase
-    .from('api_keys')
-    .select('id,name,prefix,scopes,created_at,last_used_at,revoked_at')
-    .is('revoked_at', null)
-    .order('created_at', { ascending: false });
+  const query = (columns: string) =>
+    supabase.from('api_keys').select(columns).is('revoked_at', null).order('created_at', { ascending: false });
+  let { data, error } = await query('id,name,prefix,scopes,created_at,last_used_at,revoked_at,api_key_teams(team_id)');
+  // Database without the teams migration yet
+  if (error) ({ data, error } = await query('id,name,prefix,scopes,created_at,last_used_at,revoked_at'));
   if (error) {
     console.warn('Erro ao carregar chaves de API:', error.message);
     return null;
   }
-  return (data || []) as ApiKey[];
+  return ((data || []) as any[]).map(({ api_key_teams, ...key }) => ({
+    ...key,
+    team_ids: (api_key_teams || []).map((row: { team_id: string }) => row.team_id),
+  })) as ApiKey[];
 }
 
 /**
@@ -31,9 +36,14 @@ export async function listApiKeys(): Promise<ApiKey[] | null> {
  */
 export async function createApiKey(
   name: string,
-  scopes: ApiKeyScope[]
+  scopes: ApiKeyScope[],
+  teamIds?: string[]
 ): Promise<{ key: string } | { error: 'limit' | 'failed' }> {
-  const { data, error } = await supabase.rpc('create_api_key', { p_name: name.trim(), p_scopes: scopes });
+  const { data, error } = await supabase.rpc('create_api_key', {
+    p_name: name.trim(),
+    p_scopes: scopes,
+    ...(teamIds?.length ? { p_team_ids: teamIds } : {}),
+  });
   const row = Array.isArray(data) ? data[0] : data;
   if (error || !row?.key) return { error: /limite de \d+ chaves/i.test(error?.message ?? '') ? 'limit' : 'failed' };
   return { key: row.key as string };

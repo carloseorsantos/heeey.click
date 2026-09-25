@@ -43,6 +43,8 @@ describe('handleApiRequest', () => {
     expect(await res.json()).toEqual({ boards: [{ id: BOARD, title: 'A', url: `https://heeey.click/b/${BOARD}` }] });
     expect(rpc).toHaveBeenCalledWith('api_list_boards', {
       p_key: KEY,
+      p_project_id: null,
+      p_team_id: null,
       p_folder_id: null,
       p_include_trashed: false,
       p_limit: 5,
@@ -54,7 +56,21 @@ describe('handleApiRequest', () => {
     const rpc = mockRpc({ api_list_folders: [] });
     const res = await handleApiRequest(request('GET', '/api/v1/folders', undefined, { 'X-API-Key': KEY }), rpc, ctx);
     expect(res.status).toBe(200);
-    expect(rpc).toHaveBeenCalledWith('api_list_folders', { p_key: KEY });
+    expect(rpc).toHaveBeenCalledWith('api_list_folders', { p_key: KEY, p_project_id: null });
+  });
+
+  it('lists the projects the key reaches and creates boards in a project', async () => {
+    const PROJECT = '30000000-0000-4000-8000-000000000001';
+    const rpc = mockRpc({ api_list_projects: [{ id: PROJECT, name: 'Geral' }], api_create_board: { id: BOARD, title: 'X' } });
+    const listed = await handleApiRequest(request('GET', '/api/v1/projects'), rpc, ctx);
+    expect(await listed.json()).toEqual({ projects: [{ id: PROJECT, name: 'Geral' }] });
+
+    const created = await handleApiRequest(request('POST', '/api/v1/boards', { title: 'X', project_id: PROJECT }), rpc, ctx);
+    expect(created.status).toBe(201);
+    expect(rpc).toHaveBeenCalledWith('api_create_board', expect.objectContaining({ p_project_id: PROJECT }));
+
+    const invalid = await handleApiRequest(request('POST', '/api/v1/boards', { title: 'X', project_id: 'nope' }), rpc, ctx);
+    expect(invalid.status).toBe(400);
   });
 
   it('creates boards from element specs, normalized into Excalidraw elements', async () => {

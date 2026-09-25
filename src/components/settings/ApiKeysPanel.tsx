@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { ApiKey, createApiKey, listApiKeys, revokeApiKey } from '../../lib/apiKeys';
 import { formatDateRelative } from '../../lib/utils';
 import { useI18n } from '../../i18n';
+import { useTeams } from '../../hooks/useTeams';
 
 function CopyButton({ value, label }: { value: string; label: string }) {
   const { t } = useI18n();
@@ -53,6 +54,17 @@ export function ApiKeysPanel() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null);
+  // Teams the new key can reach; the personal team by default
+  const { teams, available: teamsAvailable } = useTeams();
+  const [teamIds, setTeamIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (teamIds.length === 0 && teams.length > 0) setTeamIds([(teams.find((team) => team.is_personal) ?? teams[0]).id]);
+  }, [teams]);
+  const teamNames = (ids: string[]) =>
+    ids
+      .map((id) => teams.find((team) => team.id === id)?.name)
+      .filter(Boolean)
+      .join(', ');
 
   useEffect(() => {
     let cancelled = false;
@@ -68,10 +80,10 @@ export function ApiKeysPanel() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || (teamsAvailable && teamIds.length === 0)) return;
     setCreating(true);
     setCreateError(null);
-    const result = await createApiKey(name, readOnly ? ['read'] : ['read', 'write']);
+    const result = await createApiKey(name, readOnly ? ['read'] : ['read', 'write'], teamsAvailable ? teamIds : undefined);
     setCreating(false);
     if ('error' in result) {
       setCreateError(t(result.error === 'limit' ? 'apiKeys.limitReached' : 'apiKeys.createError'));
@@ -140,7 +152,7 @@ export function ApiKeysPanel() {
             placeholder={t('apiKeys.namePlaceholder')}
             className="field flex-1 min-w-0"
           />
-          <Button type="submit" variant="primary" disabled={creating || !name.trim()}>
+          <Button type="submit" variant="primary" disabled={creating || !name.trim() || (teamsAvailable && teamIds.length === 0)}>
             {creating && <Loader2 className="w-4 h-4 animate-spin" />}
             <span>{t('apiKeys.create')}</span>
           </Button>
@@ -154,6 +166,27 @@ export function ApiKeysPanel() {
           />
           {t('apiKeys.readOnly')}
         </label>
+        {teamsAvailable && (
+          <fieldset>
+            <legend className="text-sm text-label mb-1">{t('apiKeys.teams')}</legend>
+            <div className="rounded-xl bg-fill divide-y divide-separator overflow-hidden">
+              {teams.map((team) => (
+                <label key={team.id} className="flex items-center gap-2.5 px-3.5 py-2 text-sm text-label cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={teamIds.includes(team.id)}
+                    onChange={(e) =>
+                      setTeamIds((prev) => (e.target.checked ? [...prev, team.id] : prev.filter((id) => id !== team.id)))
+                    }
+                    className="w-4 h-4 rounded accent-[rgb(var(--accent))]"
+                  />
+                  <span className="truncate">{team.is_personal ? `${team.name} (${t('teams.personal')})` : team.name}</span>
+                </label>
+              ))}
+            </div>
+            <p className="mt-1 px-1 text-xs text-label-2">{t('apiKeys.teamsHint')}</p>
+          </fieldset>
+        )}
         {createError && (
           <p className="text-sm text-danger-text" role="alert">
             {createError}
@@ -181,6 +214,9 @@ export function ApiKeysPanel() {
                     <code>{key.prefix}…</code> · {key.scopes.includes('write') ? t('apiKeys.readWrite') : t('apiKeys.readOnlyShort')} ·{' '}
                     {key.last_used_at ? t('apiKeys.usedAt', { time: formatDateRelative(key.last_used_at) }) : t('apiKeys.neverUsed')}
                   </p>
+                  {teamsAvailable && key.team_ids.length > 0 && (
+                    <p className="text-xs text-label-2 truncate">{t('apiKeys.reaches', { teams: teamNames(key.team_ids) })}</p>
+                  )}
                 </div>
                 {confirmRevokeId === key.id ? (
                   <div className="flex items-center gap-1 flex-shrink-0">

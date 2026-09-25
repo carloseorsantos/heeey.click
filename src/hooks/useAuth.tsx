@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { getGuestProfile, updateGuestProfile, resetGuestProfile, GuestProfile, claimLocalBoardsForUser } from '../lib/storage';
+import { getGuestProfile, updateGuestProfile, resetGuestProfile, GuestProfile } from '../lib/storage';
 import { t } from '../i18n';
 import { trackSignIn, resetAnalytics } from '../lib/analytics';
 
@@ -70,9 +70,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
 
-      // Only claim boards on a deliberate SIGNED_IN event for boards created by the active guest session
+      // Boards created by the active guest session are claimed through ClaimBoardsDialog
       if (event === 'SIGNED_IN' && currentUser?.id) {
-        claimLocalBoardsForUser(currentUser.id, guestProfile.id);
         trackSignIn(currentUser);
       }
       if (currentUser) {

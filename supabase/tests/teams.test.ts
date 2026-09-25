@@ -4,6 +4,8 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createTestDb, TestDb } from './harness';
+import { handleMcpRequest } from '../../src/server/mcpHandler';
+import { handleApiRequest, Rpc } from '../../src/server/apiHandler';
 
 const OWNER = '00000000-0000-4000-8000-0000000000a1';
 const ADMIN = '00000000-0000-4000-8000-0000000000a2';
@@ -546,6 +548,47 @@ describe('teams, projects and sharing', () => {
       expect((await call('api_get_board', { p_key: outsiderKey, p_board_id: created.data.id })).error).toBeUndefined();
       await t.as(OWNER, `select public.remove_team_member($1, $2)`, [team.id, OUTSIDER]);
       expect((await call('api_get_board', { p_key: outsiderKey, p_board_id: created.data.id })).error).toMatch(/não encontrado/);
+    });
+  });
+
+  describe('REST API and MCP end to end', () => {
+    const rpc: Rpc = async (fn, args) => {
+      const names = Object.keys(args);
+      const r = await t.as(null, `select public.${fn}(${names.map((n, i) => `${n} => $${i + 1}`).join(', ')}) as r`, Object.values(args));
+      return r.error ? { data: null, error: { message: r.error } } : { data: r.rows[0].r, error: null };
+    };
+
+    it('lists projects and creates boards in the chosen project', async () => {
+      const key = (await t.as(ADMIN, `select key from public.create_api_key('mcp', array['read','write'], array[$1]::uuid[])`, [team.id])).rows[0].key;
+      const res = await handleMcpRequest(
+        new Request('https://heeey.click/api/mcp', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'list_projects', arguments: {} } }),
+        }),
+        rpc,
+        { appOrigin: 'https://heeey.click' }
+      );
+      const { result } = await res.json();
+      expect(result.structuredContent.projects.map((p: any) => [p.name, p.access])).toEqual([
+        ['Geral', 'manage'],
+        ['Projeto secreto', 'manage'],
+      ]);
+
+      const created = await handleApiRequest(
+        new Request('https://heeey.click/api/v1/boards', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: 'Via REST', project_id: secret }),
+        }),
+        rpc,
+        { appOrigin: 'https://heeey.click' }
+      );
+      expect(created.status).toBe(201);
+      const { board } = await created.json();
+      expect(board).toMatchObject({ project_id: secret, team_id: team.id, access_level: 'restricted' });
+      expect(await canSee(MEMBER, board.id)).toBe(true);
+      expect(await canSee(VIEWER, board.id)).toBe(false);
     });
   });
 

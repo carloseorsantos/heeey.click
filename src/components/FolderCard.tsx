@@ -12,8 +12,9 @@ interface FolderCardProps {
   folder: Folder;
   itemCount: number;
   onOpen: (id: string) => void;
-  onRename: (folder: Folder) => void;
-  onDelete: (folder: Folder) => void;
+  /** Absent for people who only read the project */
+  onRename?: (folder: Folder) => void;
+  onDelete?: (folder: Folder) => void;
 }
 
 export const FolderCard = forwardRef<HTMLElement, FolderCardProps>(function FolderCard(
@@ -63,6 +64,7 @@ export const FolderCard = forwardRef<HTMLElement, FolderCardProps>(function Fold
         <p className="text-xs text-label-2">{t('folders.items', { count: itemCount })}</p>
       </div>
 
+      {onRename && onDelete && (
       <div className="relative z-10" ref={menuRef}>
         <button
           type="button"
@@ -88,6 +90,7 @@ export const FolderCard = forwardRef<HTMLElement, FolderCardProps>(function Fold
           </MenuItem>
         </Menu>
       </div>
+      )}
     </motion.article>
   );
 });

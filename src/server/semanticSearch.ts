@@ -7,6 +7,7 @@ import type { Rpc } from './apiHandler';
 import { evaluate, EvaluationQuestion, JevError } from './jev';
 
 export const MAX_QUERY_LENGTH = 200;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const MAX_CANDIDATES = 40;
 export const MAX_RESULTS = 8;
 /** Probability above which Jev's "this board is relevant" answer counts as a hit */
@@ -64,10 +65,12 @@ export async function handleSemanticSearch(request: Request, deps: SemanticSearc
     return fail(400, 'bad_request', `query must have 1–${MAX_QUERY_LENGTH} characters.`);
   }
   const exclude = new Set<string>(Array.isArray(body.exclude) ? body.exclude.filter((id: unknown) => typeof id === 'string') : []);
+  // Optional: only that team's boards (search_candidates checks the caller is a member)
+  const teamId = typeof body.team_id === 'string' && UUID.test(body.team_id) ? body.team_id : null;
 
   if (!deps.gatewayToken) return fail(503, 'not_configured', 'Semantic search is not configured.');
 
-  const { data, error } = await deps.rpc('search_candidates', { p_limit: MAX_CANDIDATES });
+  const { data, error } = await deps.rpc('search_candidates', { p_limit: MAX_CANDIDATES, ...(teamId ? { p_team_id: teamId } : {}) });
   if (error) return fail(502, 'upstream_error', 'Could not load boards.');
   const candidates = ((data || []) as any[]).filter((row) => !exclude.has(row.id));
   if (candidates.length === 0) return json({ results: [] });

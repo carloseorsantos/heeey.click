@@ -30,6 +30,7 @@ import { debounce, fitTextHeights, throttle } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { setBoardTrashed } from '../lib/boardTrash';
 import { fetchBoardVersion, snapshotBoard, buildRestoredElements } from '../lib/boardVersions';
+import { BoardAccess, fetchBoardAccess, toBoardInsert } from '../lib/sharing';
 import { t } from '../i18n';
 
 interface UseRealtimeBoardOptions {
@@ -44,6 +45,10 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('saved');
   const [onlineCollaborators, setOnlineCollaborators] = useState<CollaboratorUser[]>([]);
   const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
+  // What the database says the current user can do (null until loaded, or when unavailable)
+  const [access, setAccess] = useState<BoardAccess | null>(null);
+  // The board exists but is restricted and the user has no access to it
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // References to keep latest values in callbacks without stale closures
   const apiRef = useRef<ExcalidrawImperativeAPI | null>(null);
@@ -73,21 +78,35 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   const thumbnailDirtyRef = useRef<boolean>(false);
   const thumbnailsSupportedRef = useRef<boolean>(true);
 
-  // Determine permissions accurately:
-  // - If board has owner_id, current user must match owner_id.
-  // - If board has no owner_id (guest board), current browser must be the creator session.
-  // Visitors who open the link in another browser or after session reset do NOT own the board!
+  // Permissions:
+  // - Team boards: what get_board_access returns (team/project role, direct invite, link).
+  // - Boards created without an account (no team): open for editing; the browser session that
+  //   created it counts as its owner until someone claims it.
+  // - Without an answer from the database (offline, older schema): the board's own fields.
   const creatorGuestId = getBoardCreatorGuestId(boardId);
-  const isOwner = board?.owner_id
-    ? board.owner_id === user?.id
-    : (isBoardLocallyCreated(boardId) && (!creatorGuestId || creatorGuestId === guestProfile.id));
-  // Trashed boards are read-only for everyone until the owner restores them
+  const isLocalCreator =
+    !board?.owner_id && isBoardLocallyCreated(boardId) && (!creatorGuestId || creatorGuestId === guestProfile.id);
+  const isAnonymousBoard = !!board && !board.team_id && !board.owner_id;
+  const permission = access?.permission ?? null;
+  const isOwner = isAnonymousBoard
+    ? isLocalCreator
+    : access
+      ? permission === 'manage'
+      : !!board?.owner_id && board.owner_id === user?.id;
+  // Trashed boards are read-only for everyone until someone who edits them restores them
   const isTrashed = !!board?.deleted_at;
-  const canEdit = !isTrashed && (board?.access_level === 'edit' || isOwner);
+  const canEdit =
+    !isTrashed &&
+    (isAnonymousBoard || !access
+      ? board?.access_level === 'edit' || isOwner
+      : permission === 'manage' || permission === 'edit');
   const isViewMode = !canEdit;
+  const canShare = !isAnonymousBoard && !!access?.can_share;
+  const canRestore = isAnonymousBoard ? isLocalCreator : access ? !!access.can_trash : isOwner;
 
+  // Who may insert the board when it is not in the database yet (it only exists in this browser)
   const isOwnerRef = useRef<boolean>(isOwner);
-  isOwnerRef.current = isOwner;
+  isOwnerRef.current = isLocalCreator || (!!board?.owner_id && board.owner_id === user?.id);
 
   const canEditRef = useRef<boolean>(canEdit);
   canEditRef.current = canEdit;
@@ -116,9 +135,22 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           .single();
 
         if (data && !error) {
+          const boardAccess = await fetchBoardAccess(boardId);
           if (isMounted) {
+            setAccess(boardAccess);
+            setAccessDenied(false);
             setBoard(data as Board);
             saveLocalBoard(data as Board);
+            setLoading(false);
+          }
+          return;
+        }
+
+        // Not readable: either it does not exist yet, or it is restricted and this user has no access
+        const boardAccess = await fetchBoardAccess(boardId);
+        if (boardAccess?.exists && !boardAccess.permission) {
+          if (isMounted) {
+            setAccessDenied(true);
             setLoading(false);
           }
           return;
@@ -139,7 +171,8 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         return;
       }
 
-      // If brand new board not found anywhere, initialize new board
+      // If brand new board not found anywhere, initialize new board. Signed in, it lands in the
+      // personal team's default project and, like every new team board, starts restricted.
       const newBoard: Board = {
         id: boardId,
         title: t('board.untitled'),
@@ -151,7 +184,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           currentItemBackgroundColor: 'transparent',
         },
         files: {},
-        access_level: 'edit',
+        access_level: user?.id ? 'restricted' : 'edit',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -164,9 +197,18 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       // Try creating in Supabase
       (async () => {
         try {
-          const { error } = await supabase.from('boards').insert(newBoard);
+          const { data: inserted, error } = await supabase
+            .from('boards')
+            .insert(toBoardInsert(newBoard))
+            .select('*')
+            .setHeader(BOARD_ID_HEADER, boardId)
+            .maybeSingle();
           if (error) {
             console.warn('Não foi possível persistir novo quadro inicialmente no Supabase:', error.message);
+          } else if (inserted && isMounted) {
+            // The database assigned the team and project
+            setBoard((prev) => (prev ? { ...prev, team_id: inserted.team_id, project_id: inserted.project_id } : prev));
+            setAccess(await fetchBoardAccess(boardId));
           }
         } catch (e) {
           // Ignore network errors on init
@@ -181,29 +223,57 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     };
   }, [boardId]);
 
-  // 2. Associate unowned board to user if authenticated without unmounting
-  useEffect(() => {
-    if (!user?.id || !boardRef.current) return;
-    const creator = getBoardCreatorGuestId(boardId);
-    const isCurrentGuestCreator = !creator || creator === guestProfile.id;
-    if (boardRef.current.owner_id === null && isBoardLocallyCreated(boardId) && isCurrentGuestCreator) {
-      const updated: Board = {
-        ...boardRef.current,
-        owner_id: user.id,
-        updated_at: new Date().toISOString(),
-      };
-      boardRef.current = updated;
-      setBoard(updated);
-      saveLocalBoard(updated);
-      supabase
-        .from('boards')
-        .update({ owner_id: user.id })
-        .eq('id', boardId)
-        .setHeader(BOARD_ID_HEADER, boardId)
-        .is('owner_id', null)
-        .then();
+  // 2. Access: reload when the user signs in or out, and after boards are claimed
+  //    (ClaimBoardsDialog moves boards created without an account into a team)
+  const refreshAccess = useCallback(async () => {
+    const [{ data }, boardAccess] = await Promise.all([
+      supabase.from('boards').select('*').eq('id', boardId).setHeader(BOARD_ID_HEADER, boardId).maybeSingle(),
+      fetchBoardAccess(boardId),
+    ]);
+    if (boardAccess) setAccess(boardAccess);
+    if (boardAccess?.exists && !boardAccess.permission) {
+      setAccessDenied(true);
+      return;
     }
-  }, [user?.id, boardId, guestProfile.id]);
+    if (data) {
+      setAccessDenied(false);
+      setBoard((prev) => {
+        if (!prev) return data as Board;
+        // Keep the live scene; take the metadata the database owns
+        const updated = {
+          ...prev,
+          owner_id: data.owner_id,
+          team_id: data.team_id,
+          project_id: data.project_id,
+          access_level: data.access_level,
+          deleted_at: data.deleted_at,
+          restrict_link_at: data.restrict_link_at,
+          folder_id: data.folder_id,
+        };
+        saveLocalBoard(updated);
+        return updated;
+      });
+    }
+  }, [boardId]);
+
+  const isFirstUserRef = useRef(true);
+  useEffect(() => {
+    // The initial load already fetched the access for the current session
+    if (isFirstUserRef.current) {
+      isFirstUserRef.current = false;
+      return;
+    }
+    refreshAccess();
+  }, [user?.id, refreshAccess]);
+
+  useEffect(() => {
+    const handleClaimed = (e: Event) => {
+      const ids = (e as CustomEvent<string[]>).detail;
+      if (Array.isArray(ids) && ids.includes(boardId)) refreshAccess();
+    };
+    window.addEventListener('heeey:boards-claimed', handleClaimed);
+    return () => window.removeEventListener('heeey:boards-claimed', handleClaimed);
+  }, [boardId, refreshAccess]);
 
   // 3. Debounced Database Save
   // Uses UPDATE for mutable canvas fields instead of UPSERT to avoid PostgREST INSERT RLS rejection for non-owner collaborators
@@ -267,7 +337,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         } else if (!data || data.length === 0) {
           // If board is not in remote database yet and current user is owner, insert it
           if (isOwnerRef.current) {
-            const { error: insertErr } = await supabase.from('boards').insert(boardData);
+            const { error: insertErr } = await supabase.from('boards').insert(toBoardInsert(boardData));
             if (insertErr) {
               console.warn('Erro ao inserir novo quadro no Supabase:', insertErr.message);
               setSyncStatus('error');
@@ -588,15 +658,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
         if (payload.title !== undefined) applyMeta({ title: payload.title });
         // Permission and trash state come from the database, never from a peer's message
         if (payload.accessLevel !== undefined || payload.deletedAt !== undefined) {
-          supabase
-            .from('boards')
-            .select('access_level, deleted_at')
-            .eq('id', boardId)
-            .setHeader(BOARD_ID_HEADER, boardId)
-            .maybeSingle()
-            .then(({ data }) => {
-              if (data) applyMeta({ access_level: data.access_level, deleted_at: data.deleted_at });
-            });
+          refreshAccess();
         }
       })
       .subscribe(async (status) => {
@@ -701,7 +763,7 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
       channelRef.current = null;
       peersChannelRef.current = null;
     };
-  }, [boardId, effectiveUserId]);
+  }, [boardId, effectiveUserId, refreshAccess]);
 
   // Update room presence without reconnecting WebSocket when nickname or color changes
   useEffect(() => {
@@ -984,22 +1046,37 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     };
   }, [debouncedSaveToDb]);
 
-  // 10. Update access level (Only owner should call this)
+  // 10. Update the general access (people who can share; the database enforces it)
   const updateAccessLevel = useCallback(
-    async (level: AccessLevel) => {
-      if (!boardRef.current) return;
+    async (level: AccessLevel): Promise<boolean> => {
+      if (!boardRef.current) return false;
+      const previous = boardRef.current;
 
       const updated: Board = {
         ...boardRef.current,
         access_level: level,
+        restrict_link_at: null,
         updated_at: new Date().toISOString(),
       };
-
       boardRef.current = updated;
       setBoard(updated);
-      saveLocalBoard(updated);
 
-      // Broadcast to room
+      const { data, error } = await supabase
+        .from('boards')
+        .update({ access_level: level, updated_at: new Date().toISOString() })
+        .eq('id', boardId)
+        .setHeader(BOARD_ID_HEADER, boardId)
+        .select('id');
+      if (error || !data || data.length === 0) {
+        console.warn('Erro ao atualizar permissão no banco:', error?.message);
+        boardRef.current = previous;
+        setBoard(previous);
+        return false;
+      }
+      saveLocalBoard(updated);
+      setAccess(await fetchBoardAccess(boardId));
+
+      // Tell the room; peers read the new permission from the database
       if (channelRef.current) {
         channelRef.current.send({
           type: 'broadcast',
@@ -1012,24 +1089,16 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
           },
         });
       }
-
-      // Save to Supabase
-      try {
-        await supabase
-          .from('boards')
-          .update({ access_level: level, updated_at: new Date().toISOString() })
-          .eq('id', boardId)
-          .setHeader(BOARD_ID_HEADER, boardId);
-      } catch (err) {
-        console.warn('Erro ao atualizar permissão no banco:', err);
-      }
+      return true;
     },
     [boardId, effectiveUserId]
   );
 
-  // 11. Restore from trash (only the owner is allowed by the server)
+  // 11. Restore from trash (people who edit the board through the team; the server checks)
+  const canRestoreRef = useRef(canRestore);
+  canRestoreRef.current = canRestore;
   const restoreBoard = useCallback(async () => {
-    if (!boardRef.current || !isOwnerRef.current) return false;
+    if (!boardRef.current || !canRestoreRef.current) return false;
     // 'not-found' means the board never reached Supabase, so restoring it locally is enough
     const result = await setBoardTrashed(boardId, false);
     if (result === 'error' || !boardRef.current) return false;
@@ -1094,6 +1163,12 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
     isViewMode,
     isTrashed,
     isOwner,
+    canShare,
+    canRestore,
+    access,
+    accessDenied,
+    isAnonymousBoard,
+    refreshAccess,
     excalidrawAPI,
     setExcalidrawAPI,
     handleCanvasChange,

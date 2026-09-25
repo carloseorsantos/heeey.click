@@ -94,6 +94,17 @@ export function formatDateRelative(dateStr: string | Date, locale: Locale = getL
   }
 }
 
+/** Calendar date in the given locale ("24 de out." / "Oct 24"), with the year when it is not this year */
+export function formatDateShort(dateStr: string | Date, locale: Locale = getLocale()): string {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+    year: date.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined,
+  });
+}
+
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
   waitMs: number

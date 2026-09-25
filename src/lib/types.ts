@@ -1,9 +1,19 @@
-export type AccessLevel = 'edit' | 'view';
+/** General access of a board: only people with access, or anyone with the link (view/edit) */
+export type AccessLevel = 'restricted' | 'view' | 'edit';
+
+/** What the current user can do on a board (manage > edit > view) */
+export type Permission = 'manage' | 'edit' | 'view';
 
 export interface Board {
   id: string;
   title: string;
+  /** Who created the board (null = created without an account, not claimed yet) */
   owner_id: string | null;
+  /** Team and project the board belongs to (null for boards created without an account) */
+  team_id?: string | null;
+  project_id?: string | null;
+  /** When the open link becomes restricted (migration with notice); null = not scheduled */
+  restrict_link_at?: string | null;
   elements: any[];
   app_state: Record<string, any>;
   files: Record<string, any>;

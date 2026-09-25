@@ -16,6 +16,7 @@ import {
   X,
   BookOpen,
   CircleUser,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -32,13 +33,15 @@ import { SettingsGroup, SettingsRow } from './SettingsGroup';
 import { ProfilePanel } from './ProfilePanel';
 import { AuthForm } from './AuthForm';
 import { ApiKeysPanel } from './ApiKeysPanel';
+import { TeamPanel } from './TeamPanel';
 
-export type SettingsSection = 'profile' | 'appearance' | 'account' | 'integrations' | 'about';
+export type SettingsSection = 'profile' | 'appearance' | 'account' | 'team' | 'integrations' | 'about';
 
 const SECTIONS: { id: SettingsSection; label: MessageKey; icon: LucideIcon; tint: string }[] = [
   { id: 'profile', label: 'settings.profile', icon: UserRound, tint: 'bg-[#7c3aed]' },
   { id: 'appearance', label: 'settings.appearance', icon: Palette, tint: 'bg-[#0a84ff]' },
   { id: 'account', label: 'settings.account', icon: CircleUser, tint: 'bg-[#30b04f]' },
+  { id: 'team', label: 'settings.team', icon: UsersRound, tint: 'bg-[#5e5ce6]' },
   { id: 'integrations', label: 'settings.integrations', icon: KeyRound, tint: 'bg-[#ff9500]' },
   { id: 'about', label: 'settings.about', icon: Info, tint: 'bg-[#8e8e93]' },
 ];
@@ -370,6 +373,21 @@ function SectionContent({
               <AuthForm />
             </div>
           </SettingsGroup>
+        </div>
+      );
+
+    case 'team':
+      return isAuthenticated ? (
+        <TeamPanel />
+      ) : (
+        <div className="flex flex-col items-center text-center py-10 px-4">
+          <div className="w-14 h-14 rounded-2xl bg-fill text-label-2 flex items-center justify-center mb-4">
+            <UsersRound className="w-7 h-7" strokeWidth={1.75} />
+          </div>
+          <p className="text-sm text-label-2 max-w-xs">{t('settings.teamGuest')}</p>
+          <Button variant="tinted" className="mt-4" onClick={() => onNavigate('account')}>
+            {t('settings.goToAccount')}
+          </Button>
         </div>
       );
 
