@@ -1,5 +1,7 @@
 version: 2
 updates:
+  # Minor and patch updates, grouped in one weekly PR. Major versions are upgraded on purpose,
+  # as planned work (they break things); vulnerabilities are still caught by `npm audit` in CI.
   - package-ecosystem: npm
     directory: /
     schedule:
@@ -8,6 +10,9 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:

@@ -42,11 +42,12 @@ Legenda: ✅ implementado no código/repositório · ⚙️ configuração manua
 | C14 | MFA em GitHub, Supabase, Vercel, PostHog, domínio e e-mail | CC6.1 | ⚙️ 📋 | Prints das telas de membros com MFA |
 | C15 | Revisão trimestral de acessos | CC6.2 / CC6.3 | 📋 | `compliance/access-reviews/AAAA-QN.md` |
 | C16 | Backups com PITR e teste anual de restauração | A1.2 / A1.3 | ⚙️ 📋 | Plano Supabase + registro do teste |
-| C17 | Monitoramento de disponibilidade e erros | CC7.2 / A1.1 | ⚙️ | Uptime monitor + PostHog error tracking |
+| C17 | Monitoramento de disponibilidade e erros, com status page pública | CC7.2 / A1.1 / CC2.3 | ✅ ⚙️ | `/api/health` + Upptime a cada 5 min ([status.heeey.click](https://status.heeey.click), repo `carloseorsantos/status`) + PostHog error tracking |
 | C18 | Resposta a incidentes com post-mortem | CC7.3–CC7.5 | 📋 | Issues com o rótulo `incident` |
 | C19 | Revisão anual dos fornecedores | CC9.2 | 📋 | Registro em `vendors.md` |
 | C20 | Política de privacidade e termos publicados | P1.1 | ✅ | `/privacidade`, `/termos` (pt, en, es) |
 | C21 | Divulgação responsável de vulnerabilidades | CC2.3 | ✅ ⚙️ | `SECURITY.md` + private vulnerability reporting |
+| C22 | Criptografia em repouso (AES-256) e em trânsito (TLS 1.2+); credenciais só como hash | CC6.1 / CC6.7 | ✅ | [information-security-policy.md §7](information-security-policy.md#7-criptografia), relatório SOC 2 do Supabase, `vercel.json` |
 
 ## Pendências manuais (fora do código)
 
@@ -59,7 +60,9 @@ Coisas que precisam ser feitas por quem administra as contas:
    GitHub → Settings → Code security.
 2. **MFA obrigatório** em todas as contas (C14).
 3. **Supabase**: avaliar o plano Pro com PITR (C16).
-4. **Uptime monitor** externo para `https://heeey.click` e `/api/v1` (C17).
+4. **Status page** (C17): no repo `carloseorsantos/status`, criar o secret `GH_PAT` (token fine-grained só
+   desse repo, com Contents, Issues, Actions e Workflows em leitura e escrita) e rodar o workflow *Setup CI*;
+   depois, no DNS, o CNAME `status` → `carloseorsantos.github.io`.
 5. Primeira **revisão de acessos** e primeiro **teste de restauração** (C15, C16).
 
 ## Calendário de controles recorrentes

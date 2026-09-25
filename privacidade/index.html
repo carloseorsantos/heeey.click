@@ -125,8 +125,10 @@
 
       <h2>8. Segurança</h2>
       <p>
-        Os dados trafegam com criptografia (HTTPS) e o banco aplica regras de acesso por linha: cada pessoa só lê os
-        próprios quadros ou os quadros cujo link recebeu.
+        Seus dados ficam criptografados em repouso com AES-256 pelo nosso provedor de banco e armazenamento (Supabase) e
+        trafegam criptografados com TLS (somente HTTPS). Chaves de API nunca são guardadas: mantemos só um hash SHA-256
+        irreversível, e a chave completa é mostrada a você uma única vez. O banco aplica regras de acesso por linha: cada
+        pessoa só lê os próprios quadros ou os quadros cujo link recebeu.
       </p>
 
       <h2>9. Mudanças</h2>
@@ -139,6 +141,7 @@
         <div class="flex flex-wrap gap-x-5 gap-y-2">
           <a href="/termos" class="hover:text-label">Termos de uso</a>
           <a href="/privacidade" class="hover:text-label" aria-current="page">Privacidade</a>
+          <a href="https://status.heeey.click" class="hover:text-label">Status</a>
           <a href="https://github.com/carloseorsantos/heeey.click" class="hover:text-label">GitHub</a>
         </div>
       </div>

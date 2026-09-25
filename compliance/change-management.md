@@ -35,7 +35,7 @@ Nesse caso, o PR recebe o rótulo `emergency-change` e uma revisão posterior é
 
 O Dependabot abre PRs semanais (npm) e mensais (GitHub Actions). Eles passam pelo mesmo fluxo.
 Vulnerabilidades altas bloqueiam o CI. Se não houver versão corrigida, usamos `overrides` no
-`package.json` ou registramos uma exceção ([information-security-policy.md](information-security-policy.md#8-exceções)).
+`package.json` ou registramos uma exceção ([information-security-policy.md](information-security-policy.md#9-exceções)).
 
 ## Configuração da branch `main`
 

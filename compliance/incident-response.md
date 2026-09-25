@@ -18,6 +18,9 @@ perda de dados, conta administrativa comprometida ou vulnerabilidade reportada e
 
 ## 3. Passo a passo
 
+Indisponibilidade é detectada pelo Upptime (`carloseorsantos/status`), que consulta o site, `/api/health`
+e `/api/v1` a cada 5 minutos e abre sozinho uma issue lá quando algo cai; ela fecha quando o serviço volta.
+
 1. **Registrar**: abra uma issue **privada** (security advisory do GitHub) ou, se não houver risco de expor detalhes, uma issue com o rótulo `incident`. Anote o horário de detecção.
 2. **Conter**: rotacionar segredos, revogar chaves de API, desligar funcionalidades, fazer rollback na Vercel ou restringir políticas RLS.
 3. **Investigar**: `public.audit_log`, logs da Vercel (funções e cron), logs do Supabase (API, Auth, Postgres), PostHog.
@@ -28,7 +31,9 @@ perda de dados, conta administrativa comprometida ou vulnerabilidade reportada e
 ## 4. Comunicação
 
 - **Titulares de dados e ANPD**: se houver risco ou dano relevante a titulares, comunicar à ANPD e às pessoas afetadas em até **3 dias úteis** a partir da ciência (Resolução CD/ANPD nº 15/2024). Para titulares na UE, notificar a autoridade competente em até 72 h (GDPR art. 33).
-- **Usuários**: aviso no site ou por e-mail a partir de `contato@heeey.click`.
+- **Usuários**: status page pública em [status.heeey.click](https://status.heeey.click) (para incidentes sem
+  monitor automático, abra uma issue com o rótulo `incident` no repo `carloseorsantos/status`), aviso no site
+  ou por e-mail a partir de `contato@heeey.click`.
 - **Quem reportou** (divulgação responsável): atualização ao conter e ao corrigir.
 
 ## 5. Modelo de post-mortem
