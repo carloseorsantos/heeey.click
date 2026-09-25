@@ -246,9 +246,9 @@ describe('database schema and migrations', () => {
       elements = (await board(apiBoard)).elements;
       expect(elements.find((e: any) => e.id === 'r1')).toMatchObject({ isDeleted: true, version: 3 });
 
-      const sent = (await db.query<any>('select payload, event, topic from realtime.sent order by ctid')).rows;
+      const sent = (await db.query<any>('select payload, event, topic, private from realtime.sent order by ctid')).rows;
       expect(sent).toHaveLength(2);
-      expect(sent[0]).toMatchObject({ event: 'canvas-update', topic: `heeey:room:${apiBoard}` });
+      expect(sent[0]).toMatchObject({ event: 'canvas-update', topic: `heeey:room:${apiBoard}`, private: true });
       expect(sent[0].payload).toMatchObject({ type: 'canvas-update', senderId: 'api', boardId: apiBoard });
       expect(sent[0].payload.elements.map((e: any) => e.id)).toEqual(['r1', 'r2']);
       expect(sent[1].payload.elements.map((e: any) => e.id)).toEqual(['r1']);
@@ -491,6 +491,41 @@ describe('database schema and migrations', () => {
 
       expect((await as(B, `select public.snapshot_board($1)`, [BOARD], null)).error).toMatch(/Sem permissão/);
       expect((await as(B, `select public.snapshot_board($1)`, [BOARD])).error).toBeUndefined();
+    });
+
+    it('lets only editors change the scene over Realtime; anyone with the link joins and sends cursors', async () => {
+      // What Realtime checks when a client joins a private channel: can it read / write this extension?
+      const allowed = async (user: string | null, topic: string, extension: string) => {
+        await sys(`select set_config('realtime.topic', '${topic}', false)`);
+        const r = await as(user, `insert into realtime.messages (topic, extension) values ($1, $2)`, [topic, extension], null);
+        await sys(`select set_config('realtime.topic', '', false)`);
+        return !r.error;
+      };
+      await sys(`insert into realtime.messages (topic, extension) values ('heeey:room:${BOARD}', 'broadcast')`);
+      const readable = async (user: string | null, topic: string) => {
+        await sys(`select set_config('realtime.topic', '${topic}', false)`);
+        const n = (await as(user, `select count(*)::int as n from realtime.messages`, [], null)).rows[0]?.n;
+        await sys(`select set_config('realtime.topic', '', false)`);
+        return n > 0;
+      };
+      const room = `heeey:room:${BOARD}`;
+      const peers = `heeey:peers:${BOARD}`;
+
+      await as(A, `update public.boards set access_level = 'view' where id = $1`, [BOARD]);
+      expect(await readable(null, room)).toBe(true);
+      expect(await readable(null, 'other-app:room')).toBe(false);
+      expect(await allowed(null, room, 'presence')).toBe(true);
+      expect(await allowed(null, peers, 'broadcast')).toBe(true);
+      expect(await allowed(null, room, 'broadcast')).toBe(false);
+      expect(await allowed(B, room, 'broadcast')).toBe(false);
+      expect(await allowed(A, room, 'broadcast')).toBe(true);
+      expect(await allowed(null, 'heeey:room:not-a-uuid', 'broadcast')).toBe(false);
+      expect(await allowed(null, 'other-app:room', 'presence')).toBe(false);
+
+      await as(A, `update public.boards set access_level = 'edit' where id = $1`, [BOARD]);
+      expect(await allowed(null, room, 'broadcast')).toBe(true);
+      // A board created locally and not saved yet is editable, like image uploads
+      expect(await allowed(null, 'heeey:room:20000000-0000-4000-8000-000000000008', 'broadcast')).toBe(true);
     });
 
     it('does not let anyone list board-media, but keeps uploads on editable boards', async () => {

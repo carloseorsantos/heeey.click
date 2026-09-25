@@ -21,4 +21,14 @@ create schema realtime;
 create table realtime.sent (payload jsonb, event text, topic text, private boolean);
 create function realtime.send(payload jsonb, event text, topic text, private boolean default true)
 returns void language sql as $$ insert into realtime.sent values (payload, event, topic, private) $$;
+-- Realtime Authorization: on join, Realtime checks realtime.messages policies per topic/extension
+create table realtime.messages (id bigserial primary key, topic text not null, extension text not null,
+  event text, payload jsonb, private boolean default true);
+alter table realtime.messages enable row level security;
+create function realtime.topic() returns text language sql stable as $$
+  select nullif(current_setting('realtime.topic', true), '') $$;
+grant usage on schema realtime to anon, authenticated;
+grant select, insert on realtime.messages to anon, authenticated;
+grant usage on sequence realtime.messages_id_seq to anon, authenticated;
+grant execute on function realtime.topic() to anon, authenticated;
 `;
