@@ -381,6 +381,7 @@ Heeey borra en dos pasos:
   - El registro de la pizarra en la tabla `boards`.
   - Todas las imágenes asociadas en el bucket `board-media` de Supabase Storage.
   - Todas las versiones históricas de `board_versions`.
+- Las pizarras que pasan más de **30 días** en la papelera se eliminan definitivamente de forma automática, una vez al día (Vercel Cron en `/api/cron/purge`, que llama a `public.purge_expired_data()`).
 
 ---
 

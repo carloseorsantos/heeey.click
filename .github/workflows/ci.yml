@@ -1,0 +1,35 @@
+# Runs on every PR and on main: type check + build, unit and database tests (PGlite, no
+# real Supabase), and a dependency audit. Branch protection requires the "ci" check to pass.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Dependency audit (high and critical)
+        run: npm audit --audit-level=high
+      - name: Type check and build
+        run: npm run build
+      - name: Tests (unit + database)
+        run: npm test

@@ -170,7 +170,7 @@ export const esES: Messages = {
     trashEmpty: "La papelera está vacía",
     trashError: "No se ha podido mover la pizarra a la papelera.",
     trashGuestNote: " Inicia sesión para eliminar pizarras definitivamente.",
-    trashNote: "Las pizarras de la papelera son de solo lectura. Restaura una pizarra para volver a editarla.",
+    trashNote: "Las pizarras de la papelera son de solo lectura y se borran definitivamente a los 30 días. Restaura una pizarra para volver a editarla.",
     undo: "Deshacer",
     aboutHeeey: "Acerca de Heeey",
     documentation: "Documentación",

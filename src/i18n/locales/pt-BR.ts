@@ -169,7 +169,7 @@ export const ptBR = {
     trashEmpty: "A lixeira está vazia",
     trashError: "Não foi possível mover o quadro para a lixeira.",
     trashGuestNote: " Entre na sua conta para excluir quadros definitivamente.",
-    trashNote: "Quadros na lixeira ficam somente leitura. Restaure um quadro para voltar a editá-lo.",
+    trashNote: "Quadros na lixeira ficam somente leitura e são excluídos definitivamente após 30 dias. Restaure um quadro para voltar a editá-lo.",
     undo: "Desfazer",
     aboutHeeey: "Sobre o Heeey",
     documentation: "Documentação",

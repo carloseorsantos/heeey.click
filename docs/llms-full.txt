@@ -381,6 +381,7 @@ O Heeey adota um modelo de exclusão em duas etapas:
   - O registro do quadro na tabela `boards`.
   - Todas as imagens associadas no bucket `board-media` do Supabase Storage.
   - Todas as versões históricas em `board_versions`.
+- Quadros que ficam mais de **30 dias** na lixeira são excluídos definitivamente de forma automática, uma vez por dia (Vercel Cron em `/api/cron/purge`, que chama `public.purge_expired_data()`).
 
 ---
 
