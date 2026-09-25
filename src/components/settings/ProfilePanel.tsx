@@ -23,7 +23,7 @@ const SAVED_MS = 2000;
 
 /** Name and cursor color: how others see you on a board */
 export function ProfilePanel() {
-  const { guestProfile, effectiveUserName, setNickname } = useAuth();
+  const { guestProfile, effectiveUserId, effectiveUserName, setNickname } = useAuth();
   const { t } = useI18n();
   const [name, setName] = useState(effectiveUserName || guestProfile.name);
   const [color, setColor] = useState(guestProfile.color);
@@ -53,7 +53,7 @@ export function ProfilePanel() {
     <form onSubmit={handleSave} className="space-y-6">
       {/* Live preview of how the avatar will look to others */}
       <div className="flex items-center gap-4">
-        <Avatar name={name || '?'} color={color} className="w-14 h-14 text-base" />
+        <Avatar id={effectiveUserId} color={color} className="w-14 h-14" animate="always" />
         <div className="min-w-0">
           <p className="text-base font-semibold text-label truncate">{name || '?'}</p>
           <p className="text-callout text-label-2">{t('profile.description')}</p>

@@ -11,10 +11,12 @@
     "docs:llms": "node scripts/build-llms.mjs"
   },
   "dependencies": {
+    "@blobatar/react": "^2.7.0",
     "@dagrejs/dagre": "^3.1.1",
     "@excalidraw/excalidraw": "^0.18.1",
     "@supabase/supabase-js": "^2.49.1",
     "@vercel/analytics": "^2.0.1",
+    "blobatar": "^2.7.0",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
     "marked": "^16.4.2",

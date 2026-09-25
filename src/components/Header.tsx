@@ -201,7 +201,7 @@ export function Header({
             {visibleCollaborators.map((collab) => (
               <Avatar
                 key={collab.id}
-                name={collab.name}
+                id={collab.id}
                 color={collab.color}
                 className="w-7 h-7 text-[10px] shadow-[0_0_0_2px_rgb(var(--surface))] transition-transform duration-200 hover:z-10 hover:-translate-y-0.5"
                 title={collab.name}
