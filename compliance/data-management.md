@@ -15,7 +15,7 @@
 | Convites em quadros | `public.board_members` (e-mail convidado) | Enquanto o quadro existir | Por quem compartilha, pela própria pessoa, ou em cascata com o quadro |
 | Pastas | `public.folders` | Enquanto o projeto existir | Em cascata com o projeto |
 | Biblioteca pessoal | `public.user_libraries` | Enquanto a conta existir | Em cascata com a conta |
-| Dicas na lousa (nº de dias e horários em que apareceram, fechadas, usadas) | `public.user_hints` (máx. 50 por conta); cópia local `heeey_hints_<userId>` para contas; convidados só no `localStorage` (`heeey_hints`) | Enquanto a conta existir | Em cascata com a conta |
+| Dicas na lousa (quando apareceram, foram fechadas ou usadas) | `public.user_hints` (máx. 50 por conta); cópia local `heeey_hints_<userId>` para contas; convidados só no `localStorage` (`heeey_hints`) | Enquanto a conta existir | Em cascata com a conta |
 | Chaves de API | `public.api_keys` (só o hash), `api_key_teams` | Enquanto a conta existir | Em cascata com a conta |
 | Trilha de auditoria | `public.audit_log` | **1 ano** | Expurgo diário automático |
 | Contas (e-mail) | Supabase Auth | Até o pedido de exclusão | Manual, em até 30 dias do pedido |
