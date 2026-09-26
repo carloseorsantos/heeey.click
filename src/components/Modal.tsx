@@ -14,7 +14,7 @@ interface ModalProps {
   title: string;
   description?: string;
   icon?: React.ReactNode;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
 }
 
@@ -105,7 +105,7 @@ export function Modal({ isOpen, onClose, title, description, icon, size = 'md', 
               'relative w-full flex flex-col material-thick shadow-sheet outline-none',
               'max-h-[92dvh] rounded-t-[1.375rem] pb-[env(safe-area-inset-bottom)]',
               'sm:max-h-[calc(100dvh-3rem)] sm:rounded-2xl sm:pb-0',
-              size === 'sm' ? 'sm:max-w-sm' : 'sm:max-w-md'
+              size === 'sm' ? 'sm:max-w-sm' : size === 'lg' ? 'sm:max-w-3xl' : 'sm:max-w-md'
             )}
           >
             {/* Header doubles as the drag handle on phones */}

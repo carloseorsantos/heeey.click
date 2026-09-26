@@ -82,7 +82,7 @@ export function App() {
               boardId={boardId}
               onBackToDashboard={(path) => navigate(path ?? '/app')}
               onOpenBoard={(id) => navigate(`/b/${id}`)}
-              onNavigateToDocs={() => navigate('/docs')}
+              onNavigateToDocs={(slug) => navigate(slug ? `/docs/${slug}` : '/docs')}
             />
           </Suspense>
         ) : inviteToken ? (

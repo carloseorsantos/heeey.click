@@ -263,6 +263,16 @@ You can export your diagrams at any time, with no watermarks:
 - **SVG**: An infinitely scalable vector graphic, ideal for embedding on the web or opening in tools like Figma or Illustrator.
 - The export dialog lets you include the canvas background or produce a file with transparency.
 
+### 🤖 Export for AI (Markdown)
+
+In the canvas ☰ menu, **Export for AI** creates a Markdown file with all the content of the board, to send or paste into any chat with an AI (ChatGPT, Claude, Gemini, etc.):
+- The dialog shows a preview of the text, with **Download .md** and **Copy to clipboard** buttons.
+- The file has the board title, texts, labeled shapes (diamonds and ellipses are named), frames as sections, connections as `A → B` (with the arrow label) and links. Images show up as `[image]`.
+- Text drawn over a shape counts as its label, and arrows whose end touches a shape count as a connection, even when not bound.
+- Items follow reading order (top to bottom, left to right). Coordinates, colors and IDs are left out.
+- It uses the current state of the canvas, is also available in view mode and runs only in the browser.
+- To let the AI read and edit boards directly, with nothing to export, connect the [MCP server](../mcp/getting-started.md).
+
 
 ================================================================================
 FILE: docs/en/features/collaboration-realtime.md

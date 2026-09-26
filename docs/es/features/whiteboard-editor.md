@@ -60,3 +60,13 @@ Puedes exportar tus diagramas en cualquier momento, sin marcas de agua:
 - **PNG**: imagen de mapa de bits de alta resolución, ideal para presentaciones y para compartir en Slack/Discord.
 - **SVG**: gráfico vectorial escalable sin límite, ideal para insertarlo en la web o abrirlo en herramientas como Figma o Illustrator.
 - El diálogo de exportación permite incluir el fondo del lienzo o generar un archivo con transparencia.
+
+### 🤖 Exportar para IA (Markdown)
+
+En el menú ☰ del lienzo, **Exportar para IA** genera un archivo Markdown con todo el contenido de la pizarra, para enviarlo o pegarlo en cualquier conversación con una IA (ChatGPT, Claude, Gemini, etc.):
+- El diálogo muestra una vista previa del texto, con los botones **Descargar .md** y **Copiar al portapapeles**.
+- El archivo incluye el título de la pizarra, los textos, las formas con etiqueta (rombos y elipses identificados), los marcos como secciones, las conexiones en formato `A → B` (con la etiqueta de la flecha) y los enlaces. Las imágenes aparecen como `[imagen]`.
+- El texto dibujado sobre una forma cuenta como su etiqueta, y las flechas con la punta tocando una forma cuentan como conexión, aunque no estén vinculadas.
+- Los elementos siguen el orden de lectura (de arriba abajo, de izquierda a derecha). Se omiten coordenadas, colores e IDs.
+- Usa el estado actual del lienzo, también está disponible en modo lectura y funciona solo en el navegador.
+- Para que la IA lea y edite las pizarras directamente, sin exportar nada, conecta el [servidor MCP](../mcp/getting-started.md).
