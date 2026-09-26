@@ -476,7 +476,8 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
             },
           }}
         >
-          {/* Custom menu to add "Export for AI": the default items must be declared again, in the default order */}
+          {/* Custom menu to add "Export for AI": the default items must be declared again, in the default order,
+              without Excalidraw's own links */}
           <MainMenu>
             <MainMenu.DefaultItems.LoadScene />
             <MainMenu.DefaultItems.SaveToActiveFile />
@@ -488,11 +489,8 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
             <MainMenu.DefaultItems.SearchMenu />
             <MainMenu.DefaultItems.Help />
             <MainMenu.DefaultItems.ClearCanvas />
-            <MainMenu.Separator />
-            <MainMenu.Group title="Excalidraw links">
-              <MainMenu.DefaultItems.Socials />
-            </MainMenu.Group>
-            <MainMenu.Separator />
+            {/* Only the canvas background follows (theme toggle is off), and it is hidden in view mode */}
+            {!isViewMode && <MainMenu.Separator />}
             <MainMenu.DefaultItems.ToggleTheme />
             <MainMenu.DefaultItems.ChangeCanvasBackground />
           </MainMenu>
