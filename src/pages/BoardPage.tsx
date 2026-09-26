@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Excalidraw,
+  MainMenu,
   convertToExcalidrawElements,
   viewportCoordsToSceneCoords,
   exportToBlob,
@@ -9,7 +10,7 @@ import {
 } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
 import { AnimatePresence, motion } from 'motion/react';
-import { Loader2, X, Trash2, RotateCcw, Lock, Clock } from 'lucide-react';
+import { Loader2, X, Trash2, RotateCcw, Lock, Clock, Sparkles } from 'lucide-react';
 import { spring } from '../lib/motion';
 import { Button } from '../components/ui/Button';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
@@ -20,6 +21,7 @@ import { Header } from '../components/Header';
 import { ShareModal } from '../components/ShareModal';
 import { VersionHistoryModal } from '../components/VersionHistoryModal';
 import { BoardSearchModal } from '../components/BoardSearchModal';
+import { ExportForAIModal } from '../components/ExportForAIModal';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
 import { isBoardLocallyCreated } from '../lib/storage';
@@ -50,7 +52,8 @@ interface BoardPageProps {
   /** path: where to go back to (the board's project); the dashboard's default otherwise */
   onBackToDashboard: (path?: string) => void;
   onOpenBoard: (boardId: string) => void;
-  onNavigateToDocs?: () => void;
+  /** slug: a docs page (e.g. "mcp/getting-started"); the docs home otherwise */
+  onNavigateToDocs?: (slug?: string) => void;
 }
 
 export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateToDocs }: BoardPageProps) {
@@ -85,6 +88,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
   const { openSettings, openAuthDialog } = useSettings();
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isExportForAIOpen, setIsExportForAIOpen] = useState(false);
 
   // Personal library: this browser for guests, synced with the account when signed in
   const libraryAdapter = useMemo(() => createLibraryAdapter(user?.id), [user?.id]);
@@ -112,6 +116,9 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
     setRestoreState(ok ? 'idle' : 'error');
   };
 
+  // File name for downloads: the board title without characters that file systems reject
+  const fileBaseName = () => (board?.title || t('board.fileName')).replace(/[/\\?%*:|"<>]/g, '-').trim();
+
   // Export board as PNG or SVG
   const handleExport = async (format: 'png' | 'svg') => {
     const api = excalidrawAPI;
@@ -121,7 +128,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
       const elements = api.getSceneElements();
       const appState = api.getAppState();
       const files = api.getFiles();
-      const safeTitle = (board?.title || t('board.fileName')).replace(/[/\\?%*:|"<>]/g, '-').trim();
+      const safeTitle = fileBaseName();
 
       if (format === 'png') {
         const blob = await exportToBlob({
@@ -433,7 +440,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         onlineCollaborators={onlineCollaborators}
         onOpenShare={() => setIsShareOpen(true)}
         onBackToDashboard={backToDashboard}
-        onOpenDocs={onNavigateToDocs}
+        onOpenDocs={onNavigateToDocs && (() => onNavigateToDocs())}
         onExport={handleExport}
         onOpenHistory={isViewMode ? undefined : () => setIsHistoryOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
@@ -468,7 +475,28 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
               saveAsImage: true,
             },
           }}
-        />
+        >
+          {/* Custom menu to add "Export for AI": the default items must be declared again, in the default order */}
+          <MainMenu>
+            <MainMenu.DefaultItems.LoadScene />
+            <MainMenu.DefaultItems.SaveToActiveFile />
+            <MainMenu.DefaultItems.Export />
+            <MainMenu.DefaultItems.SaveAsImage />
+            <MainMenu.Item icon={<Sparkles strokeWidth={1.5} />} onSelect={() => setIsExportForAIOpen(true)}>
+              {t('exportAI.menuItem')}
+            </MainMenu.Item>
+            <MainMenu.DefaultItems.SearchMenu />
+            <MainMenu.DefaultItems.Help />
+            <MainMenu.DefaultItems.ClearCanvas />
+            <MainMenu.Separator />
+            <MainMenu.Group title="Excalidraw links">
+              <MainMenu.DefaultItems.Socials />
+            </MainMenu.Group>
+            <MainMenu.Separator />
+            <MainMenu.DefaultItems.ToggleTheme />
+            <MainMenu.DefaultItems.ChangeCanvasBackground />
+          </MainMenu>
+        </Excalidraw>
 
         {/* Trashed board banner: read-only until the owner restores it */}
         <AnimatePresence>
@@ -624,6 +652,15 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         onClose={() => setIsSearchOpen(false)}
         currentBoardId={board.id}
         onOpenBoard={onOpenBoard}
+      />
+
+      <ExportForAIModal
+        isOpen={isExportForAIOpen}
+        onClose={() => setIsExportForAIOpen(false)}
+        boardTitle={board.title}
+        fileName={fileBaseName()}
+        getElements={() => excalidrawAPI?.getSceneElements() ?? []}
+        onOpenMcpDocs={onNavigateToDocs && (() => onNavigateToDocs('mcp/getting-started'))}
       />
 
       <VersionHistoryModal
