@@ -263,6 +263,16 @@ Você pode exportar seus diagramas em qualquer momento sem marcas d'água:
 - **SVG**: Gráfico vetorial infinito e escalável, ideal para incorporar na web ou abrir em softwares como Figma ou Illustrator.
 - O diálogo de exportação permite escolher se deseja incluir o fundo da tela ou gerar um arquivo com transparência.
 
+### 🤖 Exportar para IA (Markdown)
+
+No menu ☰ do canvas, **Exportar para IA** gera um arquivo Markdown com todo o conteúdo da lousa, para enviar ou colar em qualquer conversa com uma IA (ChatGPT, Claude, Gemini etc.):
+- O modal mostra uma prévia do texto, com os botões **Baixar .md** e **Copiar para a área de transferência**.
+- O arquivo traz o título da lousa, os textos, as formas com rótulo (losangos e elipses identificados), os frames como seções, as conexões no formato `A → B` (com o rótulo da seta) e os links. Imagens aparecem como `[imagem]`.
+- Textos desenhados sobre uma forma contam como rótulo dela, e setas com a ponta encostada numa forma contam como conexão, mesmo sem vínculo.
+- Os itens seguem a ordem de leitura (de cima para baixo, da esquerda para a direita). Coordenadas, cores e IDs ficam de fora.
+- Usa o estado atual do canvas, está disponível também no modo leitura e roda só no navegador.
+- Para a IA ler e editar as lousas direto, sem exportar, conecte o [servidor MCP](../mcp/getting-started.md).
+
 
 ================================================================================
 FILE: docs/features/collaboration-realtime.md
