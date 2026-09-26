@@ -70,3 +70,17 @@ En el menú ☰ del lienzo, **Exportar para IA** genera un archivo Markdown con 
 - Los elementos siguen el orden de lectura (de arriba abajo, de izquierda a derecha). Se omiten coordenadas, colores e IDs.
 - Usa el estado actual del lienzo, también está disponible en modo lectura y funciona solo en el navegador.
 - Para que la IA lea y edite las pizarras directamente, sin exportar nada, conecta el [servidor MCP](../mcp/getting-started.md).
+
+---
+
+## 💡 Consejos en la pizarra
+
+Pequeños globos junto al botón ☰ presentan funciones que quizá todavía no conoces. El primer consejo anuncia **Exportar para IA**; pueden llegar otros después, con el mismo funcionamiento:
+- Aparece tras 10 segundos sin interactuar con el lienzo, solo en pizarras con contenido, y nunca junto con otros avisos (bienvenida de invitado, papelera, aviso de enlace), diálogos abiertos o el menú ☰ abierto. También aparece en modo lectura.
+- Aparece como máximo una vez al día (en tu zona horaria) y deja de aparecer para siempre cuando usas la función (con el botón **Probar** del globo o desde el elemento del menú), cierras el consejo con la X o con Esc, o ya lo has visto en 3 días distintos.
+- No roba el foco, se cierra con Esc, respeta la preferencia de movimiento reducido y se anuncia a los lectores de pantalla como estado.
+
+**Dónde se guarda el estado:**
+- **Con cuenta**: en la tabla `user_hints` de Supabase, con una fila por persona y consejo (en cuántos días apareció, cuándo apareció por primera y por última vez, cuándo se cerró o se usó). Cada persona solo lee sus propias filas, las escrituras pasan por las funciones `record_hint_event` e `import_guest_hint` (en los eventos nuevos, el servidor guarda las horas y cuenta los días), cada cuenta tiene como máximo 50 consejos y las filas se borran junto con la cuenta. Una copia queda en el `localStorage` (`heeey_hints_<id de la cuenta>`) para cuando el servidor no responde.
+- **Invitado**: solo en el `localStorage` del navegador (`heeey_hints`), sin enviar nada al servidor. Al iniciar sesión, el estado se lleva a la cuenta: si la cuenta aún no tiene registro del consejo, se importa; si ya lo tiene, solo se añaden «cerrado» y «usado». La copia del invitado sigue en el navegador después de iniciar sesión, para que el consejo no vuelva al cerrar sesión.
+- **Métricas**: los eventos `hint_shown`, `hint_dismissed` y `hint_used` van a PostHog (cuando está activo en el despliegue) solo con el nombre del consejo y el origen (sin IDs de pizarras ni contenido), vinculados al mismo identificador aleatorio que los demás eventos, nunca al correo.

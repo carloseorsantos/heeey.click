@@ -70,3 +70,17 @@ In the canvas ☰ menu, **Export for AI** creates a Markdown file with all the c
 - Items follow reading order (top to bottom, left to right). Coordinates, colors and IDs are left out.
 - It uses the current state of the canvas, is also available in view mode and runs only in the browser.
 - To let the AI read and edit boards directly, with nothing to export, connect the [MCP server](../mcp/getting-started.md).
+
+---
+
+## 💡 Board hints
+
+Small bubbles next to the ☰ button introduce features you may not know yet. The first hint announces **Export for AI**; more may come later, working the same way:
+- It shows up after 10 seconds without interacting with the canvas, only on boards with content, and never together with other notices (guest welcome, trash, link notice), open dialogs or the open ☰ menu. It also shows in view mode.
+- It shows at most once a day (in your local time) and stops for good when you use the feature (from the bubble's **Try it** button or from the menu item), close the hint with X or Esc, or have seen it on 3 different days.
+- It doesn't steal focus, closes with Esc, respects the reduced motion preference and is announced to screen readers as a status.
+
+**Where the state lives:**
+- **Signed in**: in the Supabase `user_hints` table, with one row per person and hint (on how many days it was shown, when it was first and last shown, when it was closed or used). Each person only reads their own rows, writes go through the `record_hint_event` and `import_guest_hint` functions (for new events, the server records the times and counts the days), each account has at most 50 hints and the rows are deleted along with the account. A copy stays in `localStorage` (`heeey_hints_<account id>`) for when the server doesn't respond.
+- **Guest**: only in the browser's `localStorage` (`heeey_hints`), with nothing sent to the server. When you sign in, the state comes along: if the account has no record of the hint yet, it is imported; if it does, only "closed" and "used" are added. The guest copy stays in the browser after signing in, so the hint doesn't come back when you sign out.
+- **Metrics**: the `hint_shown`, `hint_dismissed` and `hint_used` events go to PostHog (when enabled for the deploy) with only the hint name and the source (no board IDs or content), tied to the same random identifier as other events, never to your email.

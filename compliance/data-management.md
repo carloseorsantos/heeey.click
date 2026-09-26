@@ -15,6 +15,7 @@
 | Convites em quadros | `public.board_members` (e-mail convidado) | Enquanto o quadro existir | Por quem compartilha, pela própria pessoa, ou em cascata com o quadro |
 | Pastas | `public.folders` | Enquanto o projeto existir | Em cascata com o projeto |
 | Biblioteca pessoal | `public.user_libraries` | Enquanto a conta existir | Em cascata com a conta |
+| Dicas na lousa (nº de dias e horários em que apareceram, fechadas, usadas) | `public.user_hints` (máx. 50 por conta); cópia local `heeey_hints_<userId>` para contas; convidados só no `localStorage` (`heeey_hints`) | Enquanto a conta existir | Em cascata com a conta |
 | Chaves de API | `public.api_keys` (só o hash), `api_key_teams` | Enquanto a conta existir | Em cascata com a conta |
 | Trilha de auditoria | `public.audit_log` | **1 ano** | Expurgo diário automático |
 | Contas (e-mail) | Supabase Auth | Até o pedido de exclusão | Manual, em até 30 dias do pedido |
@@ -31,8 +32,8 @@
 
 1. O pedido chega em `contato@heeey.click` e é registrado com data.
 2. Confirmar a identidade (o pedido deve vir do e-mail da conta).
-3. **Acesso/portabilidade**: exportar os quadros da pessoa em JSON do Excalidraw.
-4. **Exclusão**: antes, apagar as imagens (`board-media/{board_id}/`) dos quadros do **time pessoal** da pessoa, que o banco apaga junto com o time. Depois, excluir o usuário no Supabase Auth: time pessoal, projetos, pastas, bibliotecas, chaves e convites apagam em cascata. Nos times com outras pessoas, os quadros continuam (o criador vira `null`) e, se ela era a única owner, a posse passa para um admin ou para o membro mais antigo. Convites pendentes para o e-mail dela (`board_members` sem `user_id`) devem ser removidos à parte.
+3. **Acesso/portabilidade**: exportar os quadros da pessoa em JSON do Excalidraw e, se pedido, as linhas dela em `user_libraries` e `user_hints`.
+4. **Exclusão**: antes, apagar as imagens (`board-media/{board_id}/`) dos quadros do **time pessoal** da pessoa, que o banco apaga junto com o time. Depois, excluir o usuário no Supabase Auth: time pessoal, projetos, pastas, bibliotecas, dicas, chaves e convites apagam em cascata. Nos times com outras pessoas, os quadros continuam (o criador vira `null`) e, se ela era a única owner, a posse passa para um admin ou para o membro mais antigo. Convites pendentes para o e-mail dela (`board_members` sem `user_id`) devem ser removidos à parte.
 5. Responder em até 15 dias e concluir a exclusão em até 30 dias.
 
 ## 4. Backup

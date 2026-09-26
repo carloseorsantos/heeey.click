@@ -70,3 +70,17 @@ No menu ☰ do canvas, **Exportar para IA** gera um arquivo Markdown com todo o 
 - Os itens seguem a ordem de leitura (de cima para baixo, da esquerda para a direita). Coordenadas, cores e IDs ficam de fora.
 - Usa o estado atual do canvas, está disponível também no modo leitura e roda só no navegador.
 - Para a IA ler e editar as lousas direto, sem exportar, conecte o [servidor MCP](../mcp/getting-started.md).
+
+---
+
+## 💡 Dicas na lousa
+
+Pequenos balões ao lado do botão ☰ apresentam recursos que você talvez ainda não conheça. A primeira dica anuncia o **Exportar para IA**; outras podem vir depois, com o mesmo funcionamento:
+- Aparece depois de 10 segundos sem interagir com o canvas, só em lousas com conteúdo, e nunca junto com outros avisos (boas-vindas de convidado, lixeira, aviso de link), modais abertos ou o menu ☰ aberto. Também aparece no modo leitura.
+- Aparece no máximo uma vez por dia (no seu fuso horário) e para de vez quando você usa o recurso (pelo botão **Experimentar** do balão ou pelo item do menu), fecha a dica no X ou com Esc, ou já a viu em 3 dias diferentes.
+- Não rouba o foco, fecha com Esc, respeita a preferência de movimento reduzido e é anunciada aos leitores de tela como status.
+
+**Onde fica o estado:**
+- **Com conta**: na tabela `user_hints` do Supabase, com uma linha por pessoa e dica (em quantos dias apareceu, quando apareceu pela primeira e pela última vez, quando foi fechada ou usada). Cada pessoa só lê as próprias linhas, as escritas passam pelas funções `record_hint_event` e `import_guest_hint` (nos eventos novos, o servidor grava os horários e conta os dias), cada conta tem no máximo 50 dicas e as linhas são apagadas junto com a conta. Uma cópia fica no `localStorage` (`heeey_hints_<id da conta>`) para quando o servidor não responde.
+- **Convidado**: só no `localStorage` do navegador (`heeey_hints`), sem nada enviado ao servidor. Ao entrar na conta, o estado vai junto: se a conta ainda não tem registro da dica, ele é importado; se já tem, só entram "fechada" e "usada". A cópia do convidado continua no navegador depois do login, para a dica não voltar ao sair da conta.
+- **Métricas**: os eventos `hint_shown`, `hint_dismissed` e `hint_used` vão para o PostHog (quando ativo no deploy) apenas com o nome da dica e a origem, sem IDs de lousas nem conteúdo, ligados ao mesmo identificador aleatório dos outros eventos (nunca ao e-mail).
