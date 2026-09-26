@@ -19,6 +19,20 @@ Regras gerais para quem contribui com o Heeey, sejam pessoas ou agentes de IA. O
 - Toda issue tem uma seção **Critérios de aceite**, em forma de checklist.
 - Antes de abrir o PR ou encerrar a issue, revise cada critério contra o que foi entregue. Marque só os que foram cumpridos e aponte o que ainda falta.
 
+### Issues grandes: spec com sub-issues
+Quando uma issue descreve uma funcionalidade inteira, ela vira a **spec**, e o trabalho é quebrado em sub-issues pequenas, uma por tarefa.
+- **Título:** `Issue N/M · <assunto>`, na ordem de execução (ex.: `Issue 1/9 · Banco: tabela user_hints`).
+- **Ordem:** encadeie as sub-issues com *blocked by*, cada uma bloqueada pela anterior. Na spec, liste as sub-issues em ordem.
+- **Descrição de cada sub-issue:**
+  - **Tarefa:** o que ela entrega, em uma linha.
+  - **Passo a passo:** passos numerados.
+  - **Como validar (esta tarefa):** checklist que a própria tarefa consegue conferir, com o comando exato (ex.: `npx vitest run …`) ou o roteiro no navegador.
+  - **Critérios da spec que esta tarefa atende:** quais critérios de aceite da spec ela ajuda a fechar.
+  - **Pronto quando:** a condição para encerrar.
+- **Cobertura na spec:** uma tabela que liga cada critério de aceite às sub-issues que o cobrem. Critério sem sub-issue é lacuna no plano.
+- **Comparação com a spec:** uma das últimas sub-issues revisa a spec critério a critério (✅ cumprido, ⏳ depende de uma etapa seguinte, ❌ falta) antes de qualquer mudança na produção. Nada segue com ❌.
+- **Produção e git ficam por último, em sub-issues próprias:** aplicar migration na produção e abrir os PRs. Cada uma depende de aprovação explícita de quem pediu.
+
 ## Código
 - Reaproveite o que já existe (`Modal`, `AuthForm`, `Button`, hooks, i18n) antes de criar funções ou componentes novos.
 - Siga o estilo do código ao redor: nomes, densidade de comentários e padrões.
