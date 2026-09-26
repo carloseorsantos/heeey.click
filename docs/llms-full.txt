@@ -278,9 +278,9 @@ No menu ☰ do canvas, **Exportar para IA** gera um arquivo Markdown com todo o 
 ## 💡 Dicas na lousa
 
 Pequenos balões ao lado do botão ☰ apresentam recursos que você talvez ainda não conheça. A primeira dica anuncia o **Exportar para IA**; outras podem vir depois, com o mesmo funcionamento:
-- Aparece depois de 10 segundos sem interagir com o canvas, só em lousas com conteúdo, e nunca junto com outros avisos (boas-vindas de convidado, lixeira, aviso de link), modais abertos ou o menu ☰ aberto. Também aparece no modo leitura.
-- Aparece no máximo uma vez por dia (no seu fuso horário) e para de vez quando você usa o recurso (pelo botão **Experimentar** do balão ou pelo item do menu), fecha a dica no X ou com Esc, ou já a viu em 3 dias diferentes.
-- Não rouba o foco, fecha com Esc, respeita a preferência de movimento reduzido e é anunciada aos leitores de tela como status.
+- Aparece 10 segundos depois de abrir a lousa (mesmo que você esteja usando o canvas), só em lousas com conteúdo, e nunca junto com outros avisos (boas-vindas de convidado, lixeira, aviso de link), modais abertos ou o menu ☰ aberto. Também aparece no modo leitura.
+- Aparece no máximo uma vez por dia (no seu fuso horário) e para de vez quando você usa o recurso (pelo botão **Experimentar** do balão ou pelo item do menu), fecha a dica no X (ou com Esc, com o foco no balão), ou já a viu em 3 dias diferentes.
+- Não rouba o foco, respeita a preferência de movimento reduzido e é anunciada aos leitores de tela. Um Esc usado para outra coisa (sair da edição de um texto, tirar uma seleção) só tira o balão da frente, sem contar como fechado.
 
 **Onde fica o estado:**
 - **Com conta**: na tabela `user_hints` do Supabase, com uma linha por pessoa e dica (em quantos dias apareceu, quando apareceu pela primeira e pela última vez, quando foi fechada ou usada). Cada pessoa só lê as próprias linhas, as escritas passam pelas funções `record_hint_event` e `import_guest_hint` (nos eventos novos, o servidor grava os horários e conta os dias), cada conta tem no máximo 50 dicas e as linhas são apagadas junto com a conta. Uma cópia fica no `localStorage` (`heeey_hints_<id da conta>`) para quando o servidor não responde.

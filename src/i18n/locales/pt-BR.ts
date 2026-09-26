@@ -310,6 +310,14 @@ export const ptBR = {
     viewOnly: "Só visualização",
     viewOnlyTitle: "O dono do quadro deixou o link apenas para visualização",
   },
+  hints: {
+    dismiss: "Fechar dica",
+    exportAI: {
+      action: "Experimentar",
+      text: "Leve o conteúdo desta lousa para a sua IA (ChatGPT, Claude, Gemini) em um clique.",
+      title: "Exportar para IA",
+    },
+  },
   history: {
     beforeRestore: "Antes de uma restauração · ",
     description: "Versões salvas automaticamente enquanto o quadro é editado (até 30, por 30 dias).",

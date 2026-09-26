@@ -311,6 +311,14 @@ export const enUS: Messages = {
     viewOnly: "View only",
     viewOnlyTitle: "The owner shared this link as view-only",
   },
+  hints: {
+    dismiss: "Close hint",
+    exportAI: {
+      action: "Try it",
+      text: "Take this board's content to your AI (ChatGPT, Claude, Gemini) in one click.",
+      title: "Export for AI",
+    },
+  },
   history: {
     beforeRestore: "Before a restore · ",
     description: "Versions saved automatically while the board is edited (up to 30, for 30 days).",

@@ -278,9 +278,9 @@ En el menú ☰ del lienzo, **Exportar para IA** genera un archivo Markdown con 
 ## 💡 Consejos en la pizarra
 
 Pequeños globos junto al botón ☰ presentan funciones que quizá todavía no conoces. El primer consejo anuncia **Exportar para IA**; pueden llegar otros después, con el mismo funcionamiento:
-- Aparece tras 10 segundos sin interactuar con el lienzo, solo en pizarras con contenido, y nunca junto con otros avisos (bienvenida de invitado, papelera, aviso de enlace), diálogos abiertos o el menú ☰ abierto. También aparece en modo lectura.
-- Aparece como máximo una vez al día (en tu zona horaria) y deja de aparecer para siempre cuando usas la función (con el botón **Probar** del globo o desde el elemento del menú), cierras el consejo con la X o con Esc, o ya lo has visto en 3 días distintos.
-- No roba el foco, se cierra con Esc, respeta la preferencia de movimiento reducido y se anuncia a los lectores de pantalla como estado.
+- Aparece 10 segundos después de abrir la pizarra (aunque estés usando el lienzo), solo en pizarras con contenido, y nunca junto con otros avisos (bienvenida de invitado, papelera, aviso de enlace), diálogos abiertos o el menú ☰ abierto. También aparece en modo lectura.
+- Aparece como máximo una vez al día (en tu zona horaria) y deja de aparecer para siempre cuando usas la función (con el botón **Probar** del globo o desde el elemento del menú), cierras el consejo con la X (o con Esc, con el foco en el globo), o ya lo has visto en 3 días distintos.
+- No roba el foco, respeta la preferencia de movimiento reducido y se anuncia a los lectores de pantalla. Un Esc pensado para otra cosa (salir de la edición de un texto, quitar una selección) solo aparta el globo, sin contar como cerrado.
 
 **Dónde se guarda el estado:**
 - **Con cuenta**: en la tabla `user_hints` de Supabase, con una fila por persona y consejo (en cuántos días apareció, cuándo apareció por primera y por última vez, cuándo se cerró o se usó). Cada persona solo lee sus propias filas, las escrituras pasan por las funciones `record_hint_event` e `import_guest_hint` (en los eventos nuevos, el servidor guarda las horas y cuenta los días), cada cuenta tiene como máximo 50 consejos y las filas se borran junto con la cuenta. Una copia queda en el `localStorage` (`heeey_hints_<id de la cuenta>`) para cuando el servidor no responde.

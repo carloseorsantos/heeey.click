@@ -311,6 +311,14 @@ export const esES: Messages = {
     viewOnly: "Solo lectura",
     viewOnlyTitle: "La persona propietaria ha compartido este enlace como solo lectura",
   },
+  hints: {
+    dismiss: "Cerrar consejo",
+    exportAI: {
+      action: "Probar",
+      text: "Lleva el contenido de esta pizarra a tu IA (ChatGPT, Claude, Gemini) con un clic.",
+      title: "Exportar para IA",
+    },
+  },
   history: {
     beforeRestore: "Antes de una restauración · ",
     description: "Versiones guardadas automáticamente mientras se edita la pizarra (hasta 30, durante 30 días).",
