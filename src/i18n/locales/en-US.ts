@@ -312,11 +312,26 @@ export const enUS: Messages = {
     viewOnlyTitle: "The owner shared this link as view-only",
   },
   hints: {
+    boardSearch: {
+      action: "Search",
+      text: "Search for and open another board without going back to the dashboard.",
+      title: "Jump between boards",
+    },
     dismiss: "Close hint",
     exportAI: {
       action: "Try it",
       text: "Take this board's content to your AI (ChatGPT, Claude, Gemini) in one click.",
       title: "Export for AI",
+    },
+    shareBoard: {
+      action: "Share",
+      text: "Send the link and draw together on the same board, in real time.",
+      title: "Invite others",
+    },
+    versionHistory: {
+      action: "View history",
+      text: "See earlier versions of the board and restore any of them.",
+      title: "Go back in time",
     },
   },
   history: {

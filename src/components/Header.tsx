@@ -234,6 +234,7 @@ export function Header({
             variant="plain"
             iconOnly
             onClick={onOpenSearch}
+            data-hint-anchor="board-search"
             aria-label={t('header.goToBoard')}
             title={t('header.goToBoard')}
           >
@@ -241,7 +242,7 @@ export function Header({
           </Button>
         )}
 
-        <Button variant="primary" size="sm" onClick={onOpenShare} className="h-8 px-3.5">
+        <Button variant="primary" size="sm" onClick={onOpenShare} className="h-8 px-3.5" data-hint-anchor="share">
           {t('header.share')}
         </Button>
 

@@ -6,7 +6,7 @@ vi.mock('../lib/analytics', () => ({ track: vi.fn() }));
 
 import { track } from '../lib/analytics';
 import { trackHint } from '../lib/hints';
-import { useHint } from '../hooks/useHint';
+import { useHintQueue } from '../hooks/useHintQueue';
 
 const store = new Map<string, string>();
 globalThis.localStorage = {
@@ -24,10 +24,10 @@ const trackMock = vi.mocked(track);
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 /** The hook's callbacks from a guest render (effects do not run on the server, so no timers) */
-function renderHint(hintKey = 'export-ai') {
-  let result!: ReturnType<typeof useHint>;
+function renderQueue() {
+  let result!: ReturnType<typeof useHintQueue>;
   function Probe() {
-    result = useHint(hintKey, { userId: null, blocked: false, canShow: () => true });
+    result = useHintQueue({ userId: null, blocked: false, isBusy: () => false, canShow: () => true });
     return null;
   }
   renderToString(createElement(Probe));
@@ -51,59 +51,66 @@ describe('trackHint', () => {
 
   it('sends the hint key and where it was used from', () => {
     trackHint('export-ai', 'used', 'bubble');
-    trackHint('export-ai', 'used', 'menu');
+    trackHint('export-ai', 'used', 'direct');
     expect(trackMock.mock.calls).toEqual([
       ['hint_used', { hint: 'export-ai', source: 'bubble' }],
-      ['hint_used', { hint: 'export-ai', source: 'menu' }],
+      ['hint_used', { hint: 'export-ai', source: 'direct' }],
     ]);
   });
 });
 
-describe('useHint tracking', () => {
-  it('dismissing sends hint_dismissed once, with only the hint key', async () => {
-    renderHint().dismiss();
-    await flush();
-    expect(trackMock.mock.calls).toEqual([['hint_dismissed', { hint: 'export-ai' }]]);
-  });
-
-  it('using it from the bubble sends hint_used with source bubble', async () => {
-    renderHint().markUsed('bubble');
+describe('useHintQueue tracking', () => {
+  it('using a hint from its bubble sends hint_used with source bubble', async () => {
+    renderQueue().markUsed('export-ai', 'bubble');
     await flush();
     expect(trackMock.mock.calls).toEqual([['hint_used', { hint: 'export-ai', source: 'bubble' }]]);
   });
 
-  it('using it from the menu twice sends a single hint_used', async () => {
-    const hint = renderHint();
-    hint.markUsed('menu');
-    hint.markUsed('menu');
+  it('using it from its usual control twice sends a single hint_used', async () => {
+    const queue = renderQueue();
+    queue.markUsed('share-board', 'direct');
+    queue.markUsed('share-board', 'direct');
     await flush();
-    expect(trackMock.mock.calls).toEqual([['hint_used', { hint: 'export-ai', source: 'menu' }]]);
+    expect(trackMock.mock.calls).toEqual([['hint_used', { hint: 'share-board', source: 'direct' }]]);
   });
 
-  it('using it from the bubble and then the menu sends a single hint_used', async () => {
-    const hint = renderHint();
-    hint.markUsed('bubble');
-    hint.markUsed('menu');
+  it('using it from the bubble and then directly sends a single hint_used', async () => {
+    const queue = renderQueue();
+    queue.markUsed('export-ai', 'bubble');
+    queue.markUsed('export-ai', 'direct');
     await flush();
     expect(trackMock.mock.calls).toEqual([['hint_used', { hint: 'export-ai', source: 'bubble' }]]);
+  });
+
+  it('each hint counts its own first use', async () => {
+    const queue = renderQueue();
+    queue.markUsed('board-search', 'direct');
+    queue.markUsed('version-history', 'direct');
+    await flush();
+    expect(trackMock.mock.calls).toEqual([
+      ['hint_used', { hint: 'board-search', source: 'direct' }],
+      ['hint_used', { hint: 'version-history', source: 'direct' }],
+    ]);
   });
 
   it('saves the use right away, before the tracking decision', () => {
-    renderHint().markUsed('menu');
+    renderQueue().markUsed('export-ai', 'direct');
     expect(JSON.parse(store.get('heeey_hints') ?? '{}')['export-ai']?.usedAt).toBeTruthy();
   });
 
   it('does not send hint_used again once the hint is marked as used', async () => {
-    renderHint().markUsed('menu');
+    renderQueue().markUsed('export-ai', 'direct');
     await flush();
     trackMock.mockClear();
-    renderHint().markUsed('menu');
+    renderQueue().markUsed('export-ai', 'direct');
     await flush();
     expect(trackMock).not.toHaveBeenCalled();
   });
 
-  it('hiding it for now sends nothing', async () => {
-    renderHint().hide();
+  it('dismissing or hiding with no hint on screen sends nothing', async () => {
+    const queue = renderQueue();
+    queue.dismiss();
+    queue.hide();
     await flush();
     expect(trackMock).not.toHaveBeenCalled();
   });
