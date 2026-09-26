@@ -24,6 +24,7 @@ import { BoardSearchModal } from '../components/BoardSearchModal';
 import { ExportForAIModal } from '../components/ExportForAIModal';
 import { HintBubble } from '../components/HintBubble';
 import { useHint } from '../hooks/useHint';
+import type { HintUseSource } from '../lib/hints';
 import { sceneToMarkdown, SceneMarkdownStrings } from '../lib/sceneMarkdown';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
@@ -433,9 +434,9 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
   const exportOpenedFromHint = useRef(false);
 
   // Using the feature (from the hint or the menu) ends the hint for good
-  const openExportForAI = () => {
+  const openExportForAI = (source: HintUseSource) => {
     setIsExportForAIOpen(true);
-    exportAIHint.markUsed();
+    exportAIHint.markUsed(source);
   };
 
   // Restricted board and no access: never show (or create) a blank board in its place
@@ -554,7 +555,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
             <MainMenu.DefaultItems.SaveToActiveFile />
             <MainMenu.DefaultItems.Export />
             <MainMenu.DefaultItems.SaveAsImage />
-            <MainMenu.Item icon={<Sparkles strokeWidth={1.5} />} onSelect={openExportForAI}>
+            <MainMenu.Item icon={<Sparkles strokeWidth={1.5} />} onSelect={() => openExportForAI('menu')}>
               {t('exportAI.menuItem')}
             </MainMenu.Item>
             <MainMenu.DefaultItems.SearchMenu />
@@ -693,7 +694,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
           dismissLabel={t('hints.dismiss')}
           onAction={() => {
             exportOpenedFromHint.current = true;
-            openExportForAI();
+            openExportForAI('bubble');
           }}
           onDismiss={exportAIHint.dismiss}
           onClose={exportAIHint.hide}

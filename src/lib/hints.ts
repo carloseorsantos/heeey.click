@@ -1,6 +1,9 @@
 import { supabase } from './supabase';
+import { track } from './analytics';
 
 export type HintEvent = 'shown' | 'dismissed' | 'used';
+/** Where a hint's feature was used from */
+export type HintUseSource = 'bubble' | 'menu';
 
 export interface HintState {
   /** Different days (in the person's time zone) the hint was shown on */
@@ -68,6 +71,16 @@ export function applyHintEvent(state: HintState | undefined, event: HintEvent, t
   if (event === 'used') return { ...current, usedAt: current.usedAt ?? now };
   if (current.lastShownDay && today <= current.lastShownDay) return current;
   return { ...current, shownDays: Math.min(current.shownDays + 1, MAX_STORED_DAYS), lastShownDay: today };
+}
+
+/**
+ * Product analytics (PostHog, only when configured): the hint key and, for "used", where from.
+ * Never board or user ids, titles or content.
+ */
+export function trackHint(hintKey: string, event: 'shown' | 'dismissed'): void;
+export function trackHint(hintKey: string, event: 'used', source: HintUseSource): void;
+export function trackHint(hintKey: string, event: HintEvent, source?: HintUseSource) {
+  track(`hint_${event}`, event === 'used' ? { hint: hintKey, source } : { hint: hintKey });
 }
 
 // ------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createHintStore, getHint, localDay, shouldShowHint, HintEvent, HintMap } from '../lib/hints';
+import { createHintStore, getHint, localDay, shouldShowHint, trackHint, HintEvent, HintMap, HintStore, HintUseSource } from '../lib/hints';
 
 /** How long after the board opens a hint shows, whether or not the person is using it */
 export const HINT_DELAY_MS = 10_000;
@@ -27,6 +27,7 @@ export function useHint(hintKey: string, { userId, blocked, canShow }: UseHintOp
   const [hints, setHints] = useState<HintMap | null>(null);
   const [visible, setVisible] = useState(false);
   const shownHere = useRef(false);
+  const usedIn = useRef<HintStore | null>(null);
   const canShowRef = useRef(canShow);
   canShowRef.current = canShow;
   const blockedRef = useRef(blocked);
@@ -64,6 +65,7 @@ export function useHint(hintKey: string, { userId, blocked, canShow }: UseHintOp
       shownHere.current = true;
       setVisible(true);
       record('shown');
+      trackHint(hintKey, 'shown');
       return true;
     };
     const timer = setTimeout(() => {
@@ -77,7 +79,7 @@ export function useHint(hintKey: string, { userId, blocked, canShow }: UseHintOp
       clearTimeout(timer);
       clearInterval(retry);
     };
-  }, [eligible, visible, record]);
+  }, [eligible, visible, record, hintKey]);
 
   // Something else took the screen: step aside (it already counted as shown today)
   useEffect(() => {
@@ -88,16 +90,30 @@ export function useHint(hintKey: string, { userId, blocked, canShow }: UseHintOp
   const dismiss = useCallback(() => {
     setVisible(false);
     record('dismissed');
-  }, [record]);
+    trackHint(hintKey, 'dismissed');
+  }, [record, hintKey]);
 
   /** Out of the way for now, without counting as closed */
   const hide = useCallback(() => setVisible(false), []);
 
   /** The feature was used, from the hint or anywhere else: the hint stops for good */
-  const markUsed = useCallback(() => {
-    setVisible(false);
-    if (!getHint(hints ?? {}, hintKey)?.usedAt) record('used');
-  }, [record, hints, hintKey]);
+  const markUsed = useCallback(
+    (source: HintUseSource) => {
+      setVisible(false);
+      // Only the first use counts: once per store, since a second use can come before the state updates
+      if (usedIn.current === store || (hints && getHint(hints, hintKey)?.usedAt)) return;
+      usedIn.current = store;
+      // Taken before recording, so it tells whether this is the first use. While a signed-in
+      // user's state is still loading it already includes this use, and it is not tracked
+      const before = store.load();
+      // Recorded right away (repeating it is harmless), so the hint stops even if the page closes soon after
+      record('used');
+      void before.then((loaded) => {
+        if (!getHint(loaded, hintKey)?.usedAt) trackHint(hintKey, 'used', source);
+      });
+    },
+    [store, hints, hintKey, record]
+  );
 
   // Hidden in the same render something else shows up, not a frame later
   return { visible: visible && !blocked, dismiss, hide, markUsed };
