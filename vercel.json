@@ -1,5 +1,4 @@
 {
-  "git": { "deploymentEnabled": { "staging": false } },
   "redirects": [
     { "source": "/lousa-online", "destination": "/", "permanent": true },
     { "source": "/whiteboard-mcp", "destination": "/mcp", "permanent": true },
