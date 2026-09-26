@@ -1,5 +1,7 @@
 # Runs on every PR and on main: type check + build, unit and database tests (PGlite, no
 # real Supabase), and a dependency audit. Branch protection requires the "ci" check to pass.
+# On PRs, once "ci" passes, the "staging" job merges the PR into `staging` and deploys it to a
+# Vercel preview. Needs secrets VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID (optional var STAGING_DOMAIN).
 name: CI
 
 on:
@@ -33,3 +35,79 @@ jobs:
         run: npm run build
       - name: Tests (unit + database)
         run: npm test
+
+  # After CI passes on a PR, merge it into `staging` and deploy `staging` to a Vercel preview.
+  # Skipped for forks and Dependabot, which don't get the Vercel secrets.
+  staging:
+    needs: ci
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    # One staging update at a time; never cancel a merge/deploy halfway.
+    concurrency:
+      group: staging
+      cancel-in-progress: false
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Merge PR into staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin staging >/dev/null; then
+            git fetch origin staging main "pull/$PR_NUMBER/head:pr-$PR_NUMBER"
+            git switch -C staging origin/staging
+            git merge --no-edit origin/main
+          else
+            git fetch origin main "pull/$PR_NUMBER/head:pr-$PR_NUMBER"
+            git switch -C staging origin/main
+          fi
+          git merge --no-ff --no-edit -m "Merge PR #$PR_NUMBER into staging" "pr-$PR_NUMBER"
+          git push origin staging
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - name: Deploy staging to Vercel (preview)
+        id: deploy
+        run: |
+          npm install --global vercel@latest
+          vercel pull --yes --environment=preview --git-branch=staging --token="$VERCEL_TOKEN"
+          vercel build --token="$VERCEL_TOKEN"
+          url=$(vercel deploy --prebuilt --token="$VERCEL_TOKEN")
+          if [ -n "$STAGING_DOMAIN" ]; then
+            vercel alias set "$url" "$STAGING_DOMAIN" --token="$VERCEL_TOKEN"
+            url="https://$STAGING_DOMAIN"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+        env:
+          STAGING_DOMAIN: ${{ vars.STAGING_DOMAIN }}
+      - name: Comment preview URL on the PR
+        uses: actions/github-script@v8
+        env:
+          DEPLOY_URL: ${{ steps.deploy.outputs.url }}
+        with:
+          script: |
+            const marker = '<!-- staging-deploy -->';
+            const body = `${marker}\n🚀 Merged into \`staging\` and deployed to Vercel preview: ${process.env.DEPLOY_URL}\n\nCommit: ${context.payload.pull_request.head.sha}`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
