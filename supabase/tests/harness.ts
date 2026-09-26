@@ -17,7 +17,7 @@ export interface TestDb {
    * Runs a statement as a user (authenticated) or anon (null) with RLS. `link` is the board
    * opened by link (the x-board-id header the app sends).
    */
-  as: (user: string | null, sql: string, params?: unknown[], link?: string | null) => Promise<{ rows: any[]; error?: string }>;
+  as: (user: string | null, sql: string, params?: unknown[], link?: string | null) => Promise<{ rows: any[]; error?: string; code?: string }>;
   /** Superuser, no JWT user */
   sys: (sql: string, params?: unknown[]) => Promise<any[]>;
   /** Creates a user as Supabase Auth would (the signup trigger creates the personal team) */
@@ -42,7 +42,7 @@ export async function createTestDb(): Promise<TestDb> {
     try {
       return { rows: (await db.query<any>(sql, params)).rows };
     } catch (e: any) {
-      return { rows: [], error: String(e.message) };
+      return { rows: [], error: String(e.message), code: e.code };
     } finally {
       await db.exec('reset role');
     }
