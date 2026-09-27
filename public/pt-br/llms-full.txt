@@ -273,6 +273,21 @@ No menu ☰ do canvas, **Exportar para IA** gera um arquivo Markdown com todo o 
 - Usa o estado atual do canvas, está disponível também no modo leitura e roda só no navegador.
 - Para a IA ler e editar as lousas direto, sem exportar, conecte o [servidor MCP](../mcp/getting-started.md).
 
+---
+
+## 💡 Dicas na lousa
+
+Pequenos balões apresentam recursos que você talvez ainda não conheça, cada um apontando para o botão do recurso, nesta ordem: **Exportar para IA** (☰), **Compartilhar**, **Ir para outro quadro** (🔍) e **Histórico de versões** (no menu da sua foto).
+- A primeira dica aparece 10 segundos depois de abrir a lousa (mesmo que você esteja usando o canvas), e cada próxima 10 segundos depois que a anterior sai da tela. Aparece uma de cada vez, nunca junto com outros avisos (boas-vindas de convidado, lixeira, aviso de link), modais ou menus abertos; nesses casos, espera eles saírem.
+- Cada dica aparece uma vez só. Depois disso, não volta, mesmo que você não tenha clicado nela. Usar o recurso antes (pelo botão **Experimentar**/**Compartilhar**/**Buscar**/**Ver histórico** do balão ou pelo caminho normal) também encerra a dica.
+- Uma dica que ainda não se aplica fica para depois, sem contar como vista: as dicas de exportar, compartilhar e histórico esperam a lousa ter conteúdo, a de ir para outro quadro espera você ter outro quadro, e a de histórico não aparece no modo leitura.
+- Não rouba o foco, respeita a preferência de movimento reduzido e é anunciada aos leitores de tela. O X (ou Esc, com o foco no balão) fecha a dica; um Esc usado para outra coisa (sair da edição de um texto, tirar uma seleção) só tira o balão da frente.
+
+**Onde fica o estado:**
+- **Com conta**: na tabela `user_hints` do Supabase, com uma linha por pessoa e dica (quando apareceu, quando foi fechada e quando foi usada). Cada pessoa só lê as próprias linhas, as escritas passam pela função `record_hint_event` (o servidor grava os horários), cada conta tem no máximo 50 dicas e as linhas são apagadas junto com a conta. Uma cópia fica no `localStorage` (`heeey_hints_<id da conta>`) para quando o servidor não responde. Uma dica vista com a conta não volta em nenhum navegador.
+- **Convidado**: só no `localStorage` do navegador (`heeey_hints`), sem nada enviado ao servidor. Em outro navegador, ou depois de limpar os dados do site, as dicas podem aparecer de novo. Ao entrar na conta, o que o convidado já viu, fechou ou usou vai junto; a cópia continua no navegador depois do login, para as dicas não voltarem ao sair da conta.
+- **Métricas**: os eventos `hint_shown`, `hint_dismissed` e `hint_used` vão para o PostHog (quando ativo no deploy) apenas com o nome da dica e a origem (`bubble` ou `direct`), sem IDs de lousas nem conteúdo, ligados ao mesmo identificador aleatório dos outros eventos (nunca ao e-mail).
+
 
 ================================================================================
 FILE: docs/features/collaboration-realtime.md

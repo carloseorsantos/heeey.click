@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Excalidraw,
   MainMenu,
@@ -10,7 +10,7 @@ import {
 } from '@excalidraw/excalidraw';
 import '@excalidraw/excalidraw/index.css';
 import { AnimatePresence, motion } from 'motion/react';
-import { Loader2, X, Trash2, RotateCcw, Lock, Clock, Sparkles } from 'lucide-react';
+import { Loader2, X, Trash2, RotateCcw, Lock, Clock, Sparkles, Users, Search, History } from 'lucide-react';
 import { spring } from '../lib/motion';
 import { Button } from '../components/ui/Button';
 import { useRealtimeBoard } from '../hooks/useRealtimeBoard';
@@ -22,14 +22,73 @@ import { ShareModal } from '../components/ShareModal';
 import { VersionHistoryModal } from '../components/VersionHistoryModal';
 import { BoardSearchModal } from '../components/BoardSearchModal';
 import { ExportForAIModal } from '../components/ExportForAIModal';
+import { HintBubble } from '../components/HintBubble';
+import { useHintQueue } from '../hooks/useHintQueue';
+import type { HintKey, HintUseSource } from '../lib/hints';
+import { sceneToMarkdown, SceneMarkdownStrings } from '../lib/sceneMarkdown';
 import { HeeeyLogo } from '../components/Logo';
 import { Avatar } from '../components/Avatar';
-import { isBoardLocallyCreated } from '../lib/storage';
+import { getLocalBoards, isBoardLocallyCreated } from '../lib/storage';
+import { supabase } from '../lib/supabase';
 import { fitTextHeights, generateId } from '../lib/utils';
 import { optimizeAndUploadImage } from '../lib/imageOptimizer';
 import { createLibraryAdapter, createGuestLibraryMigration } from '../lib/libraryAdapter';
 import { useI18n } from '../i18n';
 import { formatDateShort } from '../lib/utils';
+
+// Excalidraw's ☰ button, where the "Export for AI" item lives
+const MAIN_MENU_TRIGGER = '.excalidraw .main-menu-trigger';
+
+// The control each board hint points at (the version history lives in the account menu)
+const HINT_ANCHORS: Record<HintKey, string> = {
+  'export-ai': MAIN_MENU_TRIGGER,
+  'share-board': 'header [data-hint-anchor="share"]',
+  'board-search': 'header [data-hint-anchor="board-search"]',
+  'version-history': 'header [data-hint-anchor="account-menu"]',
+};
+
+const HINT_CONTENT = {
+  'export-ai': {
+    icon: <Sparkles className="w-4 h-4" strokeWidth={2} />,
+    title: 'hints.exportAI.title',
+    text: 'hints.exportAI.text',
+    action: 'hints.exportAI.action',
+  },
+  'share-board': {
+    icon: <Users className="w-4 h-4" strokeWidth={2} />,
+    title: 'hints.shareBoard.title',
+    text: 'hints.shareBoard.text',
+    action: 'hints.shareBoard.action',
+  },
+  'board-search': {
+    icon: <Search className="w-4 h-4" strokeWidth={2} />,
+    title: 'hints.boardSearch.title',
+    text: 'hints.boardSearch.text',
+    action: 'hints.boardSearch.action',
+  },
+  'version-history': {
+    icon: <History className="w-4 h-4" strokeWidth={2} />,
+    title: 'hints.versionHistory.title',
+    text: 'hints.versionHistory.text',
+    action: 'hints.versionHistory.action',
+  },
+} as const satisfies Record<HintKey, { icon: React.ReactNode; title: string; text: string; action: string }>;
+
+// sceneToMarkdown only tells whether the board has content here, so its labels don't matter
+const CONTENT_CHECK_STRINGS: SceneMarkdownStrings = {
+  intro: '',
+  untitled: '',
+  content: '',
+  outsideFrames: '',
+  connections: '',
+  untitledFrame: '',
+  emptyFrame: '',
+  image: '',
+  unlabeled: '',
+  link: '',
+  ellipse: '',
+  diamond: '',
+};
 
 function safeGetStorage(storage: Storage, key: string): string | null {
   try {
@@ -103,6 +162,8 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
   const initialElements = useMemo(() => fitTextHeights(board?.elements || []), [board?.id]);
   const [isOptimizingImage, setIsOptimizingImage] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+  // Excalidraw's own menus and dialogs (☰ menu, library, help...), which hints must not cover
+  const [excalidrawOverlayOpen, setExcalidrawOverlayOpen] = useState(false);
   const [restoreState, setRestoreState] = useState<'idle' | 'restoring' | 'error'>('idle');
   // Back to the project the board is in, when the user is in its team
   const backToDashboard = () =>
@@ -382,6 +443,92 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
     };
   }, [boardId, excalidrawAPI, isViewMode]);
 
+  // Board hints: one at a time, never over another notice, dialog or menu
+  const showLinkNotice =
+    !!board && !isTrashed && !!board.restrict_link_at && !access?.member_permission && (board.access_level === 'edit' || board.access_level === 'view');
+  const [hasOtherBoards, setHasOtherBoards] = useState(false);
+  const hintQueue = useHintQueue({
+    userId: user?.id,
+    blocked:
+      !board ||
+      isTrashed ||
+      showLinkNotice ||
+      showGuestPrompt ||
+      isOptimizingImage ||
+      isShareOpen ||
+      isHistoryOpen ||
+      isSearchOpen ||
+      isExportForAIOpen ||
+      excalidrawOverlayOpen,
+    // Dialogs outside this page (settings, sign-in), Excalidraw's own, and the header's open menu
+    isBusy: () => !!document.querySelector('[aria-modal="true"], .excalidraw .Modal, header [aria-expanded="true"]'),
+    canShow: (hintKey) => {
+      if (!excalidrawAPI || !document.querySelector(HINT_ANCHORS[hintKey])) return false;
+      if (hintKey === 'board-search') return hasOtherBoards;
+      if (hintKey === 'version-history' && isViewMode) return false;
+      return sceneToMarkdown(board?.title, excalidrawAPI.getSceneElements(), CONTENT_CHECK_STRINGS) !== null;
+    },
+  });
+
+  // "Go to another board" only helps with another board to go to; checked while that hint is still ahead
+  const boardSearchAhead = hintQueue.remaining.includes('board-search');
+  useEffect(() => {
+    if (!boardSearchAhead || !board?.id) return;
+    let active = true;
+    (async () => {
+      let found = false;
+      if (user?.id) {
+        const { count } = await supabase
+          .from('boards')
+          .select('id', { count: 'exact', head: true })
+          .eq('owner_id', user.id)
+          .is('deleted_at', null)
+          .neq('id', board.id);
+        found = (count ?? 0) > 0;
+      } else {
+        found = getLocalBoards().some((b) => !b.owner_id && !b.deleted_at && b.id !== board.id && isBoardLocallyCreated(b.id, guestProfile.id));
+      }
+      if (active) setHasOtherBoards(found);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [boardSearchAhead, board?.id, user?.id, guestProfile.id]);
+
+  // The bubble keeps its last hint's content while it animates out
+  const lastHint = useRef<HintKey>('export-ai');
+  if (hintQueue.current) lastHint.current = hintQueue.current;
+  const bubbleHint = lastHint.current;
+
+  // Opened from a hint, which is gone by the time the dialog closes: focus goes back to its anchor
+  const hintFocusReturn = useRef<string | null>(null);
+  const returnFocusFromHint = () => {
+    const anchor = hintFocusReturn.current;
+    if (!anchor) return;
+    hintFocusReturn.current = null;
+    setTimeout(() => document.querySelector<HTMLElement>(anchor)?.focus());
+  };
+
+  // Using a feature (from its hint or its usual control) ends that hint for good
+  const hintActions: Record<HintKey, (source: HintUseSource) => void> = {
+    'export-ai': (source) => {
+      setIsExportForAIOpen(true);
+      hintQueue.markUsed('export-ai', source);
+    },
+    'share-board': (source) => {
+      setIsShareOpen(true);
+      hintQueue.markUsed('share-board', source);
+    },
+    'board-search': (source) => {
+      setIsSearchOpen(true);
+      hintQueue.markUsed('board-search', source);
+    },
+    'version-history': (source) => {
+      setIsHistoryOpen(true);
+      hintQueue.markUsed('version-history', source);
+    },
+  };
+
   // Restricted board and no access: never show (or create) a blank board in its place
   if (accessDenied) {
     return (
@@ -438,12 +585,12 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
         isViewMode={isViewMode}
         isTrashed={isTrashed}
         onlineCollaborators={onlineCollaborators}
-        onOpenShare={() => setIsShareOpen(true)}
+        onOpenShare={() => hintActions['share-board']('direct')}
         onBackToDashboard={backToDashboard}
         onOpenDocs={onNavigateToDocs && (() => onNavigateToDocs())}
         onExport={handleExport}
-        onOpenHistory={isViewMode ? undefined : () => setIsHistoryOpen(true)}
-        onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenHistory={isViewMode ? undefined : () => hintActions['version-history']('direct')}
+        onOpenSearch={() => hintActions['board-search']('direct')}
       />
 
       {/* Excalidraw Canvas Area */}
@@ -459,7 +606,22 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
             files: board.files || {},
             scrollToContent: true,
           }}
-          onChange={handleCanvasChange}
+          onChange={(elements, appState, files) => {
+            handleCanvasChange(elements, appState, files);
+            setExcalidrawOverlayOpen(
+              !!(
+                appState.openMenu ||
+                appState.openDialog ||
+                appState.openSidebar ||
+                appState.openPopup ||
+                appState.contextMenu ||
+                appState.showHyperlinkPopup ||
+                appState.editingTextElement ||
+                // The properties panel opens under the ☰, where the hint sits
+                Object.keys(appState.selectedElementIds).length > 0
+              )
+            );
+          }}
           onPointerUpdate={handlePointerUpdate}
           viewModeEnabled={isViewMode}
           isCollaborating={true}
@@ -483,7 +645,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
             <MainMenu.DefaultItems.SaveToActiveFile />
             <MainMenu.DefaultItems.Export />
             <MainMenu.DefaultItems.SaveAsImage />
-            <MainMenu.Item icon={<Sparkles strokeWidth={1.5} />} onSelect={() => setIsExportForAIOpen(true)}>
+            <MainMenu.Item icon={<Sparkles strokeWidth={1.5} />} onSelect={() => hintActions['export-ai']('direct')}>
               {t('exportAI.menuItem')}
             </MainMenu.Item>
             <MainMenu.DefaultItems.SearchMenu />
@@ -533,7 +695,7 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
 
         {/* Migration with notice: visitors who only have the link learn it will stop working */}
         <AnimatePresence>
-          {!isTrashed && board.restrict_link_at && !access?.member_permission && (board.access_level === 'edit' || board.access_level === 'view') && (
+          {showLinkNotice && board.restrict_link_at && (
             <motion.div key="link-notice" className="absolute top-3 inset-x-3 z-30 flex justify-center pointer-events-none">
               <motion.div
                 role="status"
@@ -612,6 +774,22 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
           )}
         </AnimatePresence>
 
+        <HintBubble
+          visible={!!hintQueue.current}
+          anchor={HINT_ANCHORS[bubbleHint]}
+          icon={HINT_CONTENT[bubbleHint].icon}
+          title={t(HINT_CONTENT[bubbleHint].title)}
+          text={t(HINT_CONTENT[bubbleHint].text)}
+          actionLabel={t(HINT_CONTENT[bubbleHint].action)}
+          dismissLabel={t('hints.dismiss')}
+          onAction={() => {
+            hintFocusReturn.current = HINT_ANCHORS[bubbleHint];
+            hintActions[bubbleHint]('bubble');
+          }}
+          onDismiss={hintQueue.dismiss}
+          onClose={hintQueue.hide}
+        />
+
         {/* Optimizing image indicator pill */}
         <AnimatePresence>
           {isOptimizingImage && (
@@ -635,7 +813,10 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
       {/* Modals */}
       <ShareModal
         isOpen={isShareOpen}
-        onClose={() => setIsShareOpen(false)}
+        onClose={() => {
+          setIsShareOpen(false);
+          returnFocusFromHint();
+        }}
         boardId={board.id}
         boardTitle={board.title}
         accessLevel={board.access_level}
@@ -647,14 +828,20 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
 
       <BoardSearchModal
         isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
+        onClose={() => {
+          setIsSearchOpen(false);
+          returnFocusFromHint();
+        }}
         currentBoardId={board.id}
         onOpenBoard={onOpenBoard}
       />
 
       <ExportForAIModal
         isOpen={isExportForAIOpen}
-        onClose={() => setIsExportForAIOpen(false)}
+        onClose={() => {
+          setIsExportForAIOpen(false);
+          returnFocusFromHint();
+        }}
         boardTitle={board.title}
         fileName={fileBaseName()}
         getElements={() => excalidrawAPI?.getSceneElements() ?? []}
@@ -663,7 +850,10 @@ export function BoardPage({ boardId, onBackToDashboard, onOpenBoard, onNavigateT
 
       <VersionHistoryModal
         isOpen={isHistoryOpen}
-        onClose={() => setIsHistoryOpen(false)}
+        onClose={() => {
+          setIsHistoryOpen(false);
+          returnFocusFromHint();
+        }}
         boardId={board.id}
         onRestore={restoreVersion}
       />

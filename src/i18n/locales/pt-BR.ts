@@ -310,6 +310,29 @@ export const ptBR = {
     viewOnly: "Só visualização",
     viewOnlyTitle: "O dono do quadro deixou o link apenas para visualização",
   },
+  hints: {
+    boardSearch: {
+      action: "Buscar",
+      text: "Busque e abra outro quadro sem voltar ao painel.",
+      title: "Pule entre quadros",
+    },
+    dismiss: "Fechar dica",
+    exportAI: {
+      action: "Experimentar",
+      text: "Leve o conteúdo desta lousa para a sua IA (ChatGPT, Claude, Gemini) em um clique.",
+      title: "Exportar para IA",
+    },
+    shareBoard: {
+      action: "Compartilhar",
+      text: "Mande o link e desenhem juntos na mesma lousa, em tempo real.",
+      title: "Chame mais gente",
+    },
+    versionHistory: {
+      action: "Ver histórico",
+      text: "Veja as versões anteriores da lousa e restaure qualquer uma.",
+      title: "Volte no tempo",
+    },
+  },
   history: {
     beforeRestore: "Antes de uma restauração · ",
     description: "Versões salvas automaticamente enquanto o quadro é editado (até 30, por 30 dias).",

@@ -70,3 +70,18 @@ En el menú ☰ del lienzo, **Exportar para IA** genera un archivo Markdown con 
 - Los elementos siguen el orden de lectura (de arriba abajo, de izquierda a derecha). Se omiten coordenadas, colores e IDs.
 - Usa el estado actual del lienzo, también está disponible en modo lectura y funciona solo en el navegador.
 - Para que la IA lea y edite las pizarras directamente, sin exportar nada, conecta el [servidor MCP](../mcp/getting-started.md).
+
+---
+
+## 💡 Consejos en la pizarra
+
+Pequeños globos presentan funciones que quizá todavía no conoces, cada uno apuntando al botón de la función, en este orden: **Exportar para IA** (☰), **Compartir**, **Ir a otra pizarra** (🔍) e **Historial de versiones** (en el menú de tu foto).
+- El primer consejo aparece 10 segundos después de abrir la pizarra (aunque estés usando el lienzo), y cada siguiente 10 segundos después de que el anterior sale de la pantalla. Aparecen de uno en uno, nunca junto con otros avisos (bienvenida de invitado, papelera, aviso de enlace), diálogos o menús abiertos; en esos casos, esperan a que se cierren.
+- Cada consejo aparece una sola vez. Después no vuelve, aunque no hayas hecho clic en él. Usar la función antes (con el botón **Probar**/**Compartir**/**Buscar**/**Ver historial** del globo o por el camino habitual) también cierra el consejo.
+- Un consejo que todavía no aplica espera, sin contar como visto: los de exportar, compartir e historial esperan a que la pizarra tenga contenido, el de ir a otra pizarra espera a que tengas otra pizarra, y el de historial no aparece en modo lectura.
+- No roba el foco, respeta la preferencia de movimiento reducido y se anuncia a los lectores de pantalla. La X (o Esc, con el foco en el globo) cierra el consejo; un Esc pensado para otra cosa (salir de la edición de un texto, quitar una selección) solo aparta el globo.
+
+**Dónde se guarda el estado:**
+- **Con cuenta**: en la tabla `user_hints` de Supabase, con una fila por persona y consejo (cuándo apareció, cuándo se cerró y cuándo se usó). Cada persona solo lee sus propias filas, las escrituras pasan por la función `record_hint_event` (el servidor guarda las horas), cada cuenta tiene como máximo 50 consejos y las filas se borran junto con la cuenta. Una copia queda en el `localStorage` (`heeey_hints_<id de la cuenta>`) para cuando el servidor no responde. Un consejo visto con la cuenta no vuelve en ningún navegador.
+- **Invitado**: solo en el `localStorage` del navegador (`heeey_hints`), sin enviar nada al servidor. En otro navegador, o después de borrar los datos del sitio, los consejos pueden volver a aparecer. Al iniciar sesión, lo que el invitado ya vio, cerró o usó se lleva a la cuenta; la copia sigue en el navegador después de iniciar sesión, para que los consejos no vuelvan al cerrar sesión.
+- **Métricas**: los eventos `hint_shown`, `hint_dismissed` y `hint_used` van a PostHog (cuando está activo en el despliegue) solo con el nombre del consejo y el origen (`bubble` o `direct`), sin IDs de pizarras ni contenido, vinculados al mismo identificador aleatorio que los demás eventos, nunca al correo.
