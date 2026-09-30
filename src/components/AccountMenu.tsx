@@ -39,6 +39,7 @@ export function AccountMenu({ onOpenDocs, children }: AccountMenuProps) {
         aria-expanded={open}
         aria-label={t('header.profileMenu')}
         title={t('header.profileMenu')}
+        data-hint-anchor="account-menu"
       >
         <Avatar id={effectiveUserId} color={guestProfile.color} className="w-8 h-8" />
       </button>

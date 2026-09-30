@@ -273,6 +273,21 @@ In the canvas ☰ menu, **Export for AI** creates a Markdown file with all the c
 - It uses the current state of the canvas, is also available in view mode and runs only in the browser.
 - To let the AI read and edit boards directly, with nothing to export, connect the [MCP server](../mcp/getting-started.md).
 
+---
+
+## 💡 Board hints
+
+Small bubbles introduce features you may not know yet, each pointing at the feature's button, in this order: **Export for AI** (☰), **Share**, **Go to another board** (🔍) and **Version history** (in your picture's menu).
+- The first hint shows up 10 seconds after the board opens (even while you are using the canvas), and each next one 10 seconds after the previous leaves the screen. They show one at a time, never together with other notices (guest welcome, trash, link notice), open dialogs or open menus; in those cases, they wait for them to go away.
+- Each hint shows only once. After that it doesn't come back, even if you didn't click it. Using the feature first (from the bubble's **Try it**/**Share**/**Search**/**View history** button or the usual way) also ends the hint.
+- A hint that doesn't apply yet waits, without counting as seen: the export, share and history hints wait for the board to have content, the "another board" hint waits until you have another board, and the history hint doesn't show in view mode.
+- It doesn't steal focus, respects the reduced motion preference and is announced to screen readers. X (or Esc while the bubble has focus) closes the hint; an Esc meant for something else (leaving a text edit, clearing a selection) only moves the bubble out of the way.
+
+**Where the state lives:**
+- **Signed in**: in the Supabase `user_hints` table, with one row per person and hint (when it was shown, closed and used). Each person only reads their own rows, writes go through the `record_hint_event` function (the server records the times), each account has at most 50 hints and the rows are deleted along with the account. A copy stays in `localStorage` (`heeey_hints_<account id>`) for when the server doesn't respond. A hint seen while signed in doesn't come back in any browser.
+- **Guest**: only in the browser's `localStorage` (`heeey_hints`), with nothing sent to the server. In another browser, or after clearing the site's data, the hints may show again. When you sign in, what the guest already saw, closed or used comes along; the copy stays in the browser after signing in, so the hints don't come back when you sign out.
+- **Metrics**: the `hint_shown`, `hint_dismissed` and `hint_used` events go to PostHog (when enabled for the deploy) with only the hint name and the source (`bubble` or `direct`), no board IDs or content, tied to the same random identifier as other events, never to your email.
+
 
 ================================================================================
 FILE: docs/en/features/collaboration-realtime.md
