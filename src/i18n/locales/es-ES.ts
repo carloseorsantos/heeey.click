@@ -178,6 +178,7 @@ export const esES: Messages = {
       },
     },
     trash: "Papelera",
+    trashClaimed: "Esta pizarra ahora pertenece a un equipo y se ha quitado de tu lista.",
     trashEmpty: "La papelera está vacía",
     trashError: "No se ha podido mover la pizarra a la papelera.",
     trashGuestNote: " Inicia sesión para eliminar pizarras definitivamente.",

@@ -18,6 +18,7 @@ Regras gerais para quem contribui com o Heeey, sejam pessoas ou agentes de IA. O
 - Antes de criar a issue, pergunte a quem pediu **a quem atribuir** e **em qual projeto** ela entra. Não presuma nenhum dos dois.
 - Toda issue tem uma seção **Critérios de aceite**, em forma de checklist.
 - Antes de abrir o PR ou encerrar a issue, revise cada critério contra o que foi entregue. Marque só os que foram cumpridos e aponte o que ainda falta.
+- Comentários e descrições no Linear são impessoais: não cite o nome de quem pediu, decidiu ou validou. Escreva "decidido em 2026-09-26" ou "validado manualmente", em vez de "o Fulano pediu" ou "validado pelo Fulano". Para chamar alguém, use a menção (`@`) ou o campo de responsável.
 
 ### Issues grandes: spec com sub-issues
 Quando uma issue descreve uma funcionalidade inteira, ela vira a **spec**, e o trabalho é quebrado em sub-issues pequenas, uma por tarefa.
@@ -29,6 +30,11 @@ Quando uma issue descreve uma funcionalidade inteira, ela vira a **spec**, e o t
   - **Como validar (esta tarefa):** checklist que a própria tarefa consegue conferir, com o comando exato (ex.: `npx vitest run …`) ou o roteiro no navegador.
   - **Critérios da spec que esta tarefa atende:** quais critérios de aceite da spec ela ajuda a fechar.
   - **Pronto quando:** a condição para encerrar.
+- **Ao terminar cada sub-issue, antes de começar a próxima:**
+  1. **Compare com a spec.** Confira o que foi entregue contra a issue pai: os critérios que a sub-issue atende e o que a spec descreve (regras, dados, interface).
+  2. **Documente o que mudou.** Se a entrega saiu diferente do planejado (escopo, regra, nome, decisão nova), registre na sub-issue o que mudou e por quê, e atualize a spec e a tabela de cobertura para refletirem o que existe de fato.
+  3. **Revise as sub-issues seguintes.** Leia as próximas sub-issues da mesma spec e veja se o que já foi feito muda alguma delas: passos, validação, critérios ou a ordem. Atualize as que mudam e, nas que continuam valendo, não mexa.
+  - Só então a sub-issue é encerrada e a próxima começa.
 - **Cobertura na spec:** uma tabela que liga cada critério de aceite às sub-issues que o cobrem. Critério sem sub-issue é lacuna no plano.
 - **Comparação com a spec:** uma das últimas sub-issues revisa a spec critério a critério (✅ cumprido, ⏳ depende de uma etapa seguinte, ❌ falta) antes de qualquer mudança na produção. Nada segue com ❌.
 - **Produção e git ficam por último, em sub-issues próprias:** aplicar migration na produção e abrir os PRs. Cada uma depende de aprovação explícita de quem pediu.

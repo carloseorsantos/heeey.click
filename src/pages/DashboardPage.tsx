@@ -57,7 +57,7 @@ import {
   getFlowchartTemplate,
   getWireframeTemplate,
 } from '../lib/utils';
-import { setBoardTrashed, deleteBoardPermanently } from '../lib/boardTrash';
+import { setBoardTrashed, deleteBoardPermanently, fetchClaimedBoard } from '../lib/boardTrash';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
 import { BoardCard } from '../components/BoardCard';
@@ -600,14 +600,29 @@ export function DashboardPage({
     );
   }
 
-  // Optimistic: 'not-found' is fine (board only exists locally), a server error rolls back
+  // A board created here without an account that a team owns now: it is no longer this
+  // person's to trash or restore, so it leaves the list (as it does once the board is opened)
+  async function dropClaimedBoard(id: string): Promise<boolean> {
+    const claimed = await fetchClaimedBoard(id);
+    if (!claimed) return false;
+    saveLocalBoard(claimed);
+    setBoards((prev) => prev.filter((b) => b.id !== id));
+    showToast({ message: t('dashboard.trashClaimed') });
+    return true;
+  }
+
+  // Optimistic: 'not-found' is fine (board only exists locally or the link no longer opens it); a server
+  // error or a refusal rolls back, unless the refusal means a team claimed the board
   function setTrashed(id: string, trashed: boolean) {
     const now = new Date().toISOString();
+    const board = boards.find((b) => b.id === id);
+    const createdWithoutAccount = !!board && !board.owner_id && !board.team_id;
     // Rolling back means going to the opposite state (undo callbacks may hold stale board data)
-    const rollback = trashed ? null : boards.find((b) => b.id === id)?.deleted_at || now;
+    const rollback = trashed ? null : board?.deleted_at || now;
     applyTrashedLocally(id, trashed ? now : null);
-    setBoardTrashed(id, trashed).then((result) => {
-      if (result !== 'error') return;
+    setBoardTrashed(id, trashed).then(async (result) => {
+      if (result === 'saved' || result === 'not-found') return;
+      if (result === 'forbidden' && createdWithoutAccount && (await dropClaimedBoard(id))) return;
       applyTrashedLocally(id, rollback);
       showToast({
         message: trashed
