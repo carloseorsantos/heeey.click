@@ -429,6 +429,46 @@ describe('teams, projects and sharing', () => {
     });
   });
 
+  describe('trash of boards created without an account', () => {
+    const trash = (board: string, link: string | null, value = 'now()') =>
+      t.as(null, `update public.boards set deleted_at = ${value} where id = $1 returning deleted_at`, [board], link);
+
+    it('reaches the server only when the request names the board in the link header', async () => {
+      const board = uuid(61);
+      await t.as(null, `insert into public.boards (id, title) values ($1, 'sem conta')`, [board], board);
+
+      expect((await trash(board, null)).rows).toEqual([]); // no link header
+      expect((await trash(board, uuid(62))).rows).toEqual([]); // another board's link
+      expect((await trash(board, board)).rows[0].deleted_at).not.toBeNull();
+      // Read-only for everyone with the link until it is restored
+      expect((await t.as(null, `update public.boards set title = 'x' where id = $1`, [board], board)).error).toMatch(/lixeira/);
+      expect((await trash(board, board, 'null')).rows[0].deleted_at).toBeNull();
+      expect(await canWrite(null, board, board)).toBe(true);
+    });
+
+    it('stops reaching a board that someone claimed into a team', async () => {
+      const open = uuid(63);
+      const restricted = uuid(64);
+      for (const [board, access] of [[open, 'edit'], [restricted, 'restricted']]) {
+        await t.as(null, `insert into public.boards (id, title) values ($1, 'sem conta')`, [board], board);
+        expect((await t.as(MEMBER, `select public.claim_board($1, $2, $3)`, [board, general, access], board)).error).toBeUndefined();
+      }
+
+      expect((await trash(open, open)).error).toMatch(/lixeira/);
+      expect((await trash(restricted, restricted)).rows).toEqual([]);
+    });
+
+    it('does not let a visitor with the link trash a team board', async () => {
+      const open = await createBoard(MEMBER, general, 'edit');
+      const restricted = await createBoard(MEMBER, general);
+
+      expect((await trash(open, open)).error).toMatch(/lixeira/);
+      expect((await trash(restricted, restricted)).rows).toEqual([]);
+      const rows = await t.sys(`select deleted_at from public.boards where id in ($1, $2)`, [open, restricted]);
+      expect(rows.map((r) => r.deleted_at)).toEqual([null, null]);
+    });
+  });
+
   describe('link restriction with notice', () => {
     // As the migration's backfill does: only privileged code schedules a restriction
     const schedule = async (ids: string[], offset: string) => {

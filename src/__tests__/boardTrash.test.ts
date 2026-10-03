@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { supabase } from '../lib/supabase';
+import { BOARD_ID_HEADER, supabase } from '../lib/supabase';
 import { setBoardTrashed, deleteBoardPermanently } from '../lib/boardTrash';
 
 function mockBoardsTable(result: { data: any; error: any }) {
@@ -7,6 +7,7 @@ function mockBoardsTable(result: { data: any; error: any }) {
     update: vi.fn(() => chain),
     delete: vi.fn(() => chain),
     eq: vi.fn(() => chain),
+    setHeader: vi.fn(() => chain),
     select: vi.fn().mockResolvedValue(result),
   };
   vi.spyOn(supabase, 'from').mockReturnValue(chain);
@@ -27,6 +28,17 @@ describe('boardTrash', () => {
     expect(await setBoardTrashed('b1', false)).toBe('saved');
     expect(chain.update.mock.calls[1][0]).toEqual({ deleted_at: null });
     expect(chain.eq).toHaveBeenCalledWith('id', 'b1');
+  });
+
+  it('setBoardTrashed should name the board in the link header, so boards without an owner are reached', async () => {
+    const chain = mockBoardsTable({ data: [{ id: 'guest-board' }], error: null });
+
+    expect(await setBoardTrashed('guest-board', true)).toBe('saved');
+    expect(await setBoardTrashed('guest-board', false)).toBe('saved');
+    expect(chain.setHeader.mock.calls).toEqual([
+      [BOARD_ID_HEADER, 'guest-board'],
+      [BOARD_ID_HEADER, 'guest-board'],
+    ]);
   });
 
   it('setBoardTrashed should report boards missing remotely and server errors', async () => {

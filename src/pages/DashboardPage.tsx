@@ -600,7 +600,7 @@ export function DashboardPage({
     );
   }
 
-  // Optimistic: 'not-found' is fine (board only exists locally), a server error rolls back
+  // Optimistic: 'not-found' is fine (board only exists locally or the link no longer opens it), a server error rolls back
   function setTrashed(id: string, trashed: boolean) {
     const now = new Date().toISOString();
     // Rolling back means going to the opposite state (undo callbacks may hold stale board data)

@@ -1,11 +1,11 @@
-import { supabase } from './supabase';
+import { BOARD_ID_HEADER, supabase } from './supabase';
 
 export type TrashResult = 'saved' | 'not-found' | 'error';
 
 /**
  * Moves a board to the trash (soft delete) or restores it.
- * The server stamps deleted_at and only lets the owner change it on owned boards.
- * 'not-found' means no row was updated, e.g. a board that only exists locally.
+ * The server stamps deleted_at; on team boards only those who edit them through the team may change it.
+ * 'not-found' means no row was updated, e.g. a board that only exists locally or that the link no longer opens.
  */
 export async function setBoardTrashed(id: string, trashed: boolean): Promise<TrashResult> {
   try {
@@ -13,6 +13,8 @@ export async function setBoardTrashed(id: string, trashed: boolean): Promise<Tra
       .from('boards')
       .update({ deleted_at: trashed ? new Date().toISOString() : null })
       .eq('id', id)
+      // Boards without an owner are only visible to requests that name them in this header
+      .setHeader(BOARD_ID_HEADER, id)
       .select('id');
 
     if (error) {
