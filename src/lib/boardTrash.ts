@@ -1,11 +1,17 @@
 import { BOARD_ID_HEADER, supabase } from './supabase';
+import { Board } from './types';
 
-export type TrashResult = 'saved' | 'not-found' | 'error';
+export type TrashResult = 'saved' | 'not-found' | 'forbidden' | 'error';
+
+// Postgres "insufficient privilege": the server found the board and refused the change
+const FORBIDDEN_CODE = '42501';
 
 /**
  * Moves a board to the trash (soft delete) or restores it.
  * The server stamps deleted_at; on team boards only those who edit them through the team may change it.
  * 'not-found' means no row was updated, e.g. a board that only exists locally or that the link no longer opens.
+ * 'forbidden' means the board is in a team and this user does not edit it there, e.g. a board
+ * created without an account that someone else claimed since.
  */
 export async function setBoardTrashed(id: string, trashed: boolean): Promise<TrashResult> {
   try {
@@ -18,6 +24,7 @@ export async function setBoardTrashed(id: string, trashed: boolean): Promise<Tra
       .select('id');
 
     if (error) {
+      if (error.code === FORBIDDEN_CODE) return 'forbidden';
       console.warn('Erro ao atualizar lixeira no Supabase:', error.message);
       return 'error';
     }
@@ -25,6 +32,26 @@ export async function setBoardTrashed(id: string, trashed: boolean): Promise<Tra
   } catch (e) {
     console.warn('Exceção ao atualizar lixeira no Supabase:', e);
     return 'error';
+  }
+}
+
+/**
+ * After a 'forbidden' on a board this browser created without an account: returns the board as
+ * the server has it now, if a team owns it. The caller stores it so the board leaves the list
+ * of boards without an owner, as it does when the board is opened.
+ */
+export async function fetchClaimedBoard(id: string): Promise<Board | null> {
+  try {
+    const { data, error } = await supabase
+      .from('boards')
+      .select('*')
+      .eq('id', id)
+      .setHeader(BOARD_ID_HEADER, id)
+      .maybeSingle();
+    if (error || !data || !(data as Board).team_id) return null;
+    return data as Board;
+  } catch {
+    return null;
   }
 }
 

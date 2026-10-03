@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { BOARD_ID_HEADER, supabase } from '../lib/supabase';
-import { setBoardTrashed, deleteBoardPermanently } from '../lib/boardTrash';
+import { setBoardTrashed, deleteBoardPermanently, fetchClaimedBoard } from '../lib/boardTrash';
 
 function mockBoardsTable(result: { data: any; error: any }) {
   const chain: any = {
@@ -47,6 +47,30 @@ describe('boardTrash', () => {
 
     mockBoardsTable({ data: null, error: { message: 'Quadro na lixeira é somente leitura.' } });
     expect(await setBoardTrashed('b1', false)).toBe('error');
+  });
+
+  it('setBoardTrashed should tell a refused change apart from other server errors', async () => {
+    mockBoardsTable({ data: null, error: { code: '42501', message: 'Apenas quem edita o quadro pelo time pode movê-lo para a lixeira ou restaurá-lo.' } });
+    expect(await setBoardTrashed('claimed-by-a-team', true)).toBe('forbidden');
+  });
+
+  it('fetchClaimedBoard should return the board only when a team owns it now', async () => {
+    const chain = mockBoardsTable({ data: null, error: null });
+    chain.select = vi.fn(() => chain);
+    chain.maybeSingle = vi.fn();
+
+    chain.maybeSingle.mockResolvedValueOnce({ data: { id: 'b1', owner_id: 'u1', team_id: 't1' }, error: null });
+    expect(await fetchClaimedBoard('b1')).toMatchObject({ id: 'b1', team_id: 't1' });
+    expect(chain.setHeader).toHaveBeenCalledWith(BOARD_ID_HEADER, 'b1');
+
+    chain.maybeSingle.mockResolvedValueOnce({ data: { id: 'b1', owner_id: null, team_id: null }, error: null });
+    expect(await fetchClaimedBoard('b1')).toBeNull();
+    chain.maybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    expect(await fetchClaimedBoard('restricted-or-missing')).toBeNull();
+    chain.maybeSingle.mockResolvedValueOnce({ data: null, error: { message: 'offline' } });
+    expect(await fetchClaimedBoard('b1')).toBeNull();
+    chain.maybeSingle.mockRejectedValueOnce(new Error('network'));
+    expect(await fetchClaimedBoard('b1')).toBeNull();
   });
 
   it('deleteBoardPermanently should remove the board images before the row', async () => {

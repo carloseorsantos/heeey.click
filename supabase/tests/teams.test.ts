@@ -454,8 +454,15 @@ describe('teams, projects and sharing', () => {
         expect((await t.as(MEMBER, `select public.claim_board($1, $2, $3)`, [board, general, access], board)).error).toBeUndefined();
       }
 
-      expect((await trash(open, open)).error).toMatch(/lixeira/);
+      const refused = await trash(open, open);
+      expect(refused.error).toMatch(/lixeira/);
+      expect(refused.code).toBe('42501'); // the app reads this as "no longer yours"
+      // The open link still shows who has the board now, so the app can drop it from the creator's list
+      const [seen] = (await t.as(null, `select team_id from public.boards where id = $1`, [open], open)).rows;
+      expect(seen.team_id).toBe(team.id);
+      // A restricted board looks the same as one that is not in the database
       expect((await trash(restricted, restricted)).rows).toEqual([]);
+      expect(await canSee(null, restricted, restricted)).toBe(false);
     });
 
     it('does not let a visitor with the link trash a team board', async () => {

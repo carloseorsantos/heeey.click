@@ -178,6 +178,7 @@ export const enUS: Messages = {
       },
     },
     trash: "Trash",
+    trashClaimed: "This board now belongs to a team, so it was removed from your list.",
     trashEmpty: "The trash is empty",
     trashError: "Couldn't move the board to the trash.",
     trashGuestNote: " Sign in to delete boards permanently.",
