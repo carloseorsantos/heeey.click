@@ -34,6 +34,7 @@ import {
   markBoardAsCreated,
   isBoardLocallyCreated,
   getClaimableLocalBoards,
+  removeCreatedBoardId,
 } from '../lib/storage';
 import {
   fetchBoardSummaries,
@@ -57,7 +58,7 @@ import {
   getFlowchartTemplate,
   getWireframeTemplate,
 } from '../lib/utils';
-import { setBoardTrashed, deleteBoardPermanently, fetchClaimedBoard } from '../lib/boardTrash';
+import { setBoardTrashed, deleteBoardPermanently, fetchClaimedBoard, fetchClaimAfterNotFound } from '../lib/boardTrash';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../hooks/useSettings';
 import { BoardCard } from '../components/BoardCard';
@@ -602,17 +603,26 @@ export function DashboardPage({
 
   // A board created here without an account that a team owns now: it is no longer this
   // person's to trash or restore, so it leaves the list (as it does once the board is opened)
-  async function dropClaimedBoard(id: string): Promise<boolean> {
-    const claimed = await fetchClaimedBoard(id);
-    if (!claimed) return false;
-    saveLocalBoard(claimed);
+  // (with an edit link the server refuses; with a read-only or restricted link it answers 'not-found')
+  async function dropClaimedBoard(id: string, result: 'forbidden' | 'not-found'): Promise<boolean> {
+    if (result === 'forbidden') {
+      const claimed = await fetchClaimedBoard(id);
+      if (!claimed) return false;
+      saveLocalBoard(claimed);
+    } else {
+      const claim = await fetchClaimAfterNotFound(id);
+      if (!claim) return false;
+      // Restricted: the owner and team can't be read, so this browser just stops counting as its creator
+      if (claim.board) saveLocalBoard(claim.board);
+      else removeCreatedBoardId(id);
+    }
     setBoards((prev) => prev.filter((b) => b.id !== id));
     showToast({ message: t('dashboard.trashClaimed') });
     return true;
   }
 
-  // Optimistic: 'not-found' is fine (board only exists locally or the link no longer opens it); a server
-  // error or a refusal rolls back, unless the refusal means a team claimed the board
+  // Optimistic: 'not-found' is fine (board only exists locally); a server error or a refusal rolls back.
+  // On a board created here without an account, both 'forbidden' and 'not-found' may mean a team claimed it
   function setTrashed(id: string, trashed: boolean) {
     const now = new Date().toISOString();
     const board = boards.find((b) => b.id === id);
@@ -621,8 +631,9 @@ export function DashboardPage({
     const rollback = trashed ? null : board?.deleted_at || now;
     applyTrashedLocally(id, trashed ? now : null);
     setBoardTrashed(id, trashed).then(async (result) => {
-      if (result === 'saved' || result === 'not-found') return;
-      if (result === 'forbidden' && createdWithoutAccount && (await dropClaimedBoard(id))) return;
+      if (result === 'saved') return;
+      if ((result === 'forbidden' || result === 'not-found') && createdWithoutAccount && (await dropClaimedBoard(id, result))) return;
+      if (result === 'not-found') return;
       applyTrashedLocally(id, rollback);
       showToast({
         message: trashed

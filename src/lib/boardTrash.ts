@@ -1,5 +1,6 @@
 import { BOARD_ID_HEADER, supabase } from './supabase';
 import { Board } from './types';
+import { fetchBoardAccess } from './sharing';
 
 export type TrashResult = 'saved' | 'not-found' | 'forbidden' | 'error';
 
@@ -53,6 +54,22 @@ export async function fetchClaimedBoard(id: string): Promise<Board | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * After a 'not-found' on a board this browser created without an account: tells whether someone
+ * claimed it since, with a read-only or restricted link (the update reaches no row in both cases).
+ * - null: the board was not claimed, e.g. it only exists in this browser
+ * - { board }: claimed with a read-only link; the server copy, with its team
+ * - { board: null }: claimed and restricted; the board exists but this browser can no longer read it
+ * Guest boards only become restricted once claimed, so a restricted board here was claimed.
+ */
+export async function fetchClaimAfterNotFound(id: string): Promise<{ board: Board | null } | null> {
+  const access = await fetchBoardAccess(id).catch(() => null);
+  if (!access?.exists) return null;
+  if (!access.permission) return { board: null };
+  const board = await fetchClaimedBoard(id);
+  return board ? { board } : null;
 }
 
 /**

@@ -465,6 +465,35 @@ describe('teams, projects and sharing', () => {
       expect(await canSee(null, restricted, restricted)).toBe(false);
     });
 
+    it('shows whoever had the link that a claimed board with a read-only or restricted link is gone', async () => {
+      const viewOnly = uuid(65);
+      const restricted = uuid(66);
+      for (const [board, access] of [[viewOnly, 'edit'], [restricted, 'restricted']]) {
+        await t.as(null, `insert into public.boards (id, title) values ($1, 'sem conta')`, [board], board);
+        expect((await t.as(MEMBER, `select public.claim_board($1, $2, $3)`, [board, general, access], board)).error).toBeUndefined();
+      }
+      // The team turns the open link into a read-only one after claiming
+      expect((await t.as(MEMBER, `update public.boards set access_level = 'view' where id = $1`, [viewOnly])).error).toBeUndefined();
+
+      const access = async (board: string) =>
+        (await t.as(null, `select public.get_board_access($1) as a`, [board], board)).rows[0].a;
+
+      // Both answer 'not-found' to the trash, like a board that only exists in the browser...
+      for (const board of [viewOnly, restricted]) {
+        const res = await trash(board, board);
+        expect(res.error).toBeUndefined();
+        expect(res.rows).toEqual([]);
+      }
+      // ...but the read-only link still reads the row with its team
+      expect(await access(viewOnly)).toMatchObject({ exists: true, permission: 'view' });
+      const [seen] = (await t.as(null, `select team_id from public.boards where id = $1`, [viewOnly], viewOnly)).rows;
+      expect(seen.team_id).toBe(team.id);
+      // ...and the restricted one exists without any permission
+      expect(await access(restricted)).toEqual({ exists: true, permission: null });
+      // A board that never reached the server does not exist
+      expect(await access(uuid(67))).toEqual({ exists: false, permission: null });
+    });
+
     it('does not let a visitor with the link trash a team board', async () => {
       const open = await createBoard(MEMBER, general, 'edit');
       const restricted = await createBoard(MEMBER, general);

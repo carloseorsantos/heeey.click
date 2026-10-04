@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { BOARD_ID_HEADER, supabase } from '../lib/supabase';
-import { setBoardTrashed, deleteBoardPermanently, fetchClaimedBoard } from '../lib/boardTrash';
+import { setBoardTrashed, deleteBoardPermanently, fetchClaimedBoard, fetchClaimAfterNotFound } from '../lib/boardTrash';
 
 function mockBoardsTable(result: { data: any; error: any }) {
   const chain: any = {
@@ -71,6 +71,40 @@ describe('boardTrash', () => {
     expect(await fetchClaimedBoard('b1')).toBeNull();
     chain.maybeSingle.mockRejectedValueOnce(new Error('network'));
     expect(await fetchClaimedBoard('b1')).toBeNull();
+  });
+
+  it('fetchClaimAfterNotFound should tell a claimed board apart from one that only exists locally', async () => {
+    const access = (data: any, error: any = null) => {
+      const call: any = { setHeader: vi.fn().mockResolvedValue({ data, error }) };
+      return call;
+    };
+    const rpc = vi.spyOn(supabase, 'rpc');
+    const chain = mockBoardsTable({ data: null, error: null });
+    chain.select = vi.fn(() => chain);
+    chain.maybeSingle = vi.fn();
+
+    // Never reached the server: one request, nothing claimed
+    rpc.mockReturnValueOnce(access({ exists: false, permission: null }));
+    expect(await fetchClaimAfterNotFound('local-only')).toBeNull();
+    expect(chain.maybeSingle).not.toHaveBeenCalled();
+
+    // Claimed and restricted: exists, but the link gives no permission
+    rpc.mockReturnValueOnce(access({ exists: true, permission: null }));
+    expect(await fetchClaimAfterNotFound('restricted')).toEqual({ board: null });
+
+    // Claimed with a read-only link: the server copy comes back with its team
+    rpc.mockReturnValueOnce(access({ exists: true, permission: 'view' }));
+    chain.maybeSingle.mockResolvedValueOnce({ data: { id: 'view-only', owner_id: 'u1', team_id: 't1' }, error: null });
+    expect(await fetchClaimAfterNotFound('view-only')).toEqual({ board: expect.objectContaining({ team_id: 't1' }) });
+
+    // Readable but still without a team, or the check failed: treated as not claimed
+    rpc.mockReturnValueOnce(access({ exists: true, permission: 'edit' }));
+    chain.maybeSingle.mockResolvedValueOnce({ data: { id: 'b1', owner_id: null, team_id: null }, error: null });
+    expect(await fetchClaimAfterNotFound('b1')).toBeNull();
+    rpc.mockReturnValueOnce(access(null, { message: 'offline' }));
+    expect(await fetchClaimAfterNotFound('b1')).toBeNull();
+    rpc.mockImplementationOnce(() => { throw new Error('network'); });
+    expect(await fetchClaimAfterNotFound('b1')).toBeNull();
   });
 
   it('deleteBoardPermanently should remove the board images before the row', async () => {
