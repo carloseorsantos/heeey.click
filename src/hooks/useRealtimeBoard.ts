@@ -1099,9 +1099,9 @@ export function useRealtimeBoard({ boardId }: UseRealtimeBoardOptions) {
   canRestoreRef.current = canRestore;
   const restoreBoard = useCallback(async () => {
     if (!boardRef.current || !canRestoreRef.current) return false;
-    // 'not-found' means the board never reached Supabase, so restoring it locally is enough
+    // 'not-found' means the board never reached Supabase (or the link no longer opens it), so restoring it locally is enough
     const result = await setBoardTrashed(boardId, false);
-    if (result === 'error' || !boardRef.current) return false;
+    if ((result !== 'saved' && result !== 'not-found') || !boardRef.current) return false;
 
     const updated: Board = { ...boardRef.current, deleted_at: null };
     boardRef.current = updated;

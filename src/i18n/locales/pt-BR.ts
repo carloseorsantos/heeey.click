@@ -177,6 +177,7 @@ export const ptBR = {
       },
     },
     trash: "Lixeira",
+    trashClaimed: "Este quadro agora pertence a um time e saiu da sua lista.",
     trashEmpty: "A lixeira está vazia",
     trashError: "Não foi possível mover o quadro para a lixeira.",
     trashGuestNote: " Entre na sua conta para excluir quadros definitivamente.",
